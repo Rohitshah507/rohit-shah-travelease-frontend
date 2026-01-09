@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { IoArrowBack } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
+import { serverURL } from "../App";
+import axios from "axios";
 
 const ForgetPassword = () => {
   const borderColor = "#ddd";
@@ -10,6 +12,53 @@ const ForgetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
+
+  const handleSendOTP = async () => {
+    try {
+      const result = await axios.post(
+        `${serverURL}/api/auth/send-otp`,
+        { email },
+        { withCredentials: true }
+      );
+      console.log(result);
+      setStep(2);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    try {
+      const result = await axios.post(
+        `${serverURL}/api/auth/verify-otp`,
+        { email, otp },
+        { withCredentials: true }
+      );
+      console.log(result);
+      setStep(3);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (password !== confirmPassword) {
+      alert("Password and Confirm Password do not match");
+      return;
+    }
+    try {
+      const result = await axios.post(
+        `${serverURL}/api/auth/reset-password`,
+        { email, newPassword: password },
+        { withCredentials: true }
+      );
+      console.log(result);
+      setStep(3);
+      navigate("/login");
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full items-center bg-[#fff9f6] flex justify-center ">
@@ -44,7 +93,10 @@ const ForgetPassword = () => {
               ></input>
             </div>
 
-            <button className="ml-4 w-76 bg-orange-600 text-white font-bold py-2 rounded-lg shadow-lg hover:bg-orange-500 hover:text-white border: 1px solid border-gray-300 transition-colors">
+            <button
+              className="ml-4 w-76 bg-orange-600 text-white font-bold py-2 rounded-lg shadow-lg hover:bg-orange-500 hover:text-white border: 1px solid border-gray-300 transition-colors"
+              onClick={handleSendOTP}
+            >
               Send OTP
             </button>
           </div>
@@ -69,7 +121,10 @@ const ForgetPassword = () => {
               ></input>
             </div>
 
-            <button className="ml-4 w-76 bg-orange-600 text-white font-bold py-2 rounded-lg shadow-lg hover:bg-orange-500 hover:text-white border: 1px solid border-gray-300 transition-colors">
+            <button
+              className="ml-4 w-76 bg-orange-600 text-white font-bold py-2 rounded-lg shadow-lg hover:bg-orange-500 hover:text-white border: 1px solid border-gray-300 transition-colors"
+              onClick={handleVerifyOTP}
+            >
               Verify
             </button>
           </div>
@@ -111,7 +166,10 @@ const ForgetPassword = () => {
               ></input>
             </div>
 
-            <button className="ml-4 w-76 bg-orange-600 text-white font-bold py-2 rounded-lg shadow-lg hover:bg-orange-500 hover:text-white border: 1px solid border-gray-300 transition-colors">
+            <button
+              className="ml-4 w-76 bg-orange-600 text-white font-bold py-2 rounded-lg shadow-lg hover:bg-orange-500 hover:text-white border: 1px solid border-gray-300 transition-colors"
+              onClick={handleResetPassword}
+            >
               Reset Password
             </button>
           </div>
