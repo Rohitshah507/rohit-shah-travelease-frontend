@@ -33,7 +33,7 @@ const OtpVerification = () => {
         { withCredentials: true }
       );
       alert("Email verified successfully!");
-      navigate("/home");
+      navigate("/login");
       console.log(result);
     } catch (error) {
       console.error("Error verifying OTP:", error);

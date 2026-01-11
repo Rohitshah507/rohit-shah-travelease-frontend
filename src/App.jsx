@@ -5,9 +5,12 @@ import LogIn from './pages/Login.jsx'
 import Home from './pages/Home.jsx'
 import ForgetPassword from './pages/ForgetPassword.jsx'
 import OtpVerification from './pages/OtpVerification.jsx'
+import useUser from './hooks/useUser.jsx'
 
 export const serverURL = "http://localhost:5000"
 const App = () => {
+
+  useUser()
   return (
     <div>
       <Routes>
