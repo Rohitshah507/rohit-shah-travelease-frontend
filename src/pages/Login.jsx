@@ -4,8 +4,10 @@ import { FaEye } from "react-icons/fa";
 import { FaEyeSlash } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
 
 import { serverURL } from "../App.jsx";
+import { setUserData } from "../redux/userSlice.js";
 const SignIn = () => {
   const primaryColor = "#ff4d2d";
   const hoverColor = "#e64323";
@@ -16,6 +18,7 @@ const SignIn = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const dispatch = useDispatch();
 
   const handleSignIn = async () => {
     try {
@@ -27,7 +30,7 @@ const SignIn = () => {
         },
         { withCredentials: true }
       );
-
+      dispatch(setUserData(res.data));
       alert(res.data.message);
       navigate("/home");
 
@@ -109,7 +112,10 @@ const SignIn = () => {
           </div>
         </div>
 
-        <div className="text-orange-600 ml-50 text-bold font-medium mb-2 cursor-pointer" onClick={()=> navigate("/forget-password")}>
+        <div
+          className="text-orange-600 ml-50 text-bold font-medium mb-2 cursor-pointer"
+          onClick={() => navigate("/forget-password")}
+        >
           Forget Password
         </div>
 

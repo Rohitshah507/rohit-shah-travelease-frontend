@@ -1,9 +1,12 @@
 import React, { useEffect } from "react";
 import { serverURL } from "../App";
 import axios from "axios";
+import { setUserData } from "../redux/userSlice";
+import {useDispatch} from "react-redux"
 
 
 const useUser = () => {
+  const dispatch = useDispatch()
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -11,7 +14,7 @@ const useUser = () => {
           withCredentials: true,
         });
 
-        console.log(result);
+        dispatch(setUserData(result.data))
       } catch (error) {
         console.log(error);
       }

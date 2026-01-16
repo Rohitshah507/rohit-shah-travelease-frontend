@@ -4,7 +4,9 @@ import { FaEye } from "react-icons/fa";
 import { FaEyeSlash } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useDispatch } from "react-redux";
 import { serverURL } from "../App.jsx";
+import { setUserData } from "../redux/userSlice.js";
 
 const SignUp = () => {
   const primaryColor = "#ff4d2d";
@@ -19,6 +21,7 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [guideDocument, setGuideDocument] = useState(null);
+  const dispatch = useDispatch();
 
   const handleSignUp = async () => {
     try {
@@ -32,7 +35,7 @@ const SignUp = () => {
         },
         { withCredentials: true }
       );
-
+      dispatch(setUserData(res.data))
       alert(res.data.message);
       navigate("/otp-verification", {
         state: { email },
