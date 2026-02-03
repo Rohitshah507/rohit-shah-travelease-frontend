@@ -7,8 +7,8 @@ import ForgetPassword from "./pages/ForgetPassword.jsx";
 import OtpVerification from "./pages/OtpVerification.jsx";
 import useUser from "./hooks/useUser.jsx";
 import { useSelector } from "react-redux";
-import LandingPage from "./pages/Hero.jsx";
-import Hero from "./pages/Hero.jsx";
+import LandingPage from "./pages/landing.jsx";
+import Hero from "./pages/landing.jsx";
 
 export const serverURL = "http://localhost:5000";
 const App = () => {
@@ -27,13 +27,16 @@ const App = () => {
         />
         <Route
           path="/home"
-          element={userData ? <Home /> : <Navigate to={"/home"} />}
+          element={userData ? <Home /> : <Navigate to={"/login"} />}
         />
         <Route
-          path="/hero"
-          element={userData ? <Hero /> : <Navigate to={""} />}
+          path="/"
+          element={ <Hero />}
         />
-        <Route path="/otp-verification" element={<OtpVerification />} />
+        <Route
+          path="/otp-verification"
+          element={!userData ? <OtpVerification /> : <Navigate to={"/home"} />}
+        />
         <Route path="forget-password" element={<ForgetPassword />} />
       </Routes>
     </div>

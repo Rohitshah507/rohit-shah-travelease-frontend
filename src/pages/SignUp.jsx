@@ -4,9 +4,7 @@ import { FaEye } from "react-icons/fa";
 import { FaEyeSlash } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useDispatch } from "react-redux";
 import { serverURL } from "../App.jsx";
-import { setUserData } from "../redux/userSlice.js";
 
 const SignUp = () => {
   const primaryColor = "#ff4d2d";
@@ -21,21 +19,23 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [guideDocument, setGuideDocument] = useState(null);
-  const dispatch = useDispatch();
 
   const handleSignUp = async () => {
     try {
-      const res = await axios.post(
-        `${serverURL}/api/auth/register`,
-        {
-          username,
-          email,
-          password,
-          role,
-        },
-        { withCredentials: true }
-      );
-      dispatch(setUserData(res.data))
+      const formData = new FormData();
+
+      formData.append("username", username);
+      formData.append("email", email);
+      formData.append("password", password);
+      formData.append("role", role);
+
+      if (role === "GUIDE" && guideDocument) {
+        formData.append("guideDocument", guideDocument);
+      }
+
+      const res = await axios.post(`${serverURL}/api/auth/register`, formData, {
+        withCredentials: true,
+      });
       alert(res.data.message);
       navigate("/otp-verification", {
         state: { email },
@@ -176,7 +176,6 @@ const SignUp = () => {
               type="file"
               name="citizenship"
               accept="image/*,.pdf"
-              value={guideDocument}
               onChange={(e) => setGuideDocument(e.target.files[0])}
               className="border shadow-lg rounded-lg cursor-pointer p-2 w-full"
               required

@@ -9,9 +9,9 @@ const Home = () => {
   const { userData } = useSelector((state) => state.user);
   return (
     <div className="">
-      {userData.user?.role === "TOURIST" && <TouristDashboard />}
-      {userData.user?.role === "GUIDE" && <GuideDashboard />}
-      {userData.user?.role === "ADMIN" && <AdminDashboard />}
+      {userData.user?.role.includes("TOURIST") && <TouristDashboard />}
+      {userData.user?.role.includes("GUIDE") && <GuideDashboard />}
+      {userData.user?.role.includes("ADMIN") && <AdminDashboard />}
     </div>
   );
 };
