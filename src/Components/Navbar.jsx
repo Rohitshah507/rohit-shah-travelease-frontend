@@ -25,8 +25,7 @@ const Navbar = () => {
         isScrolled
           ? "bg-black-500 text-white shadow-lg"
           : islanding
-            ? "bg-gray-500 text-white"
-            : "bg-gray-500 text-white shadow"
+            ? "bg-transparent text-white" : "bg-transparent text-black"
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 py-4">

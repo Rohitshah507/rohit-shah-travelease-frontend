@@ -1,5 +1,5 @@
 import React from 'react'
-import DashboardLayout from './DashboardLayout'
+import DashboardLayout from '../Components/DashboardLayout'
 
 const AdminDashboard = () => {
   return (

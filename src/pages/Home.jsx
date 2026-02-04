@@ -1,9 +1,9 @@
 import React from "react";
 import { useSelector } from "react-redux";
 
-import TouristDashboard from "../Components/TouristDashboard";
-import GuideDashboard from "../Components/GuideDashboard";
-import AdminDashboard from "../Components/AdminDashboard";
+import TouristDashboard from "./TouristDashboard";
+import GuideDashboard from "./GuideDashboard";
+import AdminDashboard from "./AdminDashboard";
 
 const Home = () => {
   const { userData } = useSelector((state) => state.user);

@@ -25,15 +25,15 @@ const TouristDashboard = () => {
       {/* Navigation */}
       <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-lg text-black' : 'bg-transparent text-white'}`}>
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="text-2xl font-bold text-amber-700">Bhutan</div>
+          <div className="text-4xl font-bold text-amber-700 shadow-2xl">TravelEase</div>
           
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center font-bold space-x-8">
             <a href="#home" className="hover:text-amber-700 transition ">Home</a>
-            <a href="#about" className=" hover:text-amber-700 transition ">About Bhutan</a>
+            <a href="#about" className=" hover:text-amber-700 transition ">Destinations</a>
             <a href="#places" className=" hover:text-amber-700 transition ">Places to Visit</a>
             <a href="#packages" className=" hover:text-amber-700 transition ">Packages</a>
-            <a href="#contact" className=" hover:text-amber-700 transition ">Contact</a>
+            <a href="#contact" className=" hover:text-amber-700 transition ">TourList</a>
           </div>
 
           {/* Mobile Menu Button */}
@@ -68,7 +68,7 @@ const TouristDashboard = () => {
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="relative z-20 text-center text-white px-6">
-          <h1 className="text-5xl md:text-7xl font-bold mb-4">We're Bhutan's</h1>
+          <h1 className="text-5xl md:text-7xl font-bold mb-4">We're Nepal's</h1>
           <h2 className="text-4xl md:text-6xl font-light mb-6">Foremost Luxury Travel</h2>
           <p className="text-2xl md:text-4xl mb-8">Designer and Outfitter</p>
           <button className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 rounded-full text-lg transition-all transform hover:scale-105">
@@ -94,12 +94,12 @@ const TouristDashboard = () => {
             <h3 className="text-amber-700 text-sm uppercase tracking-wider mb-2">Welcome</h3>
             <h2 className="text-4xl font-bold text-gray-800 mb-6">The Kingdom We Call Home</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Nestled in the eastern Himalayas, Bhutan is a land of stunning natural beauty, rich cultural heritage, 
-              and deep spiritual traditions. Known as the "Land of the Thunder Dragon," this mystical kingdom offers 
+              Nestled in the eastern Himalayas, Nepal is a land of stunning natural beauty, rich cultural heritage, 
+              and deep spiritual traditions. This mystical kingdom offers 
               travelers an unparalleled experience of pristine landscapes, ancient monasteries, and warm hospitality.
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Our mission is to share the magic of Bhutan with the world while preserving its unique culture and 
+              Our mission is to share the magic of Nepal with the world while preserving its unique culture and 
               environment. We believe in sustainable tourism that benefits local communities and protects our precious heritage.
             </p>
             <button className="border-2 border-amber-700 text-amber-700 px-6 py-2 rounded-full hover:bg-amber-700 hover:text-white transition">
