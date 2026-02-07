@@ -7,6 +7,7 @@ import {
   Award,
   Globe
 } from "lucide-react";
+import Footer from "../Components/Footer";
 
 const TouristDashboard = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -29,8 +30,8 @@ const TouristDashboard = () => {
           
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center font-bold space-x-8">
-            <a href="#home" className="hover:text-amber-700 transition ">Home</a>
-            <a href="#about" className=" hover:text-amber-700 transition ">Destinations</a>
+            <a href="/home" className="hover:text-amber-700 transition ">Home</a>
+            <a href="/destinations" className=" hover:text-amber-700 transition ">Destinations</a>
             <a href="#places" className=" hover:text-amber-700 transition ">Places to Visit</a>
             <a href="#packages" className=" hover:text-amber-700 transition ">Packages</a>
             <a href="#contact" className=" hover:text-amber-700 transition ">TourList</a>
@@ -50,7 +51,7 @@ const TouristDashboard = () => {
           <div className="md:hidden bg-white border-t">
             <div className="px-6 py-4 space-y-4">
               <a href="#home" className="block text-gray-700 hover:text-amber-700">Home</a>
-              <a href="#about" className="block text-gray-700 hover:text-amber-700">About Bhutan</a>
+              <a href="#about" className="block text-gray-700 hover:text-amber-700">About Nepal</a>
               <a href="#places" className="block text-gray-700 hover:text-amber-700">Places to Visit</a>
               <a href="#packages" className="block text-gray-700 hover:text-amber-700">Packages</a>
               <a href="#contact" className="block text-gray-700 hover:text-amber-700">Contact</a>
@@ -138,21 +139,21 @@ const TouristDashboard = () => {
             <h3 className="text-amber-700 text-sm uppercase tracking-wider mb-2">Experiences</h3>
             <h2 className="text-4xl font-bold text-gray-800 mb-4">Places To Visit</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Discover the hidden gems and iconic landmarks that make Bhutan a truly magical destination
+              Discover the hidden gems and iconic landmarks that make Nepal a truly magical destination
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             <div className="relative group overflow-hidden rounded-lg shadow-lg">
               <img 
-                src="https://images.unsplash.com/photo-1585068628604-b4245e5a3c8e?w=1200&q=80" 
+                src="https://national-parks.org/wp-content/uploads/2025/10/Sagarmatha-National-Park.jpg" 
                 alt="Tiger's Nest" 
-                className="w-full h-96 object-cover group-hover:scale-110 transition-transform duration-500"
+                className="w-full h-96 object-cover group-hover:scale-110 transition-transform duration-500 shadow-lg gray size-100"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
                 <div className="text-white">
-                  <h3 className="text-2xl font-bold mb-2">Paro Taktsang</h3>
-                  <p className="text-sm mb-3">The Tiger's Nest Monastery</p>
+                  <h3 className="text-2xl font-bold mb-2">Sagarmatha</h3>
+                  <p className="text-sm mb-3">Best Mountain</p>
                   <button className="border border-white px-4 py-1 rounded-full text-sm hover:bg-white hover:text-gray-800 transition">
                     Discover
                   </button>
@@ -162,14 +163,14 @@ const TouristDashboard = () => {
 
             <div className="relative group overflow-hidden rounded-lg shadow-lg">
               <img 
-                src="https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=1200&q=80" 
-                alt="Punakha Dzong" 
+                src="https://upload.wikimedia.org/wikipedia/commons/5/57/Kangchenjunga%2C_India.jpg" 
+                alt="Mt. Kanchunjunga" 
                 className="w-full h-96 object-cover group-hover:scale-110 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
                 <div className="text-white">
-                  <h3 className="text-2xl font-bold mb-2">Punakha Dzong</h3>
-                  <p className="text-sm mb-3">The Palace of Great Happiness</p>
+                  <h3 className="text-2xl font-bold mb-2">Kanchunjunga</h3>
+                  <p className="text-sm mb-3">The Place of Great Happiness</p>
                   <button className="border border-white px-4 py-1 rounded-full text-sm hover:bg-white hover:text-gray-800 transition">
                     Discover
                   </button>
@@ -181,14 +182,14 @@ const TouristDashboard = () => {
           <div className="grid md:grid-cols-2 gap-8">
             <div className="relative group overflow-hidden rounded-lg shadow-lg">
               <img 
-                src="https://images.unsplash.com/photo-1591274983295-5e5d5ce2c137?w=1200&q=80" 
-                alt="Buddha Dordenma" 
+                src="https://dynamic-media-cdn.tripadvisor.com/media/photo-o/18/40/f6/3f/manaslu-circuit-trekking.jpg?w=1200&h=-1&s=1" 
+                alt="Mt.Manaslu" 
                 className="w-full h-96 object-cover group-hover:scale-110 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
                 <div className="text-white">
-                  <h3 className="text-2xl font-bold mb-2">Buddha Dordenma</h3>
-                  <p className="text-sm mb-3">Giant Buddha Statue in Thimphu</p>
+                  <h3 className="text-2xl font-bold mb-2">Mt. Manaslu</h3>
+                  <p className="text-sm mb-3">The Mountain of the Manaslu Region</p>
                   <button className="border border-white px-4 py-1 rounded-full text-sm hover:bg-white hover:text-gray-800 transition">
                     Discover
                   </button>
@@ -198,14 +199,14 @@ const TouristDashboard = () => {
 
             <div className="relative group overflow-hidden rounded-lg shadow-lg">
               <img 
-                src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=1200&q=80" 
-                alt="Dochula Pass" 
+                src="https://dynamic-media-cdn.tripadvisor.com/media/photo-o/0d/d6/96/36/photo4jpg.jpg?w=600&h=500&s=1" 
+                alt="Pokhara Lakeside" 
                 className="w-full h-96 object-cover group-hover:scale-110 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
                 <div className="text-white">
-                  <h3 className="text-2xl font-bold mb-2">Dochula Pass</h3>
-                  <p className="text-sm mb-3">108 Memorial Chortens</p>
+                  <h3 className="text-2xl font-bold mb-2">Pokhara Lakeside</h3>
+                  <p className="text-sm mb-3">Scenic Views of Phewa Lake</p>
                   <button className="border border-white px-4 py-1 rounded-full text-sm hover:bg-white hover:text-gray-800 transition">
                     Discover
                   </button>
@@ -227,10 +228,10 @@ const TouristDashboard = () => {
         </div>
         <div className="max-w-4xl mx-auto relative z-10 text-center">
           <h3 className="text-amber-500 text-sm uppercase tracking-wider mb-2">Immerse</h3>
-          <h2 className="text-4xl font-bold mb-6">Experience Bhutanese Culture & Festivals</h2>
+          <h2 className="text-4xl font-bold mb-6">Experience Nepalese Culture & Festivals</h2>
           <p className="text-gray-300 mb-8 leading-relaxed">
             Witness ancient traditions come alive through vibrant festivals, sacred masked dances, and spiritual ceremonies. 
-            Participate in traditional archery, explore local markets, and connect with the warm-hearted Bhutanese people.
+            Participate in traditional archery, explore local markets, and connect with the warm-hearted Nepali people.
           </p>
           <button className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 rounded-full transition">
             View Festival Calendar
@@ -253,7 +254,7 @@ const TouristDashboard = () => {
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-3">Expert Local Guides</h3>
               <p className="text-gray-600">
-                Our experienced guides are passionate storytellers who bring Bhutan's history and culture to life.
+                Our experienced guides are passionate storytellers who bring Nepali's history and culture to life.
               </p>
             </div>
 
@@ -273,7 +274,7 @@ const TouristDashboard = () => {
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-3">Sustainable Tourism</h3>
               <p className="text-gray-600">
-                We're committed to preserving Bhutan's environment and supporting local communities.
+                We're committed to preserving Nepal's environment and supporting local communities.
               </p>
             </div>
           </div>
@@ -299,7 +300,7 @@ const TouristDashboard = () => {
                 <h3 className="text-xl font-bold text-gray-800 mb-2">Cultural Heritage Tour</h3>
                 <p className="text-gray-600 mb-4">7 Days / 6 Nights</p>
                 <p className="text-gray-600 mb-4 text-sm">
-                  Explore ancient dzongs, monasteries, and immerse yourself in Bhutanese traditions.
+                  Explore ancient temples, monasteries, and immerse yourself in Nepali traditions.
                 </p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-amber-700">$1,850</span>
@@ -341,7 +342,7 @@ const TouristDashboard = () => {
                 <h3 className="text-xl font-bold text-gray-800 mb-2">Festival Experience</h3>
                 <p className="text-gray-600 mb-4">5 Days / 4 Nights</p>
                 <p className="text-gray-600 mb-4 text-sm">
-                  Witness vibrant masked dances and sacred rituals during Bhutan's colorful festivals.
+                  Witness vibrant masked dances and sacred rituals during Nepal's colorful festivals.
                 </p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-amber-700">$1,650</span>
@@ -394,7 +395,7 @@ const TouristDashboard = () => {
                 </div>
               </div>
               <p className="text-gray-300 italic">
-                "Bhutan is a hidden paradise and this tour company made it accessible and unforgettable. From the monasteries to the festivals, every experience was authentic and deeply moving."
+                "Nepal is a hidden paradise and this tour company made it accessible and unforgettable. From the monasteries to the festivals, every experience was authentic and deeply moving."
               </p>
             </div>
           </div>
@@ -446,50 +447,7 @@ const TouristDashboard = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-6">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-8">
-          <div>
-            <h3 className="text-2xl font-bold text-amber-500 mb-4">Bhutan</h3>
-            <p className="text-gray-400 text-sm">
-              Your gateway to the magical kingdom of Bhutan. Sustainable tourism, authentic experiences.
-            </p>
-          </div>
-          <div>
-            <h4 className="font-bold mb-4">Quick Links</h4>
-            <ul className="space-y-2 text-gray-400 text-sm">
-              <li><a href="#home" className="hover:text-amber-500 transition">Home</a></li>
-              <li><a href="#about" className="hover:text-amber-500 transition">About</a></li>
-              <li><a href="#places" className="hover:text-amber-500 transition">Places</a></li>
-              <li><a href="#packages" className="hover:text-amber-500 transition">Packages</a></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold mb-4">Contact</h4>
-            <ul className="space-y-2 text-gray-400 text-sm">
-              <li>Thimphu, Bhutan</li>
-              <li>+975 2 123 456</li>
-              <li>info@bhutantravel.com</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold mb-4">Follow Us</h4>
-            <div className="flex space-x-4">
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-amber-600 transition">
-                <span className="text-sm">f</span>
-              </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-amber-600 transition">
-                <span className="text-sm">t</span>
-              </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-amber-600 transition">
-                <span className="text-sm">in</span>
-              </a>
-            </div>
-          </div>
-        </div>
-        <div className="max-w-6xl mx-auto mt-8 pt-8 border-t border-gray-800 text-center text-gray-400 text-sm">
-          <p>&copy; 2026 Bhutan Travel. All rights reserved. Designed with ❤️ for travelers.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

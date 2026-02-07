@@ -34,7 +34,6 @@ const SignIn = () => {
       alert(res.data.message);
       navigate("/home");
 
-      console.log(res);
     } catch (error) {
       if (
         error.response &&

@@ -4,7 +4,7 @@ import { Instagram, Facebook, Twitter, Youtube } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <footer className="bg-gradient-to-b from-gray-900 to-black text-white pt-20 pb-10">
+    <footer className="bg-gray-800 from-gray-900 to-black text-white pt-20 pb-10">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           <div>
@@ -12,7 +12,7 @@ const Footer = () => {
               <div className="w-10 h-10 bg-gradient-to-br from-amber-600 to-orange-700 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">T</span>
               </div>
-              <span className="text-2xl font-bold">TravelAsia</span>
+              <span className="text-2xl font-bold">TravelEase</span>
             </div>
             <p className="text-gray-400 mb-6">
               Discover the magic of Asia with expertly curated travel experiences that create memories for a lifetime.
@@ -73,7 +73,7 @@ const Footer = () => {
 
         <div className="border-t border-white/10 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-400 text-sm">© 2026 TravelAsia. All rights reserved.</p>
+            <p className="text-gray-400 text-sm">© 2026 TravelEase. All rights reserved.</p>
             <div className="flex gap-6 text-sm">
               <a href="#" className="text-gray-400 hover:text-amber-600 transition">Terms</a>
               <a href="#" className="text-gray-400 hover:text-amber-600 transition">Privacy</a>
