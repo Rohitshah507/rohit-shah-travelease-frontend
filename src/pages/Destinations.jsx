@@ -14,7 +14,7 @@ import {
   Heart,
 } from "lucide-react";
 
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { serverURL } from "../App";
 
@@ -93,6 +93,25 @@ const Destinations = () => {
         .includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
+
+  {
+    filteredDestinations.map((destination) => {
+      console.log("DESTINATION OBJECT:", destination);
+      return (
+        <div key={destination._id}>
+          <h3>{destination.title}</h3>
+          <p>{destination.destination}</p>
+        </div>
+      );
+    });
+  }
+
+  const navigate = useNavigate();
+
+  const handleCardClick = (id) => {
+    console.log("NAVIGATING WITH ID:", id);
+    navigate(`/booking/${id}`);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 relative overflow-hidden">
@@ -450,7 +469,13 @@ const Destinations = () => {
                   </div>
 
                   {/* Book Now Button */}
-                  <button className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-bold rounded-xl opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 hover:shadow-lg active:scale-95">
+                  <button
+                    className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-bold rounded-xl opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 hover:shadow-lg active:scale-95"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCardClick(destination._id);
+                    }}
+                  >
                     Book Now
                   </button>
                 </div>

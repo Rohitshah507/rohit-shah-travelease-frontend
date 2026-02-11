@@ -10,6 +10,7 @@ import { useSelector } from "react-redux";
 import LandingPage from "./pages/landing.jsx";
 import Hero from "./pages/landing.jsx";
 import Destinations from "./pages/Destinations.jsx";
+import BookingPage from "./pages/Booking.jsx";
 
 export const serverURL = "http://localhost:5000";
 const App = () => {
@@ -43,6 +44,7 @@ const App = () => {
         <Route path="forget-password" element={<ForgetPassword />} />
 
         <Route path="/destinations" element={<Destinations />} />
+        <Route path="/booking/:id" element={<BookingPage />} />
       </Routes>
     </div>
   );
