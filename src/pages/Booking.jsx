@@ -27,13 +27,16 @@ import {
 } from "lucide-react";
 import { serverURL } from "../App";
 import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import useUser from "../hooks/useUser.jsx";
 
-const BookingPage = ({ packageId }) => {
+const BookingPage = () => {
+  useUser();
+  const { userData } = useSelector((state) => state.user);
   const { id } = useParams();
 
-  console.log("BOOKING PAGE ID:", id);
-
-  const [tourPackage, setTourPackage] = useState(null);
+  const [tourPackage, setTourPackage] = useState(true);
+  const [bookingDate, setBookingDate] = useState(true);
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -54,6 +57,20 @@ const BookingPage = ({ packageId }) => {
     billingAddress: "",
   });
   const [selectedAddOns, setSelectedAddOns] = useState([]);
+
+  console.log("USER DATA FROM REDUX:", userData);
+
+  useEffect(() => {
+    if (userData?.userDetails) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: userData.userDetails.username || "",
+        email: userData.userDetails.email || "",
+        phone: userData.userDetails.phoneNumber || "",
+        country: userData.userDetails.country || "",
+      }));
+    }
+  }, [userData]);
 
   useEffect(() => {
     const fetchPackage = async () => {
@@ -88,14 +105,6 @@ const BookingPage = ({ packageId }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const toggleAddOn = (addOnId) => {
-    setSelectedAddOns((prev) =>
-      prev.includes(addOnId)
-        ? prev.filter((id) => id !== addOnId)
-        : [...prev, addOnId],
-    );
-  };
-
   const calculateTotal = () => {
     if (!tourPackage) return 0;
     const basePrice =
@@ -117,29 +126,22 @@ const BookingPage = ({ packageId }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const bookingData = {
-      packageId: tourPackage._id || tourPackage.id,
-      ...formData,
-      addOns: selectedAddOns,
-      totalPrice: calculateTotal(),
-      bookingDate: new Date().toISOString(),
-    };
 
     try {
       const response = await axios.post(
-        `${serverURL}/api/bookings`,
-        bookingData,
+        `${serverURL}/api/booking/tourist`,
         {
-          withCredentials: true,
+          tourPackageId: tourPackage._id || tourPackage.id,
+          bookingDate: formData.startDate,
         },
+        { withCredentials: true },
       );
-      if (response.status === 200 || response.status === 201) {
-        alert("Booking confirmed! 🎉");
-      }
+
+      console.log("BOOKING RESPONSE:", response.data);
+      alert("Booking Confirmed 🎉");
     } catch (error) {
-      console.error("Booking error:", error);
-      alert("Booking submitted! Check console for data.");
-      console.log("Booking Data:", bookingData);
+      console.error("BOOKING ERROR:", error.response?.data || error.message);
+      alert(error.response?.data?.message || "Booking Failed");
     }
   };
 
@@ -216,7 +218,7 @@ const BookingPage = ({ packageId }) => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 <div className="absolute top-4 left-4 px-3 py-1 bg-white/95 backdrop-blur-sm rounded-full text-xs font-bold text-orange-500 capitalize">
-                  {tourPackage.category}
+                  {tourPackage.status}
                 </div>
               </div>
 
@@ -227,15 +229,25 @@ const BookingPage = ({ packageId }) => {
                   </h2>
                   <div className="flex items-center gap-2 text-gray-600 text-sm">
                     <MapPin size={16} className="text-orange-500" />
-                    <span>{tourPackage.location}</span>
+                    <span>{tourPackage.destination}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between py-3 border-t border-b border-gray-200">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Clock size={16} className="text-orange-500" />
-                    <span className="font-medium">{tourPackage.duration}</span>
+                <div className="flex gap-7 py-3 border-t border-b border-gray-200">
+                  <div className="flex gap-2">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Clock size={16} className="text-orange-500" />
+                      <span className="font-medium">
+                        {tourPackage.duration}
+                      </span>
+                    </div>
+
+                    <div className="text-gray-600 text-sm">
+                      <Users size={16} className="text-orange-500" />
+                      <span className="font-medium">{tourPackage.group}</span>
+                    </div>
                   </div>
+
                   <div className="flex items-center gap-1 text-yellow-500 text-sm font-bold">
                     <Star size={16} className="fill-yellow-500" />
                     <span>{tourPackage.rating}</span>
@@ -243,6 +255,20 @@ const BookingPage = ({ packageId }) => {
                       ({tourPackage.reviews})
                     </span>
                   </div>
+                </div>
+
+                <div className="items-center gap-1 text-yellow-500 text-sm font-bold ml-auto">
+                  <span>
+                    <span>Started at: </span>
+                    {new Date(tourPackage.startDate).toLocaleDateString(
+                      "en-US",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      },
+                    )}
+                  </span>
                 </div>
 
                 {/* Price Breakdown */}
@@ -294,11 +320,7 @@ const BookingPage = ({ packageId }) => {
                       <p
                         className={`text-xs mt-2 font-semibold ${currentStep >= step ? "text-orange-500" : "text-gray-400"}`}
                       >
-                        {
-                          ["Trip Details", "Your Info", "Payment"][
-                            step - 1
-                          ]
-                        }
+                        {["Trip Details", "Your Info", "Payment"][step - 1]}
                       </p>
                     </div>
                     {step < 4 && (
@@ -715,7 +737,7 @@ const BookingPage = ({ packageId }) => {
                   Previous
                 </button>
 
-                {currentStep < 4 ? (
+                {currentStep < 3 ? (
                   <button
                     type="button"
                     onClick={nextStep}

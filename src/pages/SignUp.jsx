@@ -17,6 +17,7 @@ const SignUp = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [guideDocument, setGuideDocument] = useState(null);
 
@@ -26,6 +27,7 @@ const SignUp = () => {
 
       formData.append("username", username);
       formData.append("email", email);
+      formData.append("phoneNumber", phoneNumber);
       formData.append("password", password);
       formData.append("role", role);
 
@@ -107,6 +109,24 @@ const SignUp = () => {
             style={{ border: `1px solid ${borderColor}` }}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+          ></input>
+        </div>
+
+        {/* Phone Number */}
+        <div className="m-4">
+          <label
+            htmlFor="phoneNumber"
+            className="block text-gray-500 font-bold mb-2"
+          >
+            Phone Number
+          </label>
+          <input
+            type="text"
+            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:border-sky-500 "
+            placeholder="Enter Your Phone Number"
+            style={{ border: `1px solid ${borderColor}` }}
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
           ></input>
         </div>
 

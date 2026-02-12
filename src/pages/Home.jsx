@@ -7,11 +7,13 @@ import AdminDashboard from "./AdminDashboard";
 
 const Home = () => {
   const { userData } = useSelector((state) => state.user);
+  console.log("USER DATA:", userData);
+
   return (
     <div className="">
-      {userData.user?.role.includes("TOURIST") && <TouristDashboard />}
-      {userData.user?.role.includes("GUIDE") && <GuideDashboard />}
-      {userData.user?.role.includes("ADMIN") && <AdminDashboard />}
+      {userData.userDetails?.role.includes("TOURIST") && <TouristDashboard />}
+      {userData.userDetails?.role.includes("GUIDE") && <GuideDashboard />}
+      {userData.userDetails?.role.includes("ADMIN") && <AdminDashboard />}
     </div>
   );
 };
