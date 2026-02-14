@@ -35,16 +35,15 @@ const BookingPage = () => {
   const { userData } = useSelector((state) => state.user);
   const { id } = useParams();
 
-  const [tourPackage, setTourPackage] = useState(true);
-  const [bookingDate, setBookingDate] = useState(true);
+  const [tourPackage, setTourPackage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
   const [formData, setFormData] = useState({
     startDate: "",
     endDate: "",
-    adults: 2,
-    children: 0,
+    numberOfAdults: 1,
+    numberOfChildren: 0,
     fullName: "",
     email: "",
     phone: "",
@@ -76,13 +75,22 @@ const BookingPage = () => {
     const fetchPackage = async () => {
       try {
         setLoading(true);
+
+        const token = localStorage.getItem("token");
+
         const res = await axios.get(`${serverURL}/api/user/${id}`, {
-          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
+
         console.log("PACKAGE FROM API:", res.data.packageId);
         setTourPackage(res.data.packageId);
       } catch (err) {
-        console.error("FETCH ERROR:", err.response?.data || err.message);
+        console.error(
+          "FETCH ERROR:",
+          err.response?.data?.message || err.message,
+        );
       } finally {
         setLoading(false);
       }
@@ -128,13 +136,22 @@ const BookingPage = () => {
     e.preventDefault();
 
     try {
+      const token = localStorage.getItem("token");
+
       const response = await axios.post(
         `${serverURL}/api/booking/tourist`,
         {
-          tourPackageId: tourPackage._id || tourPackage.id,
-          bookingDate: formData.startDate,
+          tourPackageId: tourPackage._id,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          numberOfAdults: formData.numberOfAdults,
+          numberOfChildren: formData.numberOfChildren,
         },
-        { withCredentials: true },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
 
       console.log("BOOKING RESPONSE:", response.data);
@@ -354,7 +371,7 @@ const BookingPage = () => {
 
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                      <label className="block cursor-pointer text-sm font-bold text-gray-700 mb-2">
                         Start Date *
                       </label>
                       <input
@@ -364,12 +381,12 @@ const BookingPage = () => {
                         onChange={handleInputChange}
                         required
                         min={new Date().toISOString().split("T")[0]}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all duration-300 outline-none font-medium"
+                        className="w-full px-4 py-3 border-2 cursor-pointer border-gray-200 rounded-xl focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all duration-300 outline-none font-medium"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                      <label className="block cursor-pointer text-sm font-bold text-gray-700 mb-2">
                         End Date *
                       </label>
                       <input
@@ -382,38 +399,41 @@ const BookingPage = () => {
                           formData.startDate ||
                           new Date().toISOString().split("T")[0]
                         }
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all duration-300 outline-none font-medium"
+                        className="w-full px-4 py-3 border-2 cursor-pointer border-gray-200 rounded-xl focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all duration-300 outline-none font-medium"
                       />
                     </div>
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                      <label className="block cursor-pointer text-sm font-bold text-gray-700 mb-2">
                         Number of Adults *
                       </label>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 cursor-pointer">
                         <button
                           type="button"
                           onClick={() =>
                             setFormData((prev) => ({
                               ...prev,
-                              adults: Math.max(1, prev.adults - 1),
+                              numberOfAdults: Math.max(
+                                1,
+                                prev.numberOfAdults - 1,
+                              ),
                             }))
                           }
                           className="w-12 h-12 bg-gray-100 hover:bg-orange-500 hover:text-white rounded-xl font-bold transition-all duration-300 active:scale-95"
                         >
                           -
                         </button>
-                        <div className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl text-center font-bold text-xl">
-                          {formData.adults}
+                        <div className="flex-1 px-4 py-3 border-2 cursor-pointer border-gray-200 rounded-xl text-center font-bold text-xl">
+                          {formData.numberOfAdults}
                         </div>
                         <button
                           type="button"
                           onClick={() =>
                             setFormData((prev) => ({
                               ...prev,
-                              adults: prev.adults + 1,
+                              numberOfAdults: prev.numberOfAdults + 1,
                             }))
                           }
                           className="w-12 h-12 bg-gray-100 hover:bg-orange-500 hover:text-white rounded-xl font-bold transition-all duration-300 active:scale-95"
@@ -423,7 +443,7 @@ const BookingPage = () => {
                       </div>
                     </div>
 
-                    <div>
+                    <div className="cursor-pointer">
                       <label className="block text-sm font-bold text-gray-700 mb-2">
                         Number of Children
                       </label>
@@ -433,22 +453,25 @@ const BookingPage = () => {
                           onClick={() =>
                             setFormData((prev) => ({
                               ...prev,
-                              children: Math.max(0, prev.children - 1),
+                              numberOfChildren: Math.max(
+                                0,
+                                prev.numberOfChildren - 1,
+                              ),
                             }))
                           }
                           className="w-12 h-12 bg-gray-100 hover:bg-orange-500 hover:text-white rounded-xl font-bold transition-all duration-300 active:scale-95"
                         >
                           -
                         </button>
-                        <div className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl text-center font-bold text-xl">
-                          {formData.children}
+                        <div className="flex-1 cursor-pointer px-4 py-3 border-2 border-gray-200 rounded-xl text-center font-bold text-xl">
+                          {formData.numberOfChildren}
                         </div>
                         <button
                           type="button"
                           onClick={() =>
                             setFormData((prev) => ({
                               ...prev,
-                              children: prev.children + 1,
+                              numberOfChildren: prev.numberOfChildren + 1,
                             }))
                           }
                           className="w-12 h-12 bg-gray-100 hover:bg-orange-500 hover:text-white rounded-xl font-bold transition-all duration-300 active:scale-95"

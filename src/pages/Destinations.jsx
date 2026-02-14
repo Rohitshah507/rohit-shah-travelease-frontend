@@ -32,12 +32,17 @@ const Destinations = () => {
     const fetchTourPackages = async () => {
       try {
         setLoading(true);
+
+        const token = localStorage.getItem("token");
+
         const response = await axios.get(`${serverURL}/api/user/package`, {
-          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
+
         console.log("PACKAGES FROM API: ", response.data);
 
-        // FIX: extract the array
         setDestinations(response.data.getPackages || []);
       } catch (error) {
         console.error("Error fetching tour packages:", error);
@@ -145,6 +150,17 @@ const Destinations = () => {
             <NavLink to="/tour" className=" hover:text-amber-700 transition ">
               TourList
             </NavLink>
+            <div>
+              <button
+                className="bg-gradient-to-r from-white to-amber-600 font-bold text-black px-6 py-2 rounded-full hover:shadow-lg transition cursor-pointer"
+                onClick={() => {
+                  localStorage.removeItem("token");
+                  window.location.reload();
+                }}
+              >
+                Logout
+              </button>
+            </div>
           </div>
 
           {/* Mobile Menu Button */}

@@ -28,12 +28,20 @@ const SignIn = () => {
           email,
           password,
         },
-        { withCredentials: true }
+        { withCredentials: true },
       );
-      dispatch(setUserData(res.data));
+      localStorage.setItem("token", res.data.user.token);
+
+      dispatch(
+        setUserData({
+          success: res.data.success,
+          message: res.data.message,
+          userDetails: res.data.user,
+        }),
+      );
+
       alert(res.data.message);
       navigate("/home");
-
     } catch (error) {
       if (
         error.response &&

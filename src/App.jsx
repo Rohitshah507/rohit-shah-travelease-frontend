@@ -1,50 +1,70 @@
 import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { useSelector } from "react-redux";
+
 import SignUp from "./pages/SignUp.jsx";
 import LogIn from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
 import ForgetPassword from "./pages/ForgetPassword.jsx";
 import OtpVerification from "./pages/OtpVerification.jsx";
-import useUser from "./hooks/useUser.jsx";
-import { useSelector } from "react-redux";
-import LandingPage from "./pages/landing.jsx";
 import Hero from "./pages/landing.jsx";
 import Destinations from "./pages/Destinations.jsx";
 import BookingPage from "./pages/Booking.jsx";
 
+import useUser from "./hooks/useUser.jsx";
+
 export const serverURL = "http://localhost:5000";
+
 const App = () => {
   useUser();
+
   const { userData } = useSelector((state) => state.user);
+
+  const token = localStorage.getItem("token");
+
   return (
     <div>
       <Routes>
+
+        {/* Signup Route */}
         <Route
           path="/signup"
-          element={!userData ? <SignUp /> : <Navigate to={"/home"} />}
+          element={!token ? <SignUp /> : <Navigate to="/home" />}
         />
 
+        {/* Login Route */}
         <Route
           path="/login"
-          element={!userData ? <LogIn /> : <Navigate to={"/home"} />}
+          element={!token ? <LogIn /> : <Navigate to="/home" />}
         />
 
-        <Route
-          path="/home"
-          element={userData ? <Home /> : <Navigate to={"/login"} />}
-        />
-
+        {/* Landing Page */}
         <Route path="/" element={<Hero />} />
 
+        {/* Protected Home Route */}
         <Route
-          path="/otp-verification"
-          element={!userData ? <OtpVerification /> : <Navigate to={"/home"} />}
+          path="/home"
+          element={token ? <Home /> : <Navigate to="/login" />}
         />
 
-        <Route path="forget-password" element={<ForgetPassword />} />
+        {/* OTP Verification */}
+        <Route
+          path="/otp-verification"
+          element={!token ? <OtpVerification /> : <Navigate to="/home" />}
+        />
 
-        <Route path="/destinations" element={<Destinations />} />
-        <Route path="/booking/:id" element={<BookingPage />} />
+        <Route path="/forget-password" element={<ForgetPassword />} />
+
+        <Route
+          path="/destinations"
+          element={token ? <Destinations /> : <Navigate to="/login" />}
+        />
+
+        <Route
+          path="/booking/:id"
+          element={token ? <BookingPage /> : <Navigate to="/login" />}
+        />
+
       </Routes>
     </div>
   );

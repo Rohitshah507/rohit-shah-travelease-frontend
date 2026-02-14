@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Menu, X, ChevronRight, Users, Award, Globe } from "lucide-react";
 import Footer from "../Components/Footer";
 
+import { NavLink, useNavigate } from "react-router-dom";
+
 const TouristDashboard = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -15,111 +17,94 @@ const TouristDashboard = () => {
   }, []);
 
   return (
-    <div className="min-h-screen font-sans" style={{ backgroundColor: '#fdf6e3', fontFamily: "'Georgia', serif" }}>
-
+    <div
+      className="min-h-screen font-sans"
+      style={{ backgroundColor: "#fdf6e3", fontFamily: "'Georgia'" }}
+    >
       {/* ── NAVIGATION ───────────────────────────────────────────── */}
       <nav
-        className={`fixed w-full z-50 transition-all duration-500 ${
-          scrolled ? "shadow-2xl border-b border-amber-200" : "bg-transparent"
-        }`}
-        style={{ backgroundColor: scrolled ? "#fdf6e3" : "transparent" }}
+        className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-lg text-black" : "bg-transparent text-white"}`}
       >
-        <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
-          {/* Logo */}
-          <div
-            className="text-3xl font-black tracking-widest"
-            style={{
-              color: "#b45309",
-              fontFamily: "'Georgia', serif",
-              letterSpacing: "0.18em",
-              textShadow: "0 2px 12px rgba(180,83,9,0.18)",
-            }}
-          >
-            TravelEase
-          </div>
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="text-4xl font-bold text-amber-700 ">TravelEase</div>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-10">
-            {[
-              "Home",
-              "Destinations",
-              "Places to Visit",
-              "Packages",
-              "TourList",
-            ].map((item, i) => {
-              const hrefs = [
-                "/home",
-                "/destinations",
-                "#places",
-                "#packages",
-                "#contact",
-              ];
-              return (
-                <a
-                  key={i}
-                  href={hrefs[i]}
-                  className="relative text-sm font-bold tracking-widest uppercase transition-colors duration-300 group"
-                  style={{
-                    color: scrolled ? "#78350f" : "#fef3c7",
-                    letterSpacing: "0.12em",
-                  }}
-                >
-                  {item}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-amber-500 group-hover:w-full transition-all duration-300"></span>
-                </a>
-              );
-            })}
+          <div className="hidden md:flex items-center font-bold space-x-8">
+            <NavLink to="/home" className="over:text-amber-700 transition">
+              Home
+            </NavLink>
+            <NavLink
+              to="/destinations"
+              className=" hover:text-amber-700 transition "
+            >
+              Destinations
+            </NavLink>
+
+            <NavLink to="/places" className=" hover:text-amber-700 transition ">
+              Places to Visit
+            </NavLink>
+            <NavLink
+              to="/packages"
+              className=" hover:text-amber-700 transition "
+            >
+              Packages
+            </NavLink>
+            <NavLink to="/tour" className=" hover:text-amber-700 transition ">
+              TourList
+            </NavLink>
+          </div>
+          <div>
+            <button
+              className="bg-gradient-to-r from-white to-amber-600 font-bold text-black px-6 py-2 rounded-full hover:shadow-lg transition cursor-pointer"
+              onClick={() => {
+                localStorage.removeItem("token");
+                window.location.reload();
+              }}
+            >
+              Logout
+            </button>
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden transition"
-            style={{ color: scrolled ? "#78350f" : "#fef3c7" }}
+            className="md:hidden text-gray-700"
           >
-            {isMenuOpen ? <X size={26} /> : <Menu size={26} />}
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div
-            className="md:hidden border-t border-amber-200"
-            style={{ backgroundColor: "#fdf6e3" }}
-          >
-            <div className="px-8 py-6 space-y-5">
+          <div className="md:hidden bg-white border-t">
+            <div className="px-6 py-4 space-y-4">
               <a
-                href="/home"
-                className="block font-bold tracking-widest uppercase text-sm"
-                style={{ color: "#78350f" }}
+                href="#home"
+                className="block text-gray-700 hover:text-amber-700"
               >
                 Home
               </a>
               <a
                 href="#about"
-                className="block font-bold tracking-widest uppercase text-sm"
-                style={{ color: "#78350f" }}
+                className="block text-gray-700 hover:text-amber-700"
               >
                 About Nepal
               </a>
               <a
                 href="#places"
-                className="block font-bold tracking-widest uppercase text-sm"
-                style={{ color: "#78350f" }}
+                className="block text-gray-700 hover:text-amber-700"
               >
                 Places to Visit
               </a>
               <a
                 href="#packages"
-                className="block font-bold tracking-widest uppercase text-sm"
-                style={{ color: "#78350f" }}
+                className="block text-gray-700 hover:text-amber-700"
               >
                 Packages
               </a>
               <a
                 href="#contact"
-                className="block font-bold tracking-widest uppercase text-sm"
-                style={{ color: "#78350f" }}
+                className="block text-gray-700 hover:text-amber-700"
               >
                 Contact
               </a>
@@ -133,9 +118,12 @@ const TouristDashboard = () => {
         id="home"
         className="relative h-screen flex items-center justify-center overflow-hidden"
       >
-        <div className="absolute inset-0 bg-gray-300" style={{ fontFamily: "'Georgia', serif" }}></div>
+        <div
+          className="absolute inset-0 bg-gray-300"
+          style={{ fontFamily: "'Georgia', serif" }}
+        ></div>
         <img
-          src="https://images.unsplash.com/photo-1545652985-5edd365b12eb?w=1920&q=80"
+          src="https://images.pexels.com/photos/15896015/pexels-photo-15896015.jpeg?cs=srgb&dl=pexels-gokul-gurang-224181659-15896015.jpg&fm=jpg"
           alt="Bhutan Temple"
           className="absolute inset-0 w-full h-full object-cover"
         />
