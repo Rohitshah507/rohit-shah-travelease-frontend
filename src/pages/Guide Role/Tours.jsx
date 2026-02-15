@@ -10,7 +10,7 @@ import {
   Image,
 } from "lucide-react";
 import axios from "axios";
-import { serverURL } from "../../App";
+import { serverURL } from "../../App.jsx";
 
 const Skeleton = ({ className = "" }) => (
   <div className={`animate-pulse bg-gray-200 rounded-xl ${className}`} />
@@ -22,8 +22,8 @@ const emptyForm = {
   duration: "",
   destination: "",
   startDate: "",
-  image: "",
-  status: "active",
+  image: null,
+  status: ["Active", "INActive"],
 };
 
 export default function Tours({ guideId }) {
@@ -40,50 +40,74 @@ export default function Tours({ guideId }) {
 
   // ── Fetch tours ────────────────────────────────────────────
   useEffect(() => {
-    const fetchTours = async () => {
+    const fetchTourPackages = async () => {
       try {
         setLoading(true);
+
         const token = localStorage.getItem("token");
-        const res = await axios.get(`${serverURL}/api/guide/${guideId}/tours`, {
-          headers: { Authorization: `Bearer ${token}` },
+
+        const response = await axios.get(`${serverURL}/api/user/package`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
-        setTours(res.data.tours || []);
-      } catch (err) {
-        console.error("Tours fetch error:", err);
+
+        console.log("PACKAGES FROM API: ", response.data);
+
+        setTours(response.data.getPackages || []);
+      } catch (error) {
+        console.error("Error fetching tour packages:", error);
+        setTours([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchTours();
-  }, [guideId]);
+
+    fetchTourPackages();
+  }, []);
 
   // ── Create / Update ────────────────────────────────────────
   const handleSave = async () => {
-    if (!tourForm.title || !tourForm.price || !tourForm.destination) return;
+    if (
+      !tourForm.title ||
+      !tourForm.price ||
+      !tourForm.destination ||
+      !tourForm.duration ||
+      !tourForm.startDate ||
+      !tourForm.image
+    ) {
+      alert("All fields including image are required");
+      return;
+    }
+
     try {
       setSaving(true);
       const token = localStorage.getItem("token");
-      const headers = { Authorization: `Bearer ${token}` };
-      const payload = { ...tourForm, price: Number(tourForm.price), guideId };
 
-      if (editingTour) {
-        const res = await axios.put(
-          `${serverURL}/api/guide/tours/${editingTour._id}`,
-          payload,
-          { headers },
-        );
-        setTours((prev) =>
-          prev.map((t) => (t._id === editingTour._id ? res.data.tour : t)),
-        );
-      } else {
-        const res = await axios.post(`${serverURL}/api/guide/tours`, payload, {
-          headers,
-        });
-        setTours((prev) => [...prev, res.data.tour]);
-      }
+      const formData = new FormData();
+      formData.append("title", tourForm.title);
+      formData.append("price", Number(tourForm.price));
+      formData.append("duration", tourForm.duration);
+      formData.append("destination", tourForm.destination);
+      formData.append("startDate", tourForm.startDate);
+      formData.append("status", tourForm.status);
+      formData.append("images", tourForm.image);
+
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      };
+
+      const res = await axios.post(`${serverURL}/api/user`, formData, {
+        headers,
+      });
+
+      setTours((prev) => [...prev, res.data.data]);
+
       setShowModal(false);
+      setTourForm(emptyForm);
     } catch (err) {
-      console.error("Save tour error:", err);
+      console.error("Upload error:", err);
     } finally {
       setSaving(false);
     }
@@ -94,9 +118,10 @@ export default function Tours({ guideId }) {
     try {
       setDeleting(true);
       const token = localStorage.getItem("token");
-      await axios.delete(`${serverURL}/api/guide/tours/${deleteConfirm}`, {
+      await axios.delete(`${serverURL}/api/user/${deleteConfirm}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       setTours((prev) => prev.filter((t) => t._id !== deleteConfirm));
       setDeleteConfirm(null);
     } catch (err) {
@@ -160,9 +185,9 @@ export default function Tours({ guideId }) {
             >
               {/* Image */}
               <div className="relative h-52 overflow-hidden flex-shrink-0">
-                {t.image ? (
+                {t.imageUrls && t.imageUrls.length > 0 ? (
                   <img
-                    src={t.image}
+                    src={t.imageUrls[0]}
                     alt={t.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
@@ -173,9 +198,9 @@ export default function Tours({ guideId }) {
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div
-                  className={`absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold shadow-lg ${t.status === "active" ? "bg-green-500 text-white" : "bg-gray-600 text-white"}`}
+                  className={`absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold shadow-lg ${t.status === "ACTIVE" ? "bg-green-500 text-white" : "bg-gray-600 text-white"}`}
                 >
-                  {t.status === "active" ? "● Active" : "● Inactive"}
+                  {t.status === "Active" ? "● Active" : "● Inactive"}
                 </div>
                 <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold text-gray-800 shadow">
                   {t.booked ?? 0} bookings
@@ -187,6 +212,7 @@ export default function Tours({ guideId }) {
                   <span className="text-white/80 text-xs ml-1">/ person</span>
                 </div>
               </div>
+
 
               {/* Content */}
               <div className="p-5 flex flex-col flex-1">
@@ -362,33 +388,25 @@ export default function Tours({ guideId }) {
                 </div>
               </div>
 
-              {/* Image URL */}
+              {/* Image Upload */}
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">
-                  Image URL
+                  Upload Image *
                 </label>
-                <div className="relative">
-                  <Image
-                    size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  />
-                  <input
-                    type="text"
-                    value={tourForm.image}
-                    onChange={(e) => setField("image", e.target.value)}
-                    placeholder="https://..."
-                    className="w-full border-2 border-gray-100 focus:border-yellow-400 rounded-xl pl-9 pr-4 py-3 text-sm focus:outline-none transition bg-gray-50 focus:bg-white"
-                  />
-                </div>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setField("image", e.target.files[0])}
+                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm bg-gray-50"
+                />
+
                 {tourForm.image && (
-                  <div className="mt-2 rounded-xl overflow-hidden h-28 border-2 border-gray-100">
+                  <div className="mt-3 rounded-xl overflow-hidden h-28 border-2 border-gray-100">
                     <img
-                      src={tourForm.image}
+                      src={URL.createObjectURL(tourForm.image)}
                       alt="preview"
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = "none";
-                      }}
                     />
                   </div>
                 )}
@@ -400,7 +418,7 @@ export default function Tours({ guideId }) {
                   Status
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  {["active", "inactive"].map((s) => (
+                  {["Active", "Inactive"].map((s) => (
                     <button
                       key={s}
                       type="button"
@@ -408,7 +426,7 @@ export default function Tours({ guideId }) {
                       className={`py-3 rounded-xl text-sm font-bold capitalize transition border-2
                         ${tourForm.status === s ? "border-yellow-400 bg-yellow-50 text-yellow-700" : "border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200"}`}
                     >
-                      {s === "active" ? "✅ Active" : "⏸ Inactive"}
+                      {s === "Active" ? "✅ Active" : "⏸ Inactive"}
                     </button>
                   ))}
                 </div>
