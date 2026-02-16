@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
+
 import {
   LayoutDashboard,
   CalendarDays,
@@ -26,10 +28,11 @@ import { Reviews } from "./Reviews";
 import { Earnings } from "./Earnings";
 import { Profile } from "./Profile";
 
-// 🔁 Replace with real ID from auth context / localStorage
-const GUIDE_ID = localStorage.getItem("guideId") || "guide_001";
-
 export default function GuideDashboard() {
+  const { userData } = useSelector((state) => state.user);
+
+  const GUIDE_ID = userData?.userDetails?._id;
+
   const [activePage, setActivePage] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -64,7 +67,6 @@ export default function GuideDashboard() {
   // ── Start tracking ────────────────────────────────────────
   const handleStartTracking = async () => {
     try {
-      const token = localStorage.getItem("token");
       navigator.geolocation?.getCurrentPosition(
         async (pos) => {
           const { latitude: lat, longitude: lng } = pos.coords;
@@ -155,7 +157,7 @@ export default function GuideDashboard() {
   }, []);
 
   const initials =
-    profile?.name
+    userData?.userDetails?.username
       ?.split(" ")
       .map((n) => n[0])
       .join("") ?? "G";
@@ -179,7 +181,7 @@ export default function GuideDashboard() {
   // ── Page title ────────────────────────────────────────────
   const pageTitle =
     activePage === "dashboard"
-      ? `Welcome back, ${profile?.name?.split(" ")[0] ?? "Guide"} 👋`
+      ? `Welcome back, ${userData?.userDetails?.username?.split(" ")[0] ?? "Guide"} 👋`
       : navItems.find((n) => n.id === activePage)?.label;
 
   return (
@@ -221,10 +223,10 @@ export default function GuideDashboard() {
               </div>
               <div>
                 <p className="text-white text-sm font-semibold">
-                  {profile?.name ?? "Loading..."}
+                  {userData?.userDetails?.username ?? "Loading..."}
                 </p>
                 <p className="text-yellow-500 text-xs">
-                  {profile?.role ?? "Tour Guide"}
+                  {userData?.userDetails?.role ?? "Tour Guide"}
                 </p>
               </div>
             </div>

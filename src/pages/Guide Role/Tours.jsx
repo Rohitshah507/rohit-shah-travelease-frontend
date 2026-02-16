@@ -157,7 +157,7 @@ export default function Tours({ guideId }) {
         <p className="text-gray-500 text-sm">
           {tours.length} total ·{" "}
           <span className="text-green-600 font-medium">
-            {tours.filter((t) => t.status === "active").length} active
+            {tours.filter((t) => t.status === "ACTIVE").length} active
           </span>
         </p>
         <button
@@ -241,7 +241,10 @@ export default function Tours({ guideId }) {
                       <Calendar size={14} className="text-purple-500" />
                     </div>
                     <span className="text-sm text-gray-600 font-medium">
-                      Starts {t.startDate}
+                      Starts {new Date(t.startDate).toLocaleDateString(
+                        "en-US",
+                        { year: "numeric", month: "long", day: "numeric" },
+                      )} 
                     </span>
                   </div>
                 </div>
