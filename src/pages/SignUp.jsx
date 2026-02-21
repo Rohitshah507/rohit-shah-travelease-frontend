@@ -43,7 +43,6 @@ const SignUp = () => {
         state: { email },
       });
 
-      console.log(res);
     } catch (error) {
       if (
         error.response &&

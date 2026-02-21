@@ -17,6 +17,9 @@ import {
   MessageSquare,
   Shield,
   Globe,
+  CheckCircle,
+  Sparkles,
+  XCircle,
 } from "lucide-react";
 import { serverURL } from "../App";
 import { useParams } from "react-router-dom";
@@ -36,6 +39,9 @@ const BookingPage = () => {
   const [bookingId, setBookingId]         = useState(null);
   const [submitting, setSubmitting]       = useState(false);
   const [esewaData, setEsewaData]         = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const [cancelling, setCancelling]       = useState(false);
 
   const [formData, setFormData] = useState({
     startDate: "",
@@ -64,27 +70,50 @@ const BookingPage = () => {
     }
   }, [userData]);
 
-  // Fetch package details
+  // Fetch package details + check if user already booked it
   useEffect(() => {
-    const fetchPackage = async () => {
+    const fetchPackageAndBooking = async () => {
       try {
         setLoading(true);
         const token = localStorage.getItem("token");
+        
+        // Fetch package details
         const res = await axios.get(`${serverURL}/api/user/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log("PACKAGE FROM API:", res.data.packageId);
         setTourPackage(res.data.packageId);
+
+        // ✅ Check if user already booked this package
+        try {
+          const bookingsRes = await axios.get(`${serverURL}/api/booking/tourist`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          console.log("USER BOOKINGS:", bookingsRes.data);
+
+          // Find existing booking for this package
+          const existingBooking = bookingsRes.data.data?.find(
+            (booking) => booking.tourPackageId?._id === id || booking.tourPackageId === id
+          );
+
+          if (existingBooking) {
+            console.log("EXISTING BOOKING FOUND:", existingBooking);
+            setBookingId(existingBooking._id);
+          }
+        } catch (bookingErr) {
+          console.log("No existing bookings found:", bookingErr.message);
+        }
+
       } catch (err) {
         console.error("FETCH ERROR:", err.response?.data?.message || err.message);
       } finally {
         setLoading(false);
       }
     };
-    if (id) fetchPackage();
+    if (id) fetchPackageAndBooking();
   }, [id]);
 
-  // Auto-submit hidden eSewa form when esewaData is set
+  // Auto-submit eSewa form when esewaData is set (ONLY for payment, not booking)
   useEffect(() => {
     if (esewaData && esewaFormRef.current) {
       console.log("AUTO-SUBMITTING ESEWA FORM WITH DATA:", esewaData);
@@ -97,6 +126,42 @@ const BookingPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // ─────────────────────────────────────────────────────────────
+  // ✅ CANCEL BOOKING
+  // ─────────────────────────────────────────────────────────────
+  const handleCancelBooking = async () => {
+    if (!bookingId) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this booking? This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+    try {
+      setCancelling(true);
+      const token = localStorage.getItem("token");
+
+      await axios.put(
+        `${serverURL}/api/booking/cancel/${bookingId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log("BOOKING CANCELLED");
+      alert("Booking cancelled successfully!");
+      
+      // Clear booking state
+      setBookingId(null);
+      setShowSuccessModal(false);
+
+    } catch (error) {
+      console.error("CANCEL ERROR:", error.response?.data || error.message);
+      alert(error.response?.data?.message || error.message || "Cancellation failed. Please try again.");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const nextStep = () => {
     if (currentStep < 3) setCurrentStep(currentStep + 1);
   };
@@ -106,21 +171,17 @@ const BookingPage = () => {
   };
 
   // ─────────────────────────────────────────────────────────────
-  // ✅ STEP 1: Create booking
-  // ✅ STEP 2: Initiate eSewa payment
-  // ✅ STEP 3: Auto-redirect to eSewa
+  // ✅ STEP 1: BOOK ONLY — Create booking, show success modal
   // ─────────────────────────────────────────────────────────────
-  const handleSubmit = async (e) => {
+  const handleBooking = async (e) => {
     e.preventDefault();
 
     if (submitting) return;
 
     try {
       setSubmitting(true);
-
       const token = localStorage.getItem("token");
 
-      // ✅ STEP 1: Create booking in database
       console.log("Creating booking with data:", {
         tourPackageId: tourPackage._id,
         startDate: formData.startDate,
@@ -151,11 +212,34 @@ const BookingPage = () => {
         throw new Error("Booking ID not returned from server");
       }
 
-      // ✅ STEP 2: Initiate eSewa payment
-      console.log("Initiating eSewa payment for booking:", createdBookingId);
+      // ✅ Show success modal with booking details
+      setShowSuccessModal(true);
+
+    } catch (error) {
+      console.error("BOOKING ERROR:", error.response?.data || error.message);
+      alert(error.response?.data?.message || error.message || "Booking failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // ✅ STEP 2: PAY — Initiate eSewa payment for existing booking
+  // ─────────────────────────────────────────────────────────────
+  const handlePayment = async () => {
+    if (!bookingId) {
+      alert("No booking found. Please create a booking first.");
+      return;
+    }
+
+    try {
+      setProcessingPayment(true);
+      const token = localStorage.getItem("token");
+
+      console.log("Initiating eSewa payment for booking:", bookingId);
       const paymentResponse = await axios.post(
         `${serverURL}/api/payment/esewa/initiate`,
-        { bookingId: createdBookingId },
+        { bookingId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -166,13 +250,13 @@ const BookingPage = () => {
         throw new Error("eSewa payment data not returned from server");
       }
 
-      // ✅ STEP 3: Set eSewa data → triggers auto-submit via useEffect
+      // ✅ Set eSewa data → triggers auto-redirect via useEffect
       setEsewaData(esewaPaymentData);
 
     } catch (error) {
-      console.error("BOOKING/PAYMENT ERROR:", error.response?.data || error.message);
-      alert(error.response?.data?.message || error.message || "Booking failed. Please try again.");
-      setSubmitting(false);
+      console.error("PAYMENT ERROR:", error.response?.data || error.message);
+      alert(error.response?.data?.message || error.message || "Payment initiation failed. Please try again.");
+      setProcessingPayment(false);
     }
   };
 
@@ -219,6 +303,103 @@ const BookingPage = () => {
         </form>
       )}
 
+      {/* ─────────────────────────────────────────────────────── */}
+      {/* ✅ SUCCESS MODAL — Shows after booking is created */}
+      {/* ─────────────────────────────────────────────────────── */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border-2 border-green-200 animate-[slideUp_0.3s_ease-out]">
+            
+            {/* Success Header — COMPACT */}
+            <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 px-6 py-5 text-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMiIgZmlsbD0id2hpdGUiIGZpbGwtb3BhY2l0eT0iMC4xIi8+PC9zdmc+')] opacity-20"></div>
+              
+              <div className="relative">
+                <div className="w-16 h-16 mx-auto mb-3 bg-white rounded-full flex items-center justify-center shadow-lg animate-[bounce_1s_ease-in-out]">
+                  <CheckCircle size={36} className="text-green-500" />
+                </div>
+                <h3 className="text-xl font-black text-white mb-1 flex items-center justify-center gap-2">
+                  <Sparkles size={20} className="animate-pulse" />
+                  Booking Confirmed!
+                  <Sparkles size={20} className="animate-pulse" />
+                </h3>
+                <p className="text-green-100 text-xs">Your adventure is reserved</p>
+              </div>
+            </div>
+
+            {/* Booking Details — COMPACT */}
+            <div className="p-5 space-y-3">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-3 border-2 border-green-200">
+                <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider mb-1">Booking ID</p>
+                <p className="font-mono font-bold text-green-900 text-xs">{bookingId}</p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                  <span className="text-xs text-gray-600 font-medium">Package</span>
+                  <span className="text-xs font-bold text-gray-900">{tourPackage.title}</span>
+                </div>
+                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                  <span className="text-xs text-gray-600 font-medium">Location</span>
+                  <span className="text-xs font-bold text-gray-900">{tourPackage.destination}</span>
+                </div>
+                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                  <span className="text-xs text-gray-600 font-medium">Dates</span>
+                  <span className="text-xs font-bold text-gray-900">
+                    {new Date(formData.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} - {new Date(formData.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                  <span className="text-xs text-gray-600 font-medium">Guests</span>
+                  <span className="text-xs font-bold text-gray-900">
+                    {formData.numberOfAdults} Adults, {formData.numberOfChildren} Children
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-2 bg-green-50 rounded-lg px-3">
+                  <span className="text-sm text-green-700 font-bold">Total Amount</span>
+                  <span className="text-xl font-black text-green-600">Rs. {tourPackage.price}</span>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 flex gap-2">
+                <Shield className="text-blue-500 flex-shrink-0 mt-0.5" size={16} />
+                <div className="text-xs text-blue-800">
+                  <p className="font-semibold mb-0.5">Payment Required</p>
+                  <p>Complete payment to confirm booking. Click "Pay Now" for eSewa.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons — COMPACT */}
+            <div className="px-5 pb-5 flex gap-2">
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="flex-1 py-2.5 rounded-lg border-2 border-gray-300 text-gray-700 font-bold text-xs hover:bg-gray-50 transition-all duration-300"
+              >
+                Pay Later
+              </button>
+              <button
+                onClick={handlePayment}
+                disabled={processingPayment}
+                className="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold text-xs hover:from-green-600 hover:to-emerald-600 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg shadow-green-300/40 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+              >
+                {processingPayment ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard size={14} />
+                    Pay Now
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white shadow-md sticky top-0 z-50 border-b-2 border-orange-100">
         <div className="max-w-7xl mx-auto px-5 py-4">
@@ -253,11 +434,7 @@ const BookingPage = () => {
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden sticky top-24 border-2 border-orange-100">
               <div className="relative h-64 overflow-hidden">
-                <img
-                  src={tourPackage.imageUrls?.[0]}
-                  alt={tourPackage.title}
-                  className="w-full h-full object-cover"
-                />
+                <img src={tourPackage.imageUrls?.[0]} alt={tourPackage.title} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 <div className="absolute top-4 left-4 px-3 py-1 bg-white/95 backdrop-blur-sm rounded-full text-xs font-bold text-orange-500 capitalize">
                   {tourPackage.status}
@@ -338,7 +515,7 @@ const BookingPage = () => {
                         {currentStep > step ? <Check size={24} /> : step}
                       </div>
                       <p className={`text-xs mt-2 font-semibold ${currentStep >= step ? "text-orange-500" : "text-gray-400"}`}>
-                        {["Trip Details", "Your Info", "Payment"][step - 1]}
+                        {["Trip Details", "Your Info", "Review"][step - 1]}
                       </p>
                     </div>
                     {step < 3 && (
@@ -352,7 +529,7 @@ const BookingPage = () => {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
 
               {/* STEP 1: Trip Details */}
               {currentStep === 1 && (
@@ -541,70 +718,57 @@ const BookingPage = () => {
                 </div>
               )}
 
-              {/* STEP 3: Payment (eSewa) */}
+              {/* STEP 3: Review & Confirm */}
               {currentStep === 3 && (
                 <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6 border-2 border-orange-100">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-xl flex items-center justify-center">
-                      <CreditCard className="text-white" size={24} />
+                      <CheckCircle className="text-white" size={24} />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold text-gray-900">Payment via eSewa</h3>
-                      <p className="text-sm text-gray-600">Secure payment with eSewa</p>
+                      <h3 className="text-2xl font-bold text-gray-900">Review & Confirm</h3>
+                      <p className="text-sm text-gray-600">Check your booking details</p>
                     </div>
                   </div>
 
+                  {/* Summary */}
                   <div className="space-y-4">
-                    {/* eSewa info box */}
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6 space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-md">
-                          <img
-                            src="https://esewa.com.np/common/images/esewa_logo.png"
-                            alt="eSewa"
-                            className="w-10 h-10 object-contain"
-                            onError={(e) => { e.target.style.display = "none"; }}
-                          />
+                    <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-2xl p-6 border-2 border-orange-200">
+                      <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <MapPin size={18} className="text-orange-500" />
+                        Trip Summary
+                      </h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Package</span>
+                          <span className="text-sm font-bold text-gray-900">{tourPackage.title}</span>
                         </div>
-                        <div>
-                          <p className="font-bold text-gray-900 text-lg">Pay with eSewa</p>
-                          <p className="text-sm text-gray-600">Nepal's #1 digital wallet</p>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Destination</span>
+                          <span className="text-sm font-bold text-gray-900">{tourPackage.destination}</span>
                         </div>
-                      </div>
-
-                      <div className="bg-white/60 rounded-lg p-4 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Package Price</span>
-                          <span className="font-bold text-gray-900">Rs. {tourPackage.price}</span>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Duration</span>
+                          <span className="text-sm font-bold text-gray-900">{tourPackage.duration}</span>
                         </div>
-                        <div className="flex justify-between items-center border-t pt-2">
-                          <span className="font-bold text-gray-900">Total Amount</span>
-                          <span className="text-xl font-black text-green-600">Rs. {tourPackage.price}</span>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Dates</span>
+                          <span className="text-sm font-bold text-gray-900">
+                            {new Date(formData.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} - {new Date(formData.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Guests</span>
+                          <span className="text-sm font-bold text-gray-900">{formData.numberOfAdults} Adults, {formData.numberOfChildren} Children</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Terms checkbox */}
-                    <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-xl">
-                      <input
-                        type="checkbox"
-                        required
-                        className="mt-1 w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
-                      />
-                      <label className="text-sm text-gray-700">
-                        I agree to the{" "}
-                        <span className="text-orange-500 font-semibold cursor-pointer hover:underline">Terms & Conditions</span>
-                        {" "}and{" "}
-                        <span className="text-orange-500 font-semibold cursor-pointer hover:underline">Privacy Policy</span>
-                      </label>
-                    </div>
-
-                    {/* Secure notice */}
                     <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 flex gap-3">
                       <Shield className="text-green-500 flex-shrink-0" size={20} />
                       <div className="text-sm text-green-800">
-                        <p className="font-semibold mb-1">Secure Payment</p>
-                        <p>Your payment is processed securely through eSewa. You will be redirected to complete the payment.</p>
+                        <p className="font-semibold mb-1">Ready to Book</p>
+                        <p>Click "Confirm Booking" below to reserve your spot. You'll be able to pay immediately or later.</p>
                       </div>
                     </div>
                   </div>
@@ -627,6 +791,51 @@ const BookingPage = () => {
                   Previous
                 </button>
 
+                {/* ✅ MIDDLE BUTTONS — Pay or Cancel */}
+                {bookingId && currentStep === 3 && (
+                  <div className="flex items-center gap-3">
+                    {/* Pay Now Button */}
+                    <button
+                      type="button"
+                      onClick={handlePayment}
+                      disabled={processingPayment}
+                      className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-bold hover:from-green-600 hover:to-emerald-600 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg shadow-green-300/40 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {processingPayment ? (
+                        <>
+                          <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard size={20} />
+                          Pay Rs. {tourPackage.price}
+                        </>
+                      )}
+                    </button>
+
+                    {/* Cancel Booking Button */}
+                    <button
+                      type="button"
+                      onClick={handleCancelBooking}
+                      disabled={cancelling}
+                      className="flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg shadow-red-300/40 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {cancelling ? (
+                        <>
+                          <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Cancelling...
+                        </>
+                      ) : (
+                        <>
+                          <XCircle size={20} />
+                          Cancel
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
                 {currentStep < 3 ? (
                   <button
                     type="button"
@@ -638,19 +847,28 @@ const BookingPage = () => {
                   </button>
                 ) : (
                   <button
-                    type="submit"
-                    disabled={submitting}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleBooking(e);
+                    }}
+                    disabled={submitting || bookingId}
                     className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-bold hover:from-green-600 hover:to-emerald-600 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {submitting ? (
                       <>
                         <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Processing...
+                        Booking...
+                      </>
+                    ) : bookingId ? (
+                      <>
+                        <CheckCircle size={20} />
+                        Already Booked ✓
                       </>
                     ) : (
                       <>
-                        <Check size={20} />
-                        Pay with eSewa
+                        <CheckCircle size={20} />
+                        Confirm Booking
                       </>
                     )}
                   </button>
