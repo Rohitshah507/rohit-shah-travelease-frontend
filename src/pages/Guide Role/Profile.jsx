@@ -9,7 +9,8 @@ import {
   Edit2,
 } from "lucide-react";
 import axios from "axios";
-import { serverURL } from "../../App";
+import { serverURL } from "../../App.jsx";
+import { getToken } from "../Login.jsx";
 
 const Skeleton5 = ({ className = "" }) => (
   <div className={`animate-pulse bg-gray-200 rounded-xl ${className}`} />
@@ -24,7 +25,7 @@ export function Profile({ guideId }) {
     const fetch = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("token");
+        const token = getToken();
         const headers = { Authorization: `Bearer ${token}` };
         const [pRes, sRes] = await Promise.all([
           axios.get(`${serverURL}/api/guide/${guideId}/profile`, { headers }),

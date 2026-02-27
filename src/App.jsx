@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 import SignUp from "./pages/SignUp.jsx";
-import LogIn from "./pages/Login.jsx";
+import LogIn, { getToken } from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
 import ForgetPassword from "./pages/ForgetPassword.jsx";
 import OtpVerification from "./pages/OtpVerification.jsx";
@@ -12,6 +12,7 @@ import Destinations from "./pages/Destinations.jsx";
 import BookingPage from "./pages/Booking.jsx";
 
 import useUser from "./hooks/useUser.jsx";
+import PlacesToVisit from "./pages/PlacesToVisit.jsx";
 
 export const serverURL = "http://localhost:5000";
 
@@ -20,7 +21,7 @@ const App = () => {
 
   const { userData } = useSelector((state) => state.user);
 
-  const token = localStorage.getItem("token");
+  const token = getToken();
 
   return (
     <div>
@@ -58,6 +59,11 @@ const App = () => {
         <Route
           path="/destinations"
           element={token ? <Destinations /> : <Navigate to="/login" />}
+        />
+
+        <Route
+          path="/places-to-visit"
+          element={token ? <PlacesToVisit /> : <Navigate to="/login" />}
         />
 
         <Route

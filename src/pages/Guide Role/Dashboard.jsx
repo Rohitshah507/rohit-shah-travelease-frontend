@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { serverURL } from "../../App";
+import { getToken } from "../Login.jsx";
 
 const avatarColors = [
   "bg-yellow-500",
@@ -45,10 +46,12 @@ export default function Dashboard({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!guideId) return; 
+
     const fetchDashboard = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("token");
+        const token = getToken();
         const headers = { Authorization: `Bearer ${token}` };
 
         const [statsRes, bookingsRes, toursRes, historyRes] = await Promise.all(
@@ -74,6 +77,7 @@ export default function Dashboard({
         setLoading(false);
       }
     };
+
     fetchDashboard();
   }, [guideId]);
 

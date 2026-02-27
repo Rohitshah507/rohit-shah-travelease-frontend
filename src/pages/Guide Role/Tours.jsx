@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { serverURL } from "../../App.jsx";
+import { getToken } from "../Login.jsx";
 
 const Skeleton = ({ className = "" }) => (
   <div className={`animate-pulse bg-gray-200 rounded-xl ${className}`} />
@@ -42,7 +43,7 @@ export default function Tours({ guideId }) {
     const fetchTourPackages = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("token");
+        const token = getToken();
         const response = await axios.get(`${serverURL}/api/user/package`, {
           headers: { Authorization: `Bearer ${token}` },
         });

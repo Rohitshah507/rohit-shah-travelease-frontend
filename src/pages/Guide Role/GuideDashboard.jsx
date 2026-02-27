@@ -27,6 +27,7 @@ import { Tracking } from "./Tracking";
 import { Reviews } from "./Reviews";
 import { Earnings } from "./Earnings";
 import { Profile } from "./Profile";
+import { getToken } from "../Login.jsx";
 
 export default function GuideDashboard() {
   const { userData } = useSelector((state) => state.user);
@@ -67,6 +68,7 @@ export default function GuideDashboard() {
   // ── Start tracking ────────────────────────────────────────
   const handleStartTracking = async () => {
     try {
+      const token = getToken();
       navigator.geolocation?.getCurrentPosition(
         async (pos) => {
           const { latitude: lat, longitude: lng } = pos.coords;
@@ -104,7 +106,7 @@ export default function GuideDashboard() {
     try {
       clearInterval(intervalRef.current);
       if (sessionId) {
-        const token = localStorage.getItem("token");
+        const token = getToken();
         await axios.post(
           `${serverURL}/api/guide/tracking/stop`,
           { sessionId },
@@ -121,9 +123,11 @@ export default function GuideDashboard() {
 
   // ── Fetch guide profile for sidebar ──────────────────────
   useEffect(() => {
+    if (!GUIDE_ID) return;
+
     const fetchProfile = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = getToken();
         const res = await axios.get(
           `${serverURL}/api/guide/${GUIDE_ID}/profile`,
           {
@@ -138,7 +142,7 @@ export default function GuideDashboard() {
 
     const fetchPending = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = getToken();
         const res = await axios.get(
           `${serverURL}/api/guide/${GUIDE_ID}/bookings`,
           {
@@ -154,7 +158,7 @@ export default function GuideDashboard() {
 
     fetchProfile();
     fetchPending();
-  }, []);
+  }, [GUIDE_ID]);
 
   const initials =
     userData?.userDetails?.username

@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
-import { serverURL } from "../App";
+import { serverURL } from "../App.jsx";
+import { getToken } from "../pages/Login.jsx"; // adjust path
 import axios from "axios";
 import { setUserData } from "../redux/userSlice";
 import { useDispatch } from "react-redux";
@@ -9,9 +10,9 @@ const useUser = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = getToken();
 
-        if (!token) return; 
+        if (!token) return;
 
         const res = await axios.get(`${serverURL}/api/auth/user`, {
           headers: {

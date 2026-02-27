@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { serverURL } from "../../App";
+import { getToken } from "../Login.jsx";
 
 const avatarColors = [
   "from-yellow-400 to-amber-500",
@@ -94,15 +95,15 @@ export default function Bookings() {
   console.log("GUIDE ID:", guideId);
 
   useEffect(() => {
+    if (!guideId) return; 
+
     const fetchBookings = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = getToken();
         const response = await axios.get(`${serverURL}/api/booking/guide`, {
           params: { guideId },
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        console.log("BOOKING RESPONSE:", response.data);
 
         setBookings(
           response.data.data.map((b) => ({
@@ -125,18 +126,14 @@ export default function Bookings() {
         setLoading(false);
       }
     };
-    if (guideId) fetchBookings();
+
+    fetchBookings();
   }, [guideId]);
 
-  // ─────────────────────────────────────────────────────────────
-  // ✅ FIXED handleStatus — uses correct server routes:
-  //    Accept  → PUT /api/booking/confirm/:id
-  //    Cancel  → PUT /api/booking/cancel/:id
-  // ─────────────────────────────────────────────────────────────
   const handleStatus = async (id, action) => {
     try {
       setActionLoading(id);
-      const token = localStorage.getItem("token");
+      const token = getToken();
 
       if (action === "confirmed") {
         await axios.put(
@@ -152,7 +149,6 @@ export default function Bookings() {
         );
       }
 
-      // Update local UI state immediately after success
       setBookings((prev) =>
         prev.map((b) => (b._id === id ? { ...b, status: action } : b)),
       );

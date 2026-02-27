@@ -1,143 +1,219 @@
-// src/Components/Navbar.jsx
 import React, { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { NavLink } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
+import {
+  Menu,
+  X,
+  ShoppingCart,
+  LogOut,
+  UserCircle,
+  ChevronDown,
+} from "lucide-react";
+import useUser from "../hooks/useUser";
 
 const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
 
-  const location = useLocation();
-  const islanding = location.pathname === "/home";
+  const userData = useSelector((state) => state.user.userData);
+  console.log("REDUX USER STATE:", userData);
 
+  /* ---------------- SCROLL EFFECT ---------------- */
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? "bg-black-500 text-white shadow-lg"
-          : islanding
-            ? "bg-transparent text-white" : "bg-transparent text-black"
-      }`}
+  /* ---------------- LOGOUT ---------------- */
+  const handleLogout = () => {
+    toast
+      .promise(
+        new Promise((resolve) => {
+          setTimeout(() => {
+            localStorage.removeItem("token");
+            resolve();
+          }, 800);
+        }),
+        {
+          loading: "Logging out…",
+          success: "Logged out successfully!",
+          error: "Logout failed",
+        },
+      )
+      .then(() => setTimeout(() => window.location.reload(), 500));
+  };
+
+  /* ---------------- DESKTOP NAV LINK ---------------- */
+  const DesktopNavLink = ({ to, children }) => (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        `relative px-3 py-2 font-semibold text-sm transition-colors ${
+          isActive ? "text-violet-700" : "text-gray-700 hover:text-violet-700"
+        }`
+      }
     >
-      <div className="max-w-7xl mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient from-amber-600 to-orange-700 rounded-lg flex items-center justify-center"></div>
-            <span
-              className={`text-2xl font-bold ${isScrolled ? "text-gray-900" : "text-white"}`}
-            >
-              TravelEase
-            </span>
-          </div>
+      {({ isActive }) => (
+        <>
+          {children}
+          {isActive && (
+            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-violet-700 rounded-full" />
+          )}
+        </>
+      )}
+    </NavLink>
+  );
 
-          <div className="hidden md:flex items-center space-x-8">
-            <a
-              href="#home"
-              className={`hover:text-amber-600 transition cursor-pointer font-bold ${isScrolled ? "text-gray-700" : "text-white"}`}
-            >
-              Home
-            </a>
-            <a
-              href="#destinations"
-              className={`hover:text-amber-600 transition cursor-pointer font-bold ${isScrolled ? "text-gray-700" : "text-white"}`}
-            >
-              Destinations
-            </a>
-            <a
-              href="#experiences"
-              className={`hover:text-amber-600 transition cursor-pointer font-bold ${isScrolled ? "text-gray-700" : "text-white"}`}
-            >
-              TourList
-            </a>
-            <a
-              href="#about"
-              className={`hover:text-amber-600 transition cursor-pointer font-bold ${isScrolled ? "text-gray-700" : "text-white"}`}
-            >
-              About
-            </a>
-            <a
-              href="#contact"
-              className={`hover:text-amber-600 transition cursor-pointer font-bold ${isScrolled ? "text-gray-700" : "text-white"}`}
-            >
-              Contact
-            </a>
-          </div>
+  /* ---------------- MOBILE NAV LINK ---------------- */
+  const MobileNavLink = ({ to, children }) => (
+    <NavLink
+      to={to}
+      onClick={() => setIsMenuOpen(false)}
+      className={({ isActive }) =>
+        `block px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors ${
+          isActive
+            ? "bg-violet-50 text-violet-700"
+            : "text-gray-700 hover:bg-gray-50"
+        }`
+      }
+    >
+      {children}
+    </NavLink>
+  );
 
-          <div className="hidden md:block">
-            <button
-              className="bg-gradient-to-r from-amber-600 to-orange-700 font-bold text-white px-6 py-2 rounded-full hover:shadow-lg transition cursor-pointer"
-              onClick={() => navigate("/login")}
-            >
-              Book Now
-            </button>
-          </div>
+  return (
+    <>
+      {/* Toast */}
+      <Toaster position="top-right" />
 
-          <div className="hidden md:block">
-            <button
-              className="bg-gradient-to-r from-gray-200 to-amber-600 font-bold text-white px-6 py-2 rounded-full hover:shadow-lg transition cursor-pointer"
-              onClick={() => navigate("/login")}
-            >
-              Login
-            </button>
-          </div>
-
-          <button
-            className="md:hidden"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+      <nav
+        className={`fixed w-full z-50 transition-all duration-300 bg-white/95 backdrop-blur-md ${
+          scrolled ? "shadow-lg" : "shadow-sm"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          {/* Logo */}
+          <NavLink
+            to="/home"
+            className="text-3xl font-black text-violet-800 tracking-tight"
           >
-            {isMobileMenuOpen ? (
-              <X className="text-white" />
-            ) : (
-              <Menu className={isScrolled ? "text-gray-900" : "text-white"} />
-            )}
+            Travel<span className="text-amber-500">Ease</span>
+          </NavLink>
+
+          {/* Desktop Links */}
+          <div className="hidden md:flex items-center gap-1 font-bold">
+            <DesktopNavLink to="/home">Home</DesktopNavLink>
+            <DesktopNavLink to="/destinations">Destinations</DesktopNavLink>
+            <DesktopNavLink to="/places-to-visit">
+              Places to Visit
+            </DesktopNavLink>
+            <DesktopNavLink to="/packages">Packages</DesktopNavLink>
+            <DesktopNavLink to="/tour">TourList</DesktopNavLink>
+          </div>
+
+          {/* Right Section */}
+          <div className="hidden md:flex items-center gap-3">
+            {/* Cart */}
+            <button
+              onClick={() => toast.success("Cart opened!")}
+              className="relative p-2.5 hover:bg-violet-50 rounded-xl transition-colors"
+            >
+              <ShoppingCart size={22} className="text-gray-600" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-700 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+
+            {/* Profile */}
+            <div className="relative">
+              <button
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-700 to-purple-600 text-white rounded-full font-semibold text-sm"
+              >
+                <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center text-violet-700 font-black text-xs uppercase">
+                  {userData?.userDetails?.username
+                    ? userData.userDetails.username.charAt(0)
+                    : "U"}
+                </div>
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform ${
+                    showProfileMenu ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {showProfileMenu && (
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border overflow-hidden">
+                  {/* Profile Info */}
+                  <div className="p-5 bg-gradient-to-r from-violet-700 to-purple-600 text-white">
+                    <p className="font-bold">
+                      {userData?.userDetails?.username}
+                    </p>
+                    <p className="text-sm opacity-80">
+                      {userData?.userDetails?.email}
+                    </p>
+                  </div>
+
+                  {/* Profile Actions */}
+                  <div className="p-2">
+                    <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-violet-50 rounded-xl text-left">
+                      <UserCircle size={18} />
+                      My Profile
+                    </button>
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 rounded-xl text-left text-red-600"
+                    >
+                      <LogOut size={18} />
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile Toggle */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden p-2 hover:bg-violet-50 rounded-lg"
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
-        {isMobileMenuOpen && (
-          <div className="md:hidden mt-4 pb-4 space-y-4">
-            <a
-              href="#home"
-              className="block text-white hover:text-amber-300 cursor-pointer"
-            >
-              Home
-            </a>
-            <a
-              href="#destinations"
-              className="block text-white hover:text-amber-300 cursor-pointer"
-            >
-              Destinations
-            </a>
-            <a
-              href="#experiences"
-              className="block text-white hover:text-amber-300 cursor-pointer"
-            >
-              TourList
-            </a>
-            <a
-              href="#about"
-              className="block text-white hover:text-amber-300 cursor-pointer"
-            >
-              About
-            </a>
-            <a
-              href="#contact"
-              className="block text-white hover:text-amber-300 cursor-pointer"
-            >
-              Contact
-            </a>
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden bg-white border-t shadow-lg">
+            <div className="px-6 py-4 space-y-2">
+              <MobileNavLink to="/home">Home</MobileNavLink>
+              <MobileNavLink to="/destinations">Destinations</MobileNavLink>
+              <MobileNavLink to="/places-to-visit">
+                Places to Visit
+              </MobileNavLink>
+              <MobileNavLink to="/packages">Packages</MobileNavLink>
+              <MobileNavLink to="/tour">TourList</MobileNavLink>
+
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-4 py-2 mt-2 bg-red-50 text-red-600 rounded-xl"
+              >
+                <LogOut size={18} />
+                Logout
+              </button>
+            </div>
           </div>
         )}
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 };
 
