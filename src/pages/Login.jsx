@@ -104,9 +104,11 @@ const Toast = ({ toasts, removeToast }) => {
 };
 
 // ─── Token helpers (7-day expiry) ─────────────────────────────────────────────
-const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
+// ─── Token helpers (7-day expiry) ─────────────────────────────────────────────
+const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-const saveTokenWithExpiry = (token) => {
+// Save JWT with expiry
+export const saveTokenWithExpiry = (token) => {
   const payload = {
     value: token,
     expiry: Date.now() + TOKEN_TTL_MS,
@@ -114,18 +116,18 @@ const saveTokenWithExpiry = (token) => {
   localStorage.setItem("token", JSON.stringify(payload));
 };
 
-// Use this helper wherever you read the token (import it in other files too)
+// Get JWT (returns raw token string or null if expired)
 export const getToken = () => {
+  const raw = localStorage.getItem("token");
+  if (!raw) return null;
   try {
-    const raw = localStorage.getItem("token");
-    if (!raw) return null;
     const { value, expiry } = JSON.parse(raw);
     if (Date.now() > expiry) {
       localStorage.removeItem("token");
-      return null; // token expired → treat as logged out
+      return null; // expired
     }
-    return value;
-  } catch {
+    return value; // ✅ raw JWT for Authorization header
+  } catch (err) {
     localStorage.removeItem("token");
     return null;
   }

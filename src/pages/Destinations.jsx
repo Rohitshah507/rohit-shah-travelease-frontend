@@ -109,7 +109,9 @@ const Destinations = () => {
   const filteredDestinations = destinations.filter((destination) => {
     const matchesSearch =
       destination.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      destination.destination?.toLowerCase().includes(searchQuery.toLowerCase());
+      destination.destination
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
@@ -144,7 +146,6 @@ const Destinations = () => {
       {/* ── Hero Section ── */}
       <div className="relative pt-20 pb-16 px-4 sm:px-6 lg:px-8 z-10 mt-4">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-
           {/* Hero Text */}
           <div className="space-y-8 animate-fade-in-up">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-full text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
@@ -160,8 +161,8 @@ const Destinations = () => {
             </h1>
 
             <p className="text-base sm:text-lg md:text-xl text-gray-600 leading-relaxed">
-              Our tourist destinations offer an unrivaled blend of natural beauty
-              and cultural richness, where you can explore breathtaking
+              Our tourist destinations offer an unrivaled blend of natural
+              beauty and cultural richness, where you can explore breathtaking
               landscapes, experience vibrant local cultures, and create
               unforgettable memories.
             </p>
@@ -222,8 +223,8 @@ const Destinations = () => {
                 Escape to paradise where dreams meet reality
               </h3>
               <p className="text-xs sm:text-sm opacity-90 leading-relaxed transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-200">
-                Discover the adventure that lies beyond the ordinary, where every
-                journey becomes an extraordinary story waiting to be told
+                Discover the adventure that lies beyond the ordinary, where
+                every journey becomes an extraordinary story waiting to be told
               </p>
             </div>
           </div>
@@ -274,7 +275,6 @@ const Destinations = () => {
 
       {/* ── Destinations Cards ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-
         {/* Section Header */}
         <div className="text-center mb-10 sm:mb-12 animate-fade-in-up animation-delay-500">
           <div className="inline-block text-violet-600 text-xs sm:text-sm font-bold uppercase tracking-widest mb-3 px-4 py-1 bg-violet-50 rounded-full border border-violet-100">
@@ -308,7 +308,9 @@ const Destinations = () => {
             <p className="text-2xl font-bold text-gray-400 mb-2">
               No destinations found
             </p>
-            <p className="text-gray-500">Try adjusting your filters or search query</p>
+            <p className="text-gray-500">
+              Try adjusting your filters or search query
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
@@ -318,8 +320,8 @@ const Destinations = () => {
               const nights = destination.duration
                 ? destination.duration
                 : destination.nights
-                ? `${destination.nights} Nights`
-                : "—";
+                  ? `${destination.nights} Nights`
+                  : "—";
 
               return (
                 <div
@@ -389,7 +391,6 @@ const Destinations = () => {
 
                   {/* Card Body */}
                   <div className="p-4 sm:p-5 space-y-3">
-
                     {/* Title + Price */}
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex-1 min-w-0">
@@ -397,7 +398,10 @@ const Destinations = () => {
                           {destination.title}
                         </h3>
                         <p className="text-xs sm:text-sm text-gray-500 mt-0.5 flex items-center gap-1">
-                          <MapPin size={12} className="text-violet-400 shrink-0" />
+                          <MapPin
+                            size={12}
+                            className="text-violet-400 shrink-0"
+                          />
                           <span className="truncate">
                             {destination.destination}
                             {destination.type ? ` · ${destination.type}` : ""}
@@ -408,7 +412,9 @@ const Destinations = () => {
                         <div className="text-xl sm:text-2xl font-black text-violet-600 leading-tight">
                           ${destination.price}
                         </div>
-                        <div className="text-xs text-gray-400 font-medium">per person</div>
+                        <div className="text-xs text-gray-400 font-medium">
+                          per person
+                        </div>
                       </div>
                     </div>
 
@@ -462,11 +468,14 @@ const Destinations = () => {
                       <Calendar size={12} className="text-violet-400" />
                       <span>
                         Starts:{" "}
-                        {new Date(destination.startDate).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
+                        {new Date(destination.startDate).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          },
+                        )}
                       </span>
                     </div>
 

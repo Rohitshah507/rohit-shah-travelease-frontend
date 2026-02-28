@@ -95,7 +95,7 @@ export default function Bookings() {
   console.log("GUIDE ID:", guideId);
 
   useEffect(() => {
-    if (!guideId) return; 
+    if (!guideId) return;
 
     const fetchBookings = async () => {
       try {

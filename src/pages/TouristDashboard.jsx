@@ -18,8 +18,6 @@ import Navbar from "../Components/Navbar";
 const TouristDashboard = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [cartCount] = useState(3);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -27,14 +25,9 @@ const TouristDashboard = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-
   return (
     <div className="min-h-screen">
       <Navbar />
-
-      {/* ════════════════════════════════════════════════
-          HERO
-      ════════════════════════════════════════════════ */}
       <div
         id="home"
         className="relative min-h-screen flex items-center pt-[72px] overflow-hidden bg-gradient-to-br from-violet-950 via-violet-900 to-purple-800"
