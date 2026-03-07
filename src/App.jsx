@@ -10,6 +10,7 @@ import OtpVerification from "./pages/OtpVerification.jsx";
 import Hero from "./pages/landing.jsx";
 import Destinations from "./pages/Destinations.jsx";
 import BookingPage from "./pages/Booking.jsx";
+import KhaltiSuccess from "./Components/KhaltiSuccess.jsx";
 
 import useUser from "./hooks/useUser.jsx";
 import PlacesToVisit from "./pages/PlacesToVisit.jsx";
@@ -26,7 +27,6 @@ const App = () => {
   return (
     <div>
       <Routes>
-
         {/* Signup Route */}
         <Route
           path="/signup"
@@ -71,6 +71,7 @@ const App = () => {
           element={token ? <BookingPage /> : <Navigate to="/login" />}
         />
 
+        <Route path="/khalti/payment_success" element={<KhaltiSuccess />} />
       </Routes>
     </div>
   );

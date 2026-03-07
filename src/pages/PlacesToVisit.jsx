@@ -23,6 +23,7 @@ import {
 import axios from "axios";
 import { serverURL } from "../App";
 import Footer from "../Components/Footer";
+import Navbar from "../Components/Navbar";
 
 const PlacesToVisit = () => {
   const navigate = useNavigate();
@@ -109,134 +110,13 @@ const PlacesToVisit = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-white">
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {/* NAVBAR */}
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <nav className="bg-gradient-to-r from-white to-orange-50 shadow-md sticky top-0 z-50 border-b border-orange-100">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg">
-                <Compass size={24} className="text-white" />
-              </div>
-              <h1 className="text-2xl font-black">
-                <span className="text-orange-600">Travel</span>
-                <span className="text-gray-800">Ease</span>
-              </h1>
-            </div>
-
-            {/* Nav Links */}
-            <div className="hidden md:flex items-center gap-8">
-              <a
-                href="/home"
-                className="text-gray-600 hover:text-orange-600 font-semibold transition-colors"
-              >
-                Home
-              </a>
-              <a
-                href="/destinations"
-                className="text-gray-600 hover:text-orange-600 font-semibold transition-colors"
-              >
-                Destinations
-              </a>
-              <a
-                href="/places-to-visit"
-                className="text-orange-600 font-bold border-b-2 border-orange-600"
-              >
-                Places to Visit
-              </a>
-              <a
-                href="/packages"
-                className="text-gray-600 hover:text-orange-600 font-semibold transition-colors"
-              >
-                Packages
-              </a>
-              <a
-                href="/tourist"
-                className="text-gray-600 hover:text-orange-600 font-semibold transition-colors"
-              >
-                Tourist
-              </a>
-            </div>
-
-            {/* Right Icons */}
-            <div className="flex items-center gap-4">
-              {/* Cart Button */}
-              <button className="relative p-2 hover:bg-orange-50 rounded-xl transition-colors">
-                <ShoppingCart size={24} className="text-gray-700" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Profile Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-xl font-semibold hover:from-orange-600 hover:to-yellow-600 transition-all shadow-md"
-                >
-                  <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-orange-600 font-bold text-sm">
-                    {user.avatar}
-                  </div>
-                  <ChevronDown
-                    size={18}
-                    className={`transition-transform ${showProfileMenu ? "rotate-180" : ""}`}
-                  />
-                </button>
-
-                {/* Dropdown Menu */}
-                {showProfileMenu && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-orange-100 overflow-hidden animate-[slideDown_0.2s_ease-out]">
-                    {/* User Info */}
-                    <div className="p-4 bg-gradient-to-r from-orange-500 to-yellow-500">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-orange-600 font-black text-lg shadow-md">
-                          {user.avatar}
-                        </div>
-                        <div>
-                          <p className="font-bold text-white">{user.name}</p>
-                          <p className="text-xs text-white/80">{user.email}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Menu Items */}
-                    <div className="p-2">
-                      <button
-                        onClick={() => navigate("/profile")}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-orange-50 rounded-xl transition-colors text-left"
-                      >
-                        <UserCircle size={20} className="text-orange-600" />
-                        <span className="font-semibold text-gray-700">
-                          My Profile
-                        </span>
-                      </button>
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 rounded-xl transition-colors text-left"
-                      >
-                        <LogOut size={20} className="text-red-500" />
-                        <span className="font-semibold text-gray-700">
-                          Logout
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
-
+      
+      <Navbar/>
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {/* HERO SECTION */}
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div className="bg-gradient-to-r from-orange-500 via-yellow-500 to-orange-500 py-16 px-6">
-        <div className="max-w-7xl mx-auto text-center">
+        <div className="max-w-7xl mx-auto text-center mt-20">
           <h1 className="text-5xl font-black text-white mb-4">
             Explore Amazing Places
           </h1>

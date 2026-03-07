@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { getToken } from "../pages/Login.jsx"; 
+import React, { useState, useEffect } from "react";
+import { getToken } from "../pages/Login.jsx";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import {
@@ -32,7 +32,6 @@ const BookingPage = () => {
   useUser();
   const { userData } = useSelector((state) => state.user);
   const { id } = useParams();
-  const esewaFormRef = useRef(null);
 
   const [tourPackage, setTourPackage] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,12 +39,9 @@ const BookingPage = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [bookingId, setBookingId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [esewaData, setEsewaData] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-
-  // For custom confirm dialog
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -59,8 +55,6 @@ const BookingPage = () => {
     country: "",
     specialRequests: "",
   });
-
-  console.log("USER DATA FROM REDUX:", userData);
 
   // Auto-fill user data from Redux
   useEffect(() => {
@@ -85,30 +79,36 @@ const BookingPage = () => {
         const res = await axios.get(`${serverURL}/api/user/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("PACKAGE FROM API:", res.data.packageId);
         setTourPackage(res.data.packageId);
 
         try {
           const bookingsRes = await axios.get(
             `${serverURL}/api/booking/tourist`,
-            { headers: { Authorization: `Bearer ${token}` } }
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            },
           );
-          console.log("USER BOOKINGS:", bookingsRes.data);
 
           const existingBooking = bookingsRes.data.data?.find(
             (booking) =>
-              booking.tourPackageId?._id === id || booking.tourPackageId === id
+              (booking.tourPackageId?._id === id ||
+                booking.tourPackageId === id) &&
+              (booking.bookingStatus || "").toLowerCase() !== "cancelled",
           );
 
           if (existingBooking) {
-            console.log("EXISTING BOOKING FOUND:", existingBooking);
             setBookingId(existingBooking._id);
+          } else {
+            setBookingId(null);
           }
         } catch (bookingErr) {
           console.log("No existing bookings found:", bookingErr.message);
         }
       } catch (err) {
-        console.error("FETCH ERROR:", err.response?.data?.message || err.message);
+        console.error(
+          "FETCH ERROR:",
+          err.response?.data?.message || err.message,
+        );
         toast.error("Failed to load package details. Please try again.");
       } finally {
         setLoading(false);
@@ -116,14 +116,6 @@ const BookingPage = () => {
     };
     if (id) fetchPackageAndBooking();
   }, [id]);
-
-  // Auto-submit eSewa form when esewaData is set
-  useEffect(() => {
-    if (esewaData && esewaFormRef.current) {
-      console.log("AUTO-SUBMITTING ESEWA FORM WITH DATA:", esewaData);
-      esewaFormRef.current.submit();
-    }
-  }, [esewaData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -137,28 +129,28 @@ const BookingPage = () => {
 
     try {
       setCancelling(true);
-      const token = localStorage.getItem("token");
+      const token = getToken();
 
       await axios.put(
-        `${serverURL}/api/booking/cancel/${bookingId}`,
+        `${serverURL}/api/booking/tourist/cancel/${bookingId}`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      console.log("BOOKING CANCELLED");
       toast.success("Booking cancelled successfully!", {
         icon: "🗑️",
         duration: 4000,
       });
 
       setBookingId(null);
+      setCurrentStep(1);
       setShowSuccessModal(false);
     } catch (error) {
       console.error("CANCEL ERROR:", error.response?.data || error.message);
       toast.error(
         error.response?.data?.message ||
           error.message ||
-          "Cancellation failed. Please try again."
+          "Cancellation failed. Please try again.",
       );
     } finally {
       setCancelling(false);
@@ -182,15 +174,6 @@ const BookingPage = () => {
       setSubmitting(true);
       const token = getToken();
 
-      console.log("Creating booking with data:", {
-        tourPackageId: tourPackage._id,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        numberOfAdults: formData.numberOfAdults,
-        numberOfChildren: formData.numberOfChildren,
-        bookingStatus: "Pending",
-      });
-
       const bookingResponse = await axios.post(
         `${serverURL}/api/booking/tourist`,
         {
@@ -201,18 +184,17 @@ const BookingPage = () => {
           numberOfChildren: formData.numberOfChildren,
           bookingStatus: "Pending",
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      console.log("BOOKING CREATED:", bookingResponse.data);
       const createdBookingId =
         bookingResponse.data.data?._id || bookingResponse.data._id;
-      setBookingId(createdBookingId);
 
       if (!createdBookingId) {
         throw new Error("Booking ID not returned from server");
       }
 
+      setBookingId(createdBookingId);
       toast.success("Booking created successfully! 🎉", { duration: 3000 });
       setShowSuccessModal(true);
     } catch (error) {
@@ -220,52 +202,66 @@ const BookingPage = () => {
       toast.error(
         error.response?.data?.message ||
           error.message ||
-          "Booking failed. Please try again."
+          "Booking failed. Please try again.",
       );
     } finally {
       setSubmitting(false);
     }
   };
 
-  // ─── PAYMENT ───
+  // ─────────────────────────────────────────────────────────────
+  // ✅ KHALTI PAYMENT — FIXED
+  // ─────────────────────────────────────────────────────────────
   const handlePayment = async () => {
     if (!bookingId) {
       toast.error("No booking found. Please create a booking first.");
       return;
     }
 
+    const loadingToast = toast.loading("Redirecting to Khalti...");
+
     try {
       setProcessingPayment(true);
       const token = getToken();
 
-      console.log("Initiating eSewa payment for booking:", bookingId);
-
-      const loadingToast = toast.loading("Redirecting to eSewa...");
-
       const paymentResponse = await axios.post(
-        `${serverURL}/api/payment/esewa/initiate`,
-        { bookingId },
-        { headers: { Authorization: `Bearer ${token}` } }
+        `${serverURL}/api/payment/${bookingId}/khalti/initiate`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      console.log("ESEWA PAYMENT INITIATED:", paymentResponse.data);
-      const esewaPaymentData =
-        paymentResponse.data.data?.esewaData || paymentResponse.data.esewaData;
+      console.log("KHALTI RESPONSE:", paymentResponse.data);
 
-      if (!esewaPaymentData) {
+      const khaltiPaymentUrl =
+        (typeof paymentResponse.data?.paymentUrl === "string"
+          ? paymentResponse.data.paymentUrl
+          : null) ||
+        paymentResponse.data?.paymentUrl?.payment_url ||
+        paymentResponse.data?.payment_url;
+
+      if (!khaltiPaymentUrl) {
         toast.dismiss(loadingToast);
-        throw new Error("eSewa payment data not returned from server");
+        throw new Error(
+          "Khalti payment URL not returned from server. Check backend response.",
+        );
       }
 
       toast.dismiss(loadingToast);
-      toast.success("Redirecting to eSewa payment...", { duration: 2000 });
-      setEsewaData(esewaPaymentData);
+      toast.success("Redirecting to Khalti payment...", { duration: 2000 });
+
+      setTimeout(() => {
+        window.location.href = khaltiPaymentUrl;
+      }, 500);
     } catch (error) {
-      console.error("PAYMENT ERROR:", error.response?.data || error.message);
+      toast.dismiss(loadingToast);
+      console.error(
+        "KHALTI PAYMENT ERROR:",
+        error.response?.data || error.message,
+      );
       toast.error(
         error.response?.data?.message ||
           error.message ||
-          "Payment initiation failed. Please try again."
+          "Payment initiation failed. Please try again.",
       );
       setProcessingPayment(false);
     }
@@ -299,8 +295,7 @@ const BookingPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50">
-
-      {/* ── React Hot Toast container ── */}
+      {/* Toast Notifications */}
       <Toaster
         position="top-right"
         toastOptions={{
@@ -338,21 +333,7 @@ const BookingPage = () => {
         }}
       />
 
-      {/* ── Hidden eSewa form ── */}
-      {esewaData && (
-        <form
-          ref={esewaFormRef}
-          method="POST"
-          action="https://rc-epay.esewa.com.np/api/epay/main/v2/form"
-          style={{ display: "none" }}
-        >
-          {Object.keys(esewaData).map((key) => (
-            <input key={key} type="hidden" name={key} value={esewaData[key]} />
-          ))}
-        </form>
-      )}
-
-      {/* ── Custom Cancel Confirm Modal ── */}
+      {/* Custom Cancel Confirm Modal */}
       {showCancelConfirm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 border-2 border-red-100 animate-[slideUp_0.25s_ease-out]">
@@ -361,12 +342,17 @@ const BookingPage = () => {
                 <XCircle size={26} className="text-red-500" />
               </div>
               <div>
-                <h3 className="text-lg font-extrabold text-gray-900">Cancel Booking?</h3>
-                <p className="text-sm text-gray-500">This action cannot be undone.</p>
+                <h3 className="text-lg font-extrabold text-gray-900">
+                  Cancel Booking?
+                </h3>
+                <p className="text-sm text-gray-500">
+                  This action cannot be undone.
+                </p>
               </div>
             </div>
             <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-              Are you sure you want to cancel this booking? Your reservation will be permanently removed.
+              Are you sure you want to cancel this booking? Your reservation
+              will be permanently removed.
             </p>
             <div className="flex gap-3">
               <button
@@ -394,7 +380,7 @@ const BookingPage = () => {
         </div>
       )}
 
-      {/* ── Success Modal ── */}
+      {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border-2 border-green-200 animate-[slideUp_0.3s_ease-out]">
@@ -410,7 +396,9 @@ const BookingPage = () => {
                   Booking Confirmed!
                   <Sparkles size={20} className="animate-pulse" />
                 </h3>
-                <p className="text-green-100 text-xs">Your adventure is reserved</p>
+                <p className="text-green-100 text-xs">
+                  Your adventure is reserved
+                </p>
               </div>
             </div>
 
@@ -420,7 +408,9 @@ const BookingPage = () => {
                 <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider mb-1">
                   Booking ID
                 </p>
-                <p className="font-mono font-bold text-green-900 text-xs">{bookingId}</p>
+                <p className="font-mono font-bold text-green-900 text-xs">
+                  {bookingId}
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -429,29 +419,52 @@ const BookingPage = () => {
                   { label: "Location", value: tourPackage.destination },
                   {
                     label: "Dates",
-                    value: `${new Date(formData.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${new Date(formData.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+                    value: `${new Date(formData.startDate).toLocaleDateString(
+                      "en-US",
+                      { month: "short", day: "numeric" },
+                    )} - ${new Date(formData.endDate).toLocaleDateString(
+                      "en-US",
+                      { month: "short", day: "numeric" },
+                    )}`,
                   },
                   {
                     label: "Guests",
                     value: `${formData.numberOfAdults} Adults, ${formData.numberOfChildren} Children`,
                   },
                 ].map((row) => (
-                  <div key={row.label} className="flex justify-between items-center py-1.5 border-b border-gray-100">
-                    <span className="text-xs text-gray-600 font-medium">{row.label}</span>
-                    <span className="text-xs font-bold text-gray-900">{row.value}</span>
+                  <div
+                    key={row.label}
+                    className="flex justify-between items-center py-1.5 border-b border-gray-100"
+                  >
+                    <span className="text-xs text-gray-600 font-medium">
+                      {row.label}
+                    </span>
+                    <span className="text-xs font-bold text-gray-900">
+                      {row.value}
+                    </span>
                   </div>
                 ))}
                 <div className="flex justify-between items-center py-2 bg-green-50 rounded-lg px-3">
-                  <span className="text-sm text-green-700 font-bold">Total Amount</span>
-                  <span className="text-xl font-black text-green-600">Rs. {tourPackage.price}</span>
+                  <span className="text-sm text-green-700 font-bold">
+                    Total Amount
+                  </span>
+                  <span className="text-xl font-black text-green-600">
+                    Rs. {tourPackage.price}
+                  </span>
                 </div>
               </div>
 
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 flex gap-2">
-                <Shield className="text-blue-500 flex-shrink-0 mt-0.5" size={16} />
-                <div className="text-xs text-blue-800">
+              <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-4 flex gap-3">
+                <Shield
+                  className="text-purple-500 flex-shrink-0 mt-0.5"
+                  size={16}
+                />
+                <div className="text-xs text-purple-800">
                   <p className="font-semibold mb-0.5">Payment Required</p>
-                  <p>Complete payment to confirm booking. Click "Pay Now" for eSewa.</p>
+                  <p>
+                    Complete payment via Khalti to confirm your booking. Click
+                    "Pay Now" below.
+                  </p>
                 </div>
               </div>
             </div>
@@ -467,7 +480,7 @@ const BookingPage = () => {
               <button
                 onClick={handlePayment}
                 disabled={processingPayment}
-                className="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold text-xs hover:from-green-600 hover:to-emerald-600 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg shadow-green-300/40 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-violet-500 text-white font-bold text-xs hover:from-purple-600 hover:to-violet-600 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg shadow-purple-300/40 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
               >
                 {processingPayment ? (
                   <>
@@ -477,7 +490,7 @@ const BookingPage = () => {
                 ) : (
                   <>
                     <CreditCard size={14} />
-                    Pay Now
+                    Pay with Khalti
                   </>
                 )}
               </button>
@@ -486,7 +499,7 @@ const BookingPage = () => {
         </div>
       )}
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="bg-white shadow-md sticky top-0 z-40 border-b-2 border-violet-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
@@ -503,7 +516,9 @@ const BookingPage = () => {
             <div className="flex items-center gap-4">
               <div className="hidden md:flex items-center gap-2 text-sm">
                 <Shield className="text-green-500" size={18} />
-                <span className="text-gray-600 font-medium">Secure Booking</span>
+                <span className="text-gray-600 font-medium">
+                  Secure Booking
+                </span>
               </div>
               <button
                 onClick={() => setIsFavorite(!isFavorite)}
@@ -522,8 +537,7 @@ const BookingPage = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         <div className="grid lg:grid-cols-3 gap-8">
-
-          {/* ── Left: Package Summary ── */}
+          {/* Left: Package Summary */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden sticky top-24 border-2 border-violet-100">
               <div className="relative h-64 overflow-hidden">
@@ -553,7 +567,9 @@ const BookingPage = () => {
                   <div className="flex gap-2">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Clock size={16} className="text-violet-500" />
-                      <span className="font-medium">{tourPackage.duration}</span>
+                      <span className="font-medium">
+                        {tourPackage.duration}
+                      </span>
                     </div>
                     <div className="text-gray-600 text-sm flex items-center gap-1">
                       <Users size={16} className="text-violet-500" />
@@ -563,35 +579,50 @@ const BookingPage = () => {
                   <div className="flex items-center gap-1 text-yellow-500 text-sm font-bold">
                     <Star size={16} className="fill-yellow-500" />
                     <span>{tourPackage.rating}</span>
-                    <span className="text-gray-400 font-normal">({tourPackage.reviews})</span>
+                    <span className="text-gray-400 font-normal">
+                      ({tourPackage.reviews})
+                    </span>
                   </div>
                 </div>
 
                 <div className="text-violet-500 text-sm font-bold">
                   <span>
-                    <span className="text-gray-600 font-normal">Started at: </span>
-                    {new Date(tourPackage.startDate).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    <span className="text-gray-600 font-normal">
+                      Started at:{" "}
+                    </span>
+                    {new Date(tourPackage.startDate).toLocaleDateString(
+                      "en-US",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      },
+                    )}
                   </span>
                 </div>
 
-                {/* Price */}
                 <div className="space-y-3 pt-2">
                   <div className="border-t-2 border-violet-200 pt-3 flex justify-between items-center">
-                    <span className="text-lg font-bold text-gray-900">Total</span>
+                    <span className="text-lg font-bold text-gray-900">
+                      Total
+                    </span>
                     <span className="text-3xl font-black bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-                      ${tourPackage.price}
+                      Rs. {tourPackage.price}
                     </span>
                   </div>
                 </div>
 
-                {/* Trust Badges */}
                 <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-200">
-                  {["Free Cancellation", "Best Price", "24/7 Support", "Instant Confirm"].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs text-gray-600">
+                  {[
+                    "Free Cancellation",
+                    "Best Price",
+                    "24/7 Support",
+                    "Instant Confirm",
+                  ].map((item, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-2 text-xs text-gray-600"
+                    >
                       <Check className="text-green-500" size={16} />
                       <span>{item}</span>
                     </div>
@@ -601,9 +632,8 @@ const BookingPage = () => {
             </div>
           </div>
 
-          {/* ── Right: Booking Form ── */}
+          {/* Right: Booking Form */}
           <div className="lg:col-span-2">
-
             {/* Progress Steps */}
             <div className="bg-white rounded-2xl shadow-lg p-5 sm:p-6 mb-6 border-2 border-violet-100">
               <div className="flex items-center justify-between">
@@ -621,7 +651,9 @@ const BookingPage = () => {
                       </div>
                       <p
                         className={`text-xs mt-2 font-semibold ${
-                          currentStep >= step ? "text-violet-600" : "text-gray-400"
+                          currentStep >= step
+                            ? "text-violet-600"
+                            : "text-gray-400"
                         }`}
                       >
                         {["Trip Details", "Your Info", "Review"][step - 1]}
@@ -643,7 +675,6 @@ const BookingPage = () => {
 
             {/* Form */}
             <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-
               {/* STEP 1: Trip Details */}
               {currentStep === 1 && (
                 <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 space-y-6 border-2 border-violet-100">
@@ -652,14 +683,20 @@ const BookingPage = () => {
                       <Calendar className="text-white" size={24} />
                     </div>
                     <div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Trip Details</h3>
-                      <p className="text-sm text-gray-600">When do you want to travel?</p>
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+                        Trip Details
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        When do you want to travel?
+                      </p>
                     </div>
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Start Date *</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        Start Date *
+                      </label>
                       <input
                         type="date"
                         name="startDate"
@@ -671,14 +708,19 @@ const BookingPage = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">End Date *</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        End Date *
+                      </label>
                       <input
                         type="date"
                         name="endDate"
                         value={formData.endDate}
                         onChange={handleInputChange}
                         required
-                        min={formData.startDate || new Date().toISOString().split("T")[0]}
+                        min={
+                          formData.startDate ||
+                          new Date().toISOString().split("T")[0]
+                        }
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-violet-500 focus:ring-4 focus:ring-violet-100 transition-all duration-300 outline-none font-medium cursor-pointer"
                       />
                     </div>
@@ -686,14 +728,19 @@ const BookingPage = () => {
 
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Number of Adults *</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        Number of Adults *
+                      </label>
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
                           onClick={() =>
                             setFormData((prev) => ({
                               ...prev,
-                              numberOfAdults: Math.max(1, prev.numberOfAdults - 1),
+                              numberOfAdults: Math.max(
+                                1,
+                                prev.numberOfAdults - 1,
+                              ),
                             }))
                           }
                           className="w-12 h-12 bg-gray-100 hover:bg-violet-600 hover:text-white rounded-xl font-bold transition-all duration-300 active:scale-95"
@@ -719,14 +766,19 @@ const BookingPage = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Number of Children</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        Number of Children
+                      </label>
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
                           onClick={() =>
                             setFormData((prev) => ({
                               ...prev,
-                              numberOfChildren: Math.max(0, prev.numberOfChildren - 1),
+                              numberOfChildren: Math.max(
+                                0,
+                                prev.numberOfChildren - 1,
+                              ),
                             }))
                           }
                           className="w-12 h-12 bg-gray-100 hover:bg-violet-600 hover:text-white rounded-xl font-bold transition-all duration-300 active:scale-95"
@@ -762,16 +814,25 @@ const BookingPage = () => {
                       <User className="text-white" size={24} />
                     </div>
                     <div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Personal Information</h3>
-                      <p className="text-sm text-gray-600">Tell us about yourself</p>
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+                        Personal Information
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Tell us about yourself
+                      </p>
                     </div>
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div className="sm:col-span-2">
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Full Name *</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        Full Name *
+                      </label>
                       <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <User
+                          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={20}
+                        />
                         <input
                           type="text"
                           name="fullName"
@@ -785,9 +846,14 @@ const BookingPage = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Email Address *</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        Email Address *
+                      </label>
                       <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <Mail
+                          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={20}
+                        />
                         <input
                           type="email"
                           name="email"
@@ -801,41 +867,56 @@ const BookingPage = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number *</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        Phone Number *
+                      </label>
                       <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <Phone
+                          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={20}
+                        />
                         <input
                           type="tel"
                           name="phone"
                           value={formData.phone}
                           onChange={handleInputChange}
                           required
-                          placeholder="+1 234 567 8900"
+                          placeholder="+977 98xxxxxxxx"
                           className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-violet-500 focus:ring-4 focus:ring-violet-100 transition-all duration-300 outline-none font-medium"
                         />
                       </div>
                     </div>
 
                     <div className="sm:col-span-2">
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Country *</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        Country *
+                      </label>
                       <div className="relative">
-                        <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <Globe
+                          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={20}
+                        />
                         <input
                           type="text"
                           name="country"
                           value={formData.country}
                           onChange={handleInputChange}
                           required
-                          placeholder="United States"
+                          placeholder="Nepal"
                           className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-violet-500 focus:ring-4 focus:ring-violet-100 transition-all duration-300 outline-none font-medium"
                         />
                       </div>
                     </div>
 
                     <div className="sm:col-span-2">
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Special Requests</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        Special Requests
+                      </label>
                       <div className="relative">
-                        <MessageSquare className="absolute left-4 top-4 text-gray-400" size={20} />
+                        <MessageSquare
+                          className="absolute left-4 top-4 text-gray-400"
+                          size={20}
+                        />
                         <textarea
                           name="specialRequests"
                           value={formData.specialRequests}
@@ -858,8 +939,12 @@ const BookingPage = () => {
                       <CheckCircle className="text-white" size={24} />
                     </div>
                     <div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Review & Confirm</h3>
-                      <p className="text-sm text-gray-600">Check your booking details</p>
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+                        Review & Confirm
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Check your booking details
+                      </p>
                     </div>
                   </div>
 
@@ -872,11 +957,25 @@ const BookingPage = () => {
                       <div className="space-y-2">
                         {[
                           { label: "Package", value: tourPackage.title },
-                          { label: "Destination", value: tourPackage.destination },
+                          {
+                            label: "Destination",
+                            value: tourPackage.destination,
+                          },
                           { label: "Duration", value: tourPackage.duration },
                           {
                             label: "Dates",
-                            value: `${new Date(formData.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${new Date(formData.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+                            value: `${new Date(
+                              formData.startDate,
+                            ).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })} - ${new Date(
+                              formData.endDate,
+                            ).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}`,
                           },
                           {
                             label: "Guests",
@@ -884,20 +983,27 @@ const BookingPage = () => {
                           },
                         ].map((row) => (
                           <div key={row.label} className="flex justify-between">
-                            <span className="text-sm text-gray-600">{row.label}</span>
-                            <span className="text-sm font-bold text-gray-900">{row.value}</span>
+                            <span className="text-sm text-gray-600">
+                              {row.label}
+                            </span>
+                            <span className="text-sm font-bold text-gray-900">
+                              {row.value}
+                            </span>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 flex gap-3">
-                      <Shield className="text-green-500 flex-shrink-0" size={20} />
+                      <Shield
+                        className="text-green-500 flex-shrink-0"
+                        size={20}
+                      />
                       <div className="text-sm text-green-800">
                         <p className="font-semibold mb-1">Ready to Book</p>
                         <p>
-                          Click "Confirm Booking" below to reserve your spot. You'll be able to pay
-                          immediately or later.
+                          Click "Confirm Booking" below to reserve your spot.
+                          You'll be able to pay via Khalti immediately or later.
                         </p>
                       </div>
                     </div>
@@ -928,7 +1034,7 @@ const BookingPage = () => {
                       type="button"
                       onClick={handlePayment}
                       disabled={processingPayment}
-                      className="flex items-center gap-2 px-6 sm:px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-bold hover:from-green-600 hover:to-emerald-600 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg shadow-green-300/40 disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 px-6 sm:px-8 py-3 bg-gradient-to-r from-purple-500 to-violet-500 text-white rounded-xl font-bold hover:from-purple-600 hover:to-violet-600 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg shadow-purple-300/40 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {processingPayment ? (
                         <>
@@ -971,7 +1077,7 @@ const BookingPage = () => {
                       e.preventDefault();
                       handleBooking(e);
                     }}
-                    disabled={submitting || bookingId}
+                    disabled={submitting || !!bookingId}
                     className="flex items-center gap-2 px-6 sm:px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-bold hover:from-green-600 hover:to-emerald-600 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {submitting ? (
