@@ -14,6 +14,7 @@ import KhaltiSuccess from "./Components/KhaltiSuccess.jsx";
 
 import useUser from "./hooks/useUser.jsx";
 import PlacesToVisit from "./pages/PlacesToVisit.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
 
 export const serverURL = "http://localhost:5000";
 
@@ -72,6 +73,8 @@ const App = () => {
         />
 
         <Route path="/khalti/payment_success" element={<KhaltiSuccess />} />
+
+        <Route path="/admin/*" element={<AdminDashboard />} />
       </Routes>
     </div>
   );

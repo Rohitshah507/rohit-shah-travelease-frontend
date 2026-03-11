@@ -22,10 +22,9 @@ const Skeleton5 = ({ className = "" }) => (
 // ─── Edit Modal ────────────────────────────────────────────────────────────────
 function EditModal({ profile, onClose, onSaved }) {
   const [form, setForm] = useState({
-    name: profile?.name ?? "",
-    phone: profile?.phone ?? "",
-    location: profile?.location ?? "",
-    license: profile?.license ?? "",
+    name: profile?.username ?? "",
+    phoneNumber: profile?.phoneNumber ?? "",
+    location: profile?.location ?? "Nepal",
     experience: profile?.experience ?? "",
     specializations: (profile?.specializations ?? []).join(", "),
     languages: (profile?.languages ?? []).join(", "),
@@ -42,7 +41,6 @@ function EditModal({ profile, onClose, onSaved }) {
       setError("");
       const token = getToken();
 
-      // Build payload — split comma-separated tags back into arrays
       const payload = {
         ...form,
         specializations: form.specializations
@@ -56,12 +54,12 @@ function EditModal({ profile, onClose, onSaved }) {
       };
 
       const { data } = await axios.put(
-        `${serverURL}/api/auth/user/update`,
+        `${serverURL}/api/auth/user/update/${profile._id}`,
         payload,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      onSaved(data.user ?? data);
+      onSaved(data.user ?? data.userDetails ?? data);
       onClose();
     } catch (err) {
       setError(err.response?.data?.message ?? err.message ?? "Failed to save");
@@ -71,7 +69,6 @@ function EditModal({ profile, onClose, onSaved }) {
   };
 
   return (
-    /* backdrop */
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
@@ -91,10 +88,9 @@ function EditModal({ profile, onClose, onSaved }) {
         {/* body */}
         <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
           {[
-            { name: "name", label: "Full Name", type: "text" },
-            { name: "phone", label: "Phone", type: "tel" },
+            { name: "username", label: "Full Name", type: "text" },
+            { name: "phoneNumber", label: "Phone", type: "tel" },
             { name: "location", label: "Location", type: "text" },
-            { name: "license", label: "License No.", type: "text" },
             { name: "experience", label: "Experience (e.g. 5 years)", type: "text" },
           ].map((field) => (
             <div key={field.name}>
@@ -114,9 +110,7 @@ function EditModal({ profile, onClose, onSaved }) {
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
               Specializations{" "}
-              <span className="normal-case font-normal text-gray-400">
-                (comma-separated)
-              </span>
+              <span className="normal-case font-normal text-gray-400">(comma-separated)</span>
             </label>
             <input
               name="specializations"
@@ -130,9 +124,7 @@ function EditModal({ profile, onClose, onSaved }) {
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
               Languages{" "}
-              <span className="normal-case font-normal text-gray-400">
-                (comma-separated)
-              </span>
+              <span className="normal-case font-normal text-gray-400">(comma-separated)</span>
             </label>
             <input
               name="languages"
@@ -164,11 +156,7 @@ function EditModal({ profile, onClose, onSaved }) {
             disabled={saving}
             className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-60 text-gray-900 font-bold px-5 py-2 rounded-xl text-sm transition"
           >
-            {saving ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Save size={14} />
-            )}
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
             {saving ? "Saving…" : "Save Changes"}
           </button>
         </div>
@@ -178,7 +166,7 @@ function EditModal({ profile, onClose, onSaved }) {
 }
 
 // ─── Main Profile Component ────────────────────────────────────────────────────
-export function Profile({ guideId }) {
+export function Profile() {
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -191,39 +179,20 @@ export function Profile({ guideId }) {
         const token = getToken();
         const headers = { Authorization: `Bearer ${token}` };
 
-        if (guideId) {
-          // Viewing another guide's profile
-          const [pRes, sRes] = await Promise.all([
-            axios.get(`${serverURL}/api/auth/user/${guideId}`, { headers }),
-            axios.get(`${serverURL}/api/auth/user/${guideId}`, { headers }),
-          ]);
-          setProfile(pRes.data.guide || pRes.data);
-          setStats(sRes.data);
-        } else {
-          // Viewing own profile — use the authenticated user endpoint
-          const { data } = await axios.get(`${serverURL}/api/auth/user`, {
-            headers,
-          });
-          setProfile(data.user ?? data);
-          // stats endpoint optional for own profile
-          try {
-            const sRes = await axios.get(
-              `${serverURL}/api/guide/${(data.user ?? data)._id}/stats`,
-              { headers }
-            );
-            setStats(sRes.data);
-          } catch {
-            // stats not critical — silently ignore
-          }
-        }
+        const { data } = await axios.get(`${serverURL}/api/auth/user`, { headers });
+        const userData = data.userDetails ?? data.user ?? data;
+
+        console.log("User Data:", userData);
+        setProfile(userData);
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
-  }, [guideId]);
+  }, []);
 
   if (loading)
     return (
@@ -234,10 +203,15 @@ export function Profile({ guideId }) {
     );
 
   const initials =
+    profile?.username
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("") ??
     profile?.name
       ?.split(" ")
       .map((n) => n[0])
-      .join("") ?? "G";
+      .join("") ??
+    "G";
 
   return (
     <>
@@ -253,7 +227,7 @@ export function Profile({ guideId }) {
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-xl font-black text-gray-900">
-                  {profile?.name}
+                  {profile?.username}
                 </h2>
                 <p className="text-yellow-600 font-medium">
                   {profile?.role ?? "Tour Guide"}
@@ -278,15 +252,13 @@ export function Profile({ guideId }) {
                 </div>
               </div>
 
-              {/* Edit button — only shown on own profile (no guideId prop) */}
-              {!guideId && (
-                <button
-                  onClick={() => setEditOpen(true)}
-                  className="flex items-center gap-2 bg-yellow-500 text-gray-900 font-bold px-4 py-2 rounded-xl text-sm hover:bg-yellow-400 transition"
-                >
-                  <Edit2 size={14} /> Edit Profile
-                </button>
-              )}
+              {/* Edit button — always visible on own profile */}
+              <button
+                onClick={() => setEditOpen(true)}
+                className="flex items-center gap-2 bg-yellow-500 text-gray-900 font-bold px-4 py-2 rounded-xl text-sm hover:bg-yellow-400 transition"
+              >
+                <Edit2 size={14} /> Edit Profile
+              </button>
             </div>
           </div>
         </div>
@@ -298,9 +270,9 @@ export function Profile({ guideId }) {
             <h3 className="font-bold text-gray-900">Personal Info</h3>
             {[
               { icon: Mail, label: "Email", value: profile?.email },
-              { icon: Phone, label: "Phone", value: profile?.phone },
-              { icon: MapPin, label: "Location", value: profile?.location },
-              { icon: FileText, label: "License", value: profile?.license },
+              { icon: Phone, label: "Phone", value: profile?.phoneNumber },
+              { icon: MapPin, label: "Location", value: profile?.location ?? "Nepal" },
+              { icon: FileText, label: "Role", value: profile?.role ?? "Tour Guide" },
             ].map((f, i) => (
               <div key={i} className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-yellow-50 rounded-xl flex items-center justify-center">
@@ -352,9 +324,7 @@ export function Profile({ guideId }) {
 
             <div className="pt-4 border-t border-gray-100">
               <div className="flex justify-between mb-3">
-                <span className="text-sm font-bold text-gray-900">
-                  Profile Completion
-                </span>
+                <span className="text-sm font-bold text-gray-900">Profile Completion</span>
                 <span className="text-sm font-bold text-yellow-600">
                   {profile?.profileCompletion ?? 0}%
                 </span>
