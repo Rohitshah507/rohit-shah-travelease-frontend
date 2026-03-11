@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { MapPin, Users, Navigation, Clock, RefreshCw } from "lucide-react";
-import { serverURL } from "../App";
+import { serverURL } from "../../App";
 
 const GuideTracking = () => {
   const [activeGuides, setActiveGuides] = useState([]);

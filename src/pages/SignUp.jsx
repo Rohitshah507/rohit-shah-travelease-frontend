@@ -4,7 +4,7 @@ import { FaEye } from "react-icons/fa";
 import { FaEyeSlash } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { serverURL } from "../App.jsx";
+import { serverURL } from "../App";
 
 const SignUp = () => {
   const primaryColor = "#ff4d2d";

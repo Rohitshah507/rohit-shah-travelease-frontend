@@ -21,9 +21,9 @@ import {
   Users,
 } from "lucide-react";
 import axios from "axios";
-import { serverURL } from "../App";
-import Footer from "../Components/Footer";
-import Navbar from "../Components/Navbar";
+import { serverURL } from "../../App";
+import Footer from "../../Components/Footer";
+import Navbar from "../../Components/Navbar";
 
 const PlacesToVisit = () => {
   const navigate = useNavigate();

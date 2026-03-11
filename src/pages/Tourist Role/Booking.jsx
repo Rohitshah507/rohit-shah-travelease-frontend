@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getToken } from "../pages/Login.jsx";
+import { getToken } from "../Login.jsx";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import {
@@ -23,10 +23,10 @@ import {
   Sparkles,
   XCircle,
 } from "lucide-react";
-import { serverURL } from "../App";
+import { serverURL } from "../../App.jsx";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import useUser from "../hooks/useUser.jsx";
+import useUser from "../../hooks/useUser.jsx";
 
 const BookingPage = () => {
   useUser();

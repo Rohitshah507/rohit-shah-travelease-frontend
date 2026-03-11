@@ -11,9 +11,9 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
-import Footer from "../Components/Footer";
+import Footer from "../../Components/Footer";
 import toast, { Toaster } from "react-hot-toast";
-import Navbar from "../Components/Navbar";
+import Navbar from "../../Components/Navbar";
 
 const TouristDashboard = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

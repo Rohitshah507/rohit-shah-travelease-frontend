@@ -29,7 +29,7 @@ import { Tracking } from "./Tracking";
 import { Reviews } from "./Reviews";
 import { Earnings } from "./Earnings";
 import { Profile } from "./Profile";
-import { getToken } from "../Login.jsx";
+import { getToken } from "../Login";
 
 export default function GuideDashboard() {
   const { userData } = useSelector((state) => state.user);

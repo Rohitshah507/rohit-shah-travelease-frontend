@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { serverURL } from "../../App";
-import { getToken } from "../Login.jsx";
+import { getToken } from "../Login";
 
 const avatarColors = [
   "from-violet-400 to-purple-500",

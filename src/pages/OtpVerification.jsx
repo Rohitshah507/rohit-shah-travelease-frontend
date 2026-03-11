@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
-import { serverURL } from "../App.jsx";
+import { serverURL } from "../App";
 
 const OtpVerification = () => {
   const [otp, setOtp] = useState(["", "", "", "", ""]);

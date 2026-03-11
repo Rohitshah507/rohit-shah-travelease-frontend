@@ -10,7 +10,7 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import { serverURL } from "../App";
+import { serverURL } from "../../App";
 
 const AdminOverview = () => {
   const [stats, setStats] = useState({

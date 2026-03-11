@@ -2,9 +2,9 @@ import React, { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-import TouristDashboard from "./TouristDashboard";
+import TouristDashboard from "./Tourist Role/TouristDashboard";
 import GuideDashboard from "./Guide Role/GuideDashboard";
-import AdminDashboard from "./AdminDashboard";
+import AdminDashboard from "./Admin Role/AdminDashboard";
 
 const Home = () => {
   const { userData } = useSelector((state) => state.user);

@@ -12,8 +12,8 @@ import {
   Loader2,
 } from "lucide-react";
 import axios from "axios";
-import { serverURL } from "../../App.jsx";
-import { getToken } from "../Login.jsx";
+import { serverURL } from "../../App";
+import { getToken } from "../Login";
 
 const Skeleton5 = ({ className = "" }) => (
   <div className={`animate-pulse bg-gray-200 rounded-xl ${className}`} />

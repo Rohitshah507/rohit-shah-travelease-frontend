@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import useUser from "../../hooks/useUser";
 import { Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -19,7 +21,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
-import { serverURL } from "../App";
+import { serverURL } from "../../App";
 
 // Import child components (we'll create these)
 import AdminOverview from "./AdminOverview";
@@ -37,10 +39,19 @@ const AdminDashboard = () => {
   const [pendingGuides, setPendingGuides] = useState([]);
   const [notifications, setNotifications] = useState([]);
 
+  // Call the hook to fetch & sync user into Redux
+  useUser();
+
+  // Get real user data from Redux store
+  const userData = useSelector((state) => state.user.userData);
+  console.log(userData)
+
   const admin = {
-    name: "Admin User",
-    email: "admin@travelease.com",
-    avatar: "AD",
+    name: userData?.userDetails?.username || "Admin User",
+    email: userData?.userDetails?.email || "admin@travelease.com",
+    avatar: userData?.userDetails?.username
+      ? userData.userDetails.username.slice(0, 2).toUpperCase()
+      : "AD",
   };
 
   // Fetch pending guide approvals
@@ -51,13 +62,16 @@ const AdminDashboard = () => {
   const fetchPendingGuides = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${serverURL}/api/admin/pending-guides`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(
+        `${serverURL}/api/admin/pending-guides`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       setPendingGuides(response.data.data || []);
-      
+
       // Create notifications for pending guides
-      const guideNotifications = (response.data.data || []).map(guide => ({
+      const guideNotifications = (response.data.data || []).map((guide) => ({
         id: guide._id,
         type: "guide_approval",
         message: `New guide registration: ${guide.username}`,
@@ -71,28 +85,35 @@ const AdminDashboard = () => {
   };
 
   const handleLogout = () => {
-    toast.promise(
-      new Promise((resolve) => {
+    toast
+      .promise(
+        new Promise((resolve) => {
+          setTimeout(() => {
+            localStorage.removeItem("token");
+            resolve();
+          }, 800);
+        }),
+        {
+          loading: "Logging out...",
+          success: "Logged out successfully!",
+          error: "Logout failed",
+        },
+      )
+      .then(() => {
         setTimeout(() => {
-          localStorage.removeItem("token");
-          resolve();
-        }, 800);
-      }),
-      {
-        loading: "Logging out...",
-        success: "Logged out successfully!",
-        error: "Logout failed",
-      }
-    ).then(() => {
-      setTimeout(() => {
-        navigate("/login");
-      }, 500);
-    });
+          navigate("/login");
+        }, 500);
+      });
   };
 
   const menuItems = [
     { path: "/admin", icon: LayoutDashboard, label: "Overview", exact: true },
-    { path: "/admin/guide-approvals", icon: UserCheck, label: "Guide Approvals", badge: pendingGuides.length },
+    {
+      path: "/admin/guide-approvals",
+      icon: UserCheck,
+      label: "Guide Approvals",
+      badge: pendingGuides.length,
+    },
     { path: "/admin/packages", icon: Package, label: "All Packages" },
     { path: "/admin/bookings", icon: FileText, label: "Bookings" },
     { path: "/admin/payments", icon: CreditCard, label: "Payment History" },
@@ -101,7 +122,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-gray-50 to-purple-50">
-      
       {/* Toast Container */}
       <Toaster
         position="top-right"
@@ -124,39 +144,48 @@ const AdminDashboard = () => {
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
-            
             {/* Left: Logo + Menu Toggle */}
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="p-2 hover:bg-violet-50 rounded-lg transition-colors"
               >
-                {sidebarOpen ? <X size={24} className="text-gray-700" /> : <Menu size={24} className="text-gray-700" />}
+                {sidebarOpen ? (
+                  <X size={24} className="text-gray-700" />
+                ) : (
+                  <Menu size={24} className="text-gray-700" />
+                )}
               </button>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                   <LayoutDashboard size={24} className="text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-black text-gray-900">TravelEase</h1>
-                  <p className="text-xs text-gray-500 font-semibold">Admin Panel</p>
+                  <h1 className="text-xl font-black text-gray-900">
+                    TravelEase
+                  </h1>
+                  <p className="text-xs text-gray-500 font-semibold">
+                    Admin Panel
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Right: Notifications + Profile */}
             <div className="flex items-center gap-4">
-              
               {/* Notifications */}
               <div className="relative">
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
                   className="relative p-2.5 hover:bg-violet-50 rounded-xl transition-colors group"
                 >
-                  <Bell size={24} className="text-gray-700 group-hover:text-violet-600 transition-colors" />
-                  {notifications.filter(n => n.unread).length > 0 && (
+                  <Bell
+                    size={24}
+                    className="text-gray-700 group-hover:text-violet-600 transition-colors"
+                  />
+                  {notifications.filter((n) => n.unread).length > 0 && (
                     <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
-                      {notifications.filter(n => n.unread).length}
+                      {notifications.filter((n) => n.unread).length}
                     </span>
                   )}
                 </button>
@@ -164,17 +193,31 @@ const AdminDashboard = () => {
                 {/* Notifications Dropdown */}
                 {showNotifications && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowNotifications(false)}
+                    />
                     <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 animate-[slideDown_0.2s_ease-out]">
                       <div className="p-4 bg-gradient-to-r from-violet-600 to-purple-600 border-b">
-                        <h3 className="font-bold text-white text-lg">Notifications</h3>
-                        <p className="text-xs text-violet-100">You have {notifications.filter(n => n.unread).length} unread notifications</p>
+                        <h3 className="font-bold text-white text-lg">
+                          Notifications
+                        </h3>
+                        <p className="text-xs text-violet-100">
+                          You have{" "}
+                          {notifications.filter((n) => n.unread).length} unread
+                          notifications
+                        </p>
                       </div>
                       <div className="max-h-96 overflow-y-auto">
                         {notifications.length === 0 ? (
                           <div className="p-8 text-center">
-                            <Bell size={48} className="text-gray-300 mx-auto mb-3" />
-                            <p className="text-gray-500 font-medium">No notifications yet</p>
+                            <Bell
+                              size={48}
+                              className="text-gray-300 mx-auto mb-3"
+                            />
+                            <p className="text-gray-500 font-medium">
+                              No notifications yet
+                            </p>
                           </div>
                         ) : (
                           notifications.map((notif) => (
@@ -188,8 +231,12 @@ const AdminDashboard = () => {
                               <div className="flex items-start gap-3">
                                 <div className="w-2 h-2 bg-violet-500 rounded-full mt-2 flex-shrink-0" />
                                 <div className="flex-1">
-                                  <p className="text-sm font-semibold text-gray-900">{notif.message}</p>
-                                  <p className="text-xs text-gray-500 mt-1">{notif.time}</p>
+                                  <p className="text-sm font-semibold text-gray-900">
+                                    {notif.message}
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {notif.time}
+                                  </p>
                                 </div>
                               </div>
                             </div>
@@ -221,12 +268,18 @@ const AdminDashboard = () => {
                   <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-violet-600 font-bold text-sm">
                     {admin.avatar}
                   </div>
-                  <ChevronDown size={18} className={`transition-transform ${showProfileMenu ? "rotate-180" : ""}`} />
+                  <ChevronDown
+                    size={18}
+                    className={`transition-transform ${showProfileMenu ? "rotate-180" : ""}`}
+                  />
                 </button>
 
                 {showProfileMenu && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowProfileMenu(false)}
+                    />
                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 animate-[slideDown_0.2s_ease-out]">
                       <div className="p-5 bg-gradient-to-r from-violet-600 to-purple-600">
                         <div className="flex items-center gap-3">
@@ -235,7 +288,9 @@ const AdminDashboard = () => {
                           </div>
                           <div>
                             <p className="font-bold text-white">{admin.name}</p>
-                            <p className="text-xs text-violet-100">{admin.email}</p>
+                            <p className="text-xs text-violet-100">
+                              {admin.email}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -248,7 +303,9 @@ const AdminDashboard = () => {
                           className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 rounded-xl transition-colors text-left"
                         >
                           <LogOut size={20} className="text-red-500" />
-                          <span className="font-semibold text-gray-700">Logout</span>
+                          <span className="font-semibold text-gray-700">
+                            Logout
+                          </span>
                         </button>
                       </div>
                     </div>
@@ -286,9 +343,13 @@ const AdminDashboard = () => {
                     <item.icon size={20} />
                     <span className="flex-1">{item.label}</span>
                     {item.badge > 0 && (
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                        isActive ? "bg-white text-violet-600" : "bg-red-500 text-white"
-                      }`}>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                          isActive
+                            ? "bg-white text-violet-600"
+                            : "bg-red-500 text-white"
+                        }`}
+                      >
                         {item.badge}
                       </span>
                     )}
@@ -300,10 +361,15 @@ const AdminDashboard = () => {
         </aside>
 
         {/* Main Content */}
-        <main className={`flex-1 ${sidebarOpen ? "ml-64" : "ml-0"} transition-all duration-300 p-6`}>
+        <main
+          className={`flex-1 ${sidebarOpen ? "ml-64" : "ml-0"} transition-all duration-300 p-6`}
+        >
           <Routes>
             <Route path="/" element={<AdminOverview />} />
-            <Route path="/guide-approvals" element={<GuideApprovals onUpdate={fetchPendingGuides} />} />
+            <Route
+              path="/guide-approvals"
+              element={<GuideApprovals onUpdate={fetchPendingGuides} />}
+            />
             <Route path="/packages" element={<AllPackages />} />
             <Route path="/bookings" element={<BookingManagement />} />
             <Route path="/payments" element={<PaymentHistory />} />

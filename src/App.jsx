@@ -3,18 +3,19 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 import SignUp from "./pages/SignUp.jsx";
-import LogIn, { getToken } from "./pages/Login.jsx";
+import LogIn from "./pages/Login.jsx";
+import { getToken } from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
 import ForgetPassword from "./pages/ForgetPassword.jsx";
 import OtpVerification from "./pages/OtpVerification.jsx";
 import Hero from "./pages/landing.jsx";
-import Destinations from "./pages/Destinations.jsx";
-import BookingPage from "./pages/Booking.jsx";
+import Destinations from "./pages/Tourist Role/Destinations.jsx";
+import BookingPage from "./pages/Tourist Role/Booking.jsx";
 import KhaltiSuccess from "./Components/KhaltiSuccess.jsx";
 
 import useUser from "./hooks/useUser.jsx";
-import PlacesToVisit from "./pages/PlacesToVisit.jsx";
-import AdminDashboard from "./pages/AdminDashboard.jsx";
+import PlacesToVisit from "./pages/Tourist Role/PlacesToVisit.jsx";
+import AdminDashboard from "./pages/Admin Role/AdminDashboard.jsx";
 
 export const serverURL = "http://localhost:5000";
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { FileText, CheckCircle, XCircle, Clock } from "lucide-react";
-import { serverURL } from "../App";
+import { serverURL } from "../../App";
 
 const BookingManagement = () => {
   const [bookings, setBookings] = useState([]);

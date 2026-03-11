@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { Package, MapPin, DollarSign, Users, Calendar, Eye, Edit, Trash2 } from "lucide-react";
-import { serverURL } from "../App";
+import { serverURL } from "../../App";
 
 const AllPackages = () => {
   const [packages, setPackages] = useState([]);

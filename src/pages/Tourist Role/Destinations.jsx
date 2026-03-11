@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getToken } from "../pages/Login.jsx";
+import { getToken } from "../Login.jsx";
 
 import {
   Search,
@@ -22,8 +22,8 @@ import {
 
 import { NavLink, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { serverURL } from "../App.jsx";
-import Navbar from "../Components/Navbar.jsx";
+import { serverURL } from "../../App.jsx";
+import Navbar from "../../Components/Navbar.jsx";
 
 // Helper: pick badge label & color based on status or index
 const getBadgeInfo = (destination, index) => {
