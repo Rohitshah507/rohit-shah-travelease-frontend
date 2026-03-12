@@ -4,7 +4,6 @@ import useUser from "../../hooks/useUser";
 import { Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
-  Users,
   MapPin,
   Package,
   FileText,
@@ -14,16 +13,12 @@ import {
   ChevronDown,
   Menu,
   X,
-  CheckCircle,
-  Clock,
-  XCircle,
   UserCheck,
 } from "lucide-react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import { serverURL } from "../../App";
 
-// Import child components (we'll create these)
 import AdminOverview from "./AdminOverview";
 import GuideApprovals from "./GuideApprovals";
 import AllPackages from "./AllPackages";
@@ -40,12 +35,8 @@ const AdminDashboard = () => {
   const [pendingGuides, setPendingGuides] = useState([]);
   const [notifications, setNotifications] = useState([]);
 
-  // Call the hook to fetch & sync user into Redux
   useUser();
-
-  // Get real user data from Redux store
   const userData = useSelector((state) => state.user.userData);
-  console.log(userData)
 
   const admin = {
     name: userData?.userDetails?.username || "Admin User",
@@ -55,7 +46,6 @@ const AdminDashboard = () => {
       : "AD",
   };
 
-  // Fetch pending guide approvals
   useEffect(() => {
     fetchPendingGuides();
   }, []);
@@ -63,23 +53,20 @@ const AdminDashboard = () => {
   const fetchPendingGuides = async () => {
     try {
       const token = getToken();
-      const response = await axios.get(
-        `${serverURL}/api/auth/pending-guides`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+      const response = await axios.get(`${serverURL}/api/auth/pending-guides`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const guides = response.data.data || [];
+      setPendingGuides(guides);
+      setNotifications(
+        guides.map((guide) => ({
+          id: guide._id,
+          type: "guide_approval",
+          message: `New guide registration: ${guide.username}`,
+          time: new Date(guide.createdAt).toLocaleString(),
+          unread: true,
+        })),
       );
-      setPendingGuides(response.data.data || []);
-
-      // Create notifications for pending guides
-      const guideNotifications = (response.data.data || []).map((guide) => ({
-        id: guide._id,
-        type: "guide_approval",
-        message: `New guide registration: ${guide.username}`,
-        time: new Date(guide.createdAt).toLocaleString(),
-        unread: true,
-      }));
-      setNotifications(guideNotifications);
     } catch (error) {
       console.error("Error fetching pending guides:", error);
     }
@@ -101,12 +88,11 @@ const AdminDashboard = () => {
         },
       )
       .then(() => {
-        setTimeout(() => {
-          navigate("/login");
-        }, 500);
+        setTimeout(() => navigate("/login"), 500);
       });
   };
 
+  // ── Sidebar menu — paths must match <Routes> below exactly ──────────────
   const menuItems = [
     { path: "/admin", icon: LayoutDashboard, label: "Overview", exact: true },
     {
@@ -123,7 +109,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-gray-50 to-purple-50">
-      {/* Toast Container */}
       <Toaster
         position="top-right"
         toastOptions={{
@@ -135,17 +120,15 @@ const AdminDashboard = () => {
             borderRadius: "12px",
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
           },
-          success: {
-            iconTheme: { primary: "#7c3aed", secondary: "#fff" },
-          },
+          success: { iconTheme: { primary: "#7c3aed", secondary: "#fff" } },
         }}
       />
 
-      {/* Top Navbar */}
+      {/* ── Top Navbar ───────────────────────────────────────────────────── */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
-            {/* Left: Logo + Menu Toggle */}
+            {/* Left: toggle + logo */}
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -172,7 +155,7 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* Right: Notifications + Profile */}
+            {/* Right: notifications + profile */}
             <div className="flex items-center gap-4">
               {/* Notifications */}
               <div className="relative">
@@ -191,15 +174,14 @@ const AdminDashboard = () => {
                   )}
                 </button>
 
-                {/* Notifications Dropdown */}
                 {showNotifications && (
                   <>
                     <div
                       className="fixed inset-0 z-40"
                       onClick={() => setShowNotifications(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 animate-[slideDown_0.2s_ease-out]">
-                      <div className="p-4 bg-gradient-to-r from-violet-600 to-purple-600 border-b">
+                    <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50">
+                      <div className="p-4 bg-gradient-to-r from-violet-600 to-purple-600">
                         <h3 className="font-bold text-white text-lg">
                           Notifications
                         </h3>
@@ -209,7 +191,7 @@ const AdminDashboard = () => {
                           notifications
                         </p>
                       </div>
-                      <div className="max-h-96 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto">
                         {notifications.length === 0 ? (
                           <div className="p-8 text-center">
                             <Bell
@@ -224,14 +206,15 @@ const AdminDashboard = () => {
                           notifications.map((notif) => (
                             <div
                               key={notif.id}
-                              className={`p-4 border-b border-gray-100 hover:bg-violet-50 transition-colors cursor-pointer ${
-                                notif.unread ? "bg-violet-50/50" : ""
-                              }`}
-                              onClick={() => navigate("/admin/guide-approvals")}
+                              className={`p-4 border-b border-gray-100 hover:bg-violet-50 cursor-pointer transition-colors ${notif.unread ? "bg-violet-50/50" : ""}`}
+                              onClick={() => {
+                                navigate("/admin/guide-approvals");
+                                setShowNotifications(false);
+                              }}
                             >
                               <div className="flex items-start gap-3">
-                                <div className="w-2 h-2 bg-violet-500 rounded-full mt-2 flex-shrink-0" />
-                                <div className="flex-1">
+                                <div className="w-2 h-2 bg-violet-500 rounded-full mt-2 shrink-0" />
+                                <div>
                                   <p className="text-sm font-semibold text-gray-900">
                                     {notif.message}
                                   </p>
@@ -260,7 +243,7 @@ const AdminDashboard = () => {
                 )}
               </div>
 
-              {/* Profile Dropdown */}
+              {/* Profile */}
               <div className="relative">
                 <button
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -281,7 +264,7 @@ const AdminDashboard = () => {
                       className="fixed inset-0 z-40"
                       onClick={() => setShowProfileMenu(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 animate-[slideDown_0.2s_ease-out]">
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50">
                       <div className="p-5 bg-gradient-to-r from-violet-600 to-purple-600">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-violet-600 font-black text-lg shadow-md">
@@ -319,23 +302,21 @@ const AdminDashboard = () => {
       </nav>
 
       <div className="flex">
-        {/* Sidebar */}
+        {/* ── Sidebar ───────────────────────────────────────────────────── */}
         <aside
-          className={`${
-            sidebarOpen ? "w-64" : "w-0"
-          } bg-white border-r border-gray-200 transition-all duration-300 overflow-hidden fixed left-0 top-[73px] h-[calc(100vh-73px)] z-40 shadow-lg`}
+          className={`${sidebarOpen ? "w-64" : "w-0"} bg-white border-r border-gray-200 transition-all duration-300 overflow-hidden fixed left-0 top-[73px] h-[calc(100vh-73px)] z-40 shadow-lg`}
         >
-          <nav className="p-4 space-y-2">
+          <nav className="p-4 space-y-1">
             {menuItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
                 end={item.exact}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                  `flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-200 ${
                     isActive
                       ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-300/40"
-                      : "text-gray-700 hover:bg-violet-50"
+                      : "text-gray-700 hover:bg-violet-50 hover:text-violet-700"
                   }`
                 }
               >
@@ -361,12 +342,14 @@ const AdminDashboard = () => {
           </nav>
         </aside>
 
-        {/* Main Content */}
+        {/* ── Main Content ─────────────────────────────────────────────── */}
         <main
           className={`flex-1 ${sidebarOpen ? "ml-64" : "ml-0"} transition-all duration-300 p-6`}
         >
           <Routes>
+            {/* exact match for /admin → Overview */}
             <Route path="/" element={<AdminOverview />} />
+            {/* quick-action targets */}
             <Route
               path="/guide-approvals"
               element={<GuideApprovals onUpdate={fetchPendingGuides} />}

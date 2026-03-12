@@ -192,10 +192,6 @@ export function Earnings() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
           <h3 className="font-bold text-gray-900">Payment History</h3>
-          <button className="text-yellow-600 text-sm font-medium flex items-center gap-1 hover:bg-yellow-50 px-3 py-1.5 rounded-lg transition">
-            <Download size={14} />
-            Export CSV
-          </button>
         </div>
 
         {loading ? (
@@ -230,7 +226,7 @@ export function Earnings() {
                     {h.tourTitle}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {h.tourist} · {h.date}
+                    {h.username} · {h.date}
                   </p>
                 </div>
 
