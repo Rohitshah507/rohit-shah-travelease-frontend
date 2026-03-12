@@ -3,6 +3,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { Package, MapPin, DollarSign, Users, Calendar, Eye, Edit, Trash2 } from "lucide-react";
 import { serverURL } from "../../App";
+import { getToken } from "../Login";
 
 const AllPackages = () => {
   const [packages, setPackages] = useState([]);
@@ -14,7 +15,7 @@ const AllPackages = () => {
 
   const fetchPackages = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = getToken();
       const response = await axios.get(`${serverURL}/api/user/package`, {
         headers: { Authorization: `Bearer ${token}` },
       });

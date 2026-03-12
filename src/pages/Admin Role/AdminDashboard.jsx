@@ -30,6 +30,7 @@ import AllPackages from "./AllPackages";
 import BookingManagement from "./BookingManagement";
 import PaymentHistory from "./PaymentHistory";
 import GuideTracking from "./GuideTracking";
+import { getToken } from "../Login";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -61,9 +62,9 @@ const AdminDashboard = () => {
 
   const fetchPendingGuides = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = getToken();
       const response = await axios.get(
-        `${serverURL}/api/admin/pending-guides`,
+        `${serverURL}/api/auth/pending-guides`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
