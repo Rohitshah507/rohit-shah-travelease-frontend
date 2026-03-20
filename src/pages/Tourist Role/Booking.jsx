@@ -3,25 +3,9 @@ import { getToken } from "../Login.jsx";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import {
-  Calendar,
-  MapPin,
-  Users,
-  Clock,
-  Star,
-  Heart,
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  CreditCard,
-  User,
-  Mail,
-  Phone,
-  MessageSquare,
-  Shield,
-  Globe,
-  CheckCircle,
-  Sparkles,
-  XCircle,
+  Calendar, MapPin, Users, Clock, Star, Heart, ArrowLeft, ArrowRight,
+  Check, CreditCard, User, Mail, Phone, MessageSquare, Shield, Globe,
+  CheckCircle, Sparkles, XCircle,
 } from "lucide-react";
 import { serverURL } from "../../App.jsx";
 import { useParams } from "react-router-dom";
@@ -45,18 +29,10 @@ const BookingPage = () => {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const [formData, setFormData] = useState({
-    startDate: "",
-    endDate: "",
-    numberOfAdults: 1,
-    numberOfChildren: 0,
-    fullName: "",
-    email: "",
-    phone: "",
-    country: "",
-    specialRequests: "",
+    startDate: "", endDate: "", numberOfAdults: 1, numberOfChildren: 0,
+    fullName: "", email: "", phone: "", country: "", specialRequests: "",
   });
 
-  // Auto-fill user data from Redux
   useEffect(() => {
     if (userData?.userDetails) {
       setFormData((prev) => ({
@@ -69,50 +45,22 @@ const BookingPage = () => {
     }
   }, [userData]);
 
-  // Fetch package details + check if user already booked it
   useEffect(() => {
     const fetchPackageAndBooking = async () => {
       try {
         setLoading(true);
         const token = getToken();
-
-        const res = await axios.get(`${serverURL}/api/user/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get(`${serverURL}/api/user/${id}`, { headers: { Authorization: `Bearer ${token}` } });
         setTourPackage(res.data.packageId);
-
         try {
-          const bookingsRes = await axios.get(
-            `${serverURL}/api/booking/tourist`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            },
-          );
-
+          const bookingsRes = await axios.get(`${serverURL}/api/booking/tourist`, { headers: { Authorization: `Bearer ${token}` } });
           const existingBooking = bookingsRes.data.data?.find(
-            (booking) =>
-              (booking.tourPackageId?._id === id ||
-                booking.tourPackageId === id) &&
-              (booking.bookingStatus || "").toLowerCase() !== "cancelled",
+            (booking) => (booking.tourPackageId?._id === id || booking.tourPackageId === id) && (booking.bookingStatus || "").toLowerCase() !== "cancelled"
           );
-
-          if (existingBooking) {
-            setBookingId(existingBooking._id);
-          } else {
-            setBookingId(null);
-          }
-        } catch (bookingErr) {
-          console.log("No existing bookings found:", bookingErr.message);
-        }
-      } catch (err) {
-        console.error(
-          "FETCH ERROR:",
-          err.response?.data?.message || err.message,
-        );
-        toast.error("Failed to load package details. Please try again.");
-      } finally {
-        setLoading(false);
-      }
+          setBookingId(existingBooking ? existingBooking._id : null);
+        } catch {}
+      } catch { toast.error("Failed to load package details."); }
+      finally { setLoading(false); }
     };
     if (id) fetchPackageAndBooking();
   }, [id]);
@@ -122,509 +70,246 @@ const BookingPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ─── CANCEL BOOKING ───
   const handleCancelBooking = async () => {
     if (!bookingId) return;
     setShowCancelConfirm(false);
-
     try {
       setCancelling(true);
       const token = getToken();
-
-      await axios.put(
-        `${serverURL}/api/booking/tourist/cancel/${bookingId}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-
-      toast.success("Booking cancelled successfully!", {
-        icon: "🗑️",
-        duration: 4000,
-      });
-
-      setBookingId(null);
-      setCurrentStep(1);
-      setShowSuccessModal(false);
-    } catch (error) {
-      console.error("CANCEL ERROR:", error.response?.data || error.message);
-      toast.error(
-        error.response?.data?.message ||
-          error.message ||
-          "Cancellation failed. Please try again.",
-      );
-    } finally {
-      setCancelling(false);
-    }
+      await axios.put(`${serverURL}/api/booking/tourist/cancel/${bookingId}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success("Booking cancelled successfully!");
+      setBookingId(null); setCurrentStep(1); setShowSuccessModal(false);
+    } catch (error) { toast.error(error.response?.data?.message || "Cancellation failed."); }
+    finally { setCancelling(false); }
   };
 
-  const nextStep = () => {
-    if (currentStep < 3) setCurrentStep(currentStep + 1);
-  };
-
-  const prevStep = () => {
-    if (currentStep > 1) setCurrentStep(currentStep - 1);
-  };
-
-  // ─── BOOK ONLY ───
   const handleBooking = async (e) => {
     e.preventDefault();
     if (submitting) return;
-
     try {
       setSubmitting(true);
       const token = getToken();
-
-      const bookingResponse = await axios.post(
-        `${serverURL}/api/booking/tourist`,
-        {
-          tourPackageId: tourPackage._id,
-          startDate: formData.startDate,
-          endDate: formData.endDate,
-          numberOfAdults: formData.numberOfAdults,
-          numberOfChildren: formData.numberOfChildren,
-          bookingStatus: "Pending",
-        },
-        { headers: { Authorization: `Bearer ${token}` } },
+      const bookingResponse = await axios.post(`${serverURL}/api/booking/tourist`,
+        { tourPackageId: tourPackage._id, startDate: formData.startDate, endDate: formData.endDate, numberOfAdults: formData.numberOfAdults, numberOfChildren: formData.numberOfChildren, bookingStatus: "Pending" },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      const createdBookingId =
-        bookingResponse.data.data?._id || bookingResponse.data._id;
-
-      if (!createdBookingId) {
-        throw new Error("Booking ID not returned from server");
-      }
-
+      const createdBookingId = bookingResponse.data.data?._id || bookingResponse.data._id;
+      if (!createdBookingId) throw new Error("Booking ID not returned");
       setBookingId(createdBookingId);
-      toast.success("Booking created successfully! 🎉", { duration: 3000 });
+      toast.success("Booking created successfully! 🎉");
       setShowSuccessModal(true);
-    } catch (error) {
-      console.error("BOOKING ERROR:", error.response?.data || error.message);
-      toast.error(
-        error.response?.data?.message ||
-          error.message ||
-          "Booking failed. Please try again.",
-      );
-    } finally {
-      setSubmitting(false);
-    }
+    } catch (error) { toast.error(error.response?.data?.message || "Booking failed."); }
+    finally { setSubmitting(false); }
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // ✅ KHALTI PAYMENT — FIXED
-  // ─────────────────────────────────────────────────────────────
   const handlePayment = async () => {
-    if (!bookingId) {
-      toast.error("No booking found. Please create a booking first.");
-      return;
-    }
-
+    if (!bookingId) { toast.error("No booking found."); return; }
     const loadingToast = toast.loading("Redirecting to Khalti...");
-
     try {
       setProcessingPayment(true);
       const token = getToken();
-
-      const paymentResponse = await axios.post(
-        `${serverURL}/api/payment/${bookingId}/khalti/initiate`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-
-      console.log("KHALTI RESPONSE:", paymentResponse.data);
-
-      const khaltiPaymentUrl =
-        (typeof paymentResponse.data?.paymentUrl === "string"
-          ? paymentResponse.data.paymentUrl
-          : null) ||
-        paymentResponse.data?.paymentUrl?.payment_url ||
-        paymentResponse.data?.payment_url;
-
-      if (!khaltiPaymentUrl) {
-        toast.dismiss(loadingToast);
-        throw new Error(
-          "Khalti payment URL not returned from server. Check backend response.",
-        );
-      }
-
+      const paymentResponse = await axios.post(`${serverURL}/api/payment/${bookingId}/khalti/initiate`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      const khaltiPaymentUrl = (typeof paymentResponse.data?.paymentUrl === "string" ? paymentResponse.data.paymentUrl : null) || paymentResponse.data?.paymentUrl?.payment_url || paymentResponse.data?.payment_url;
+      if (!khaltiPaymentUrl) { toast.dismiss(loadingToast); throw new Error("Khalti URL not returned."); }
       toast.dismiss(loadingToast);
-      toast.success("Redirecting to Khalti payment...", { duration: 2000 });
-
-      setTimeout(() => {
-        window.location.href = khaltiPaymentUrl;
-      }, 500);
+      toast.success("Redirecting to Khalti...", { duration: 2000 });
+      setTimeout(() => { window.location.href = khaltiPaymentUrl; }, 500);
     } catch (error) {
       toast.dismiss(loadingToast);
-      console.error(
-        "KHALTI PAYMENT ERROR:",
-        error.response?.data || error.message,
-      );
-      toast.error(
-        error.response?.data?.message ||
-          error.message ||
-          "Payment initiation failed. Please try again.",
-      );
+      toast.error(error.response?.data?.message || "Payment failed.");
       setProcessingPayment(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="relative w-20 h-20 mx-auto">
-            <div className="absolute top-0 left-0 w-full h-full border-4 border-violet-200 rounded-full"></div>
-            <div className="absolute top-0 left-0 w-full h-full border-4 border-violet-600 rounded-full animate-spin border-t-transparent"></div>
-          </div>
-          <p className="text-gray-600 font-semibold animate-pulse">
-            Loading booking details...
-          </p>
-        </div>
+  if (loading) return (
+    <div className="min-h-screen bg-[#07030f] flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-14 h-14 rounded-full border-[3px] border-violet-500/20 border-t-violet-500 animate-spin mx-auto mb-4" />
+        <p className="text-[#6b5a8e] font-semibold">Loading booking details...</p>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (!tourPackage) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-2xl font-bold text-gray-400">Package not found</p>
-        </div>
-      </div>
-    );
-  }
+  if (!tourPackage) return (
+    <div className="min-h-screen bg-[#07030f] flex items-center justify-center">
+      <p className="text-[#6b5a8e] text-xl font-bold">Package not found</p>
+    </div>
+  );
+
+  const inputClass = "w-full bg-violet-500/8 border border-violet-500/25 text-white rounded-[14px] px-4 py-3 outline-none text-sm font-medium placeholder:text-violet-400/40 focus:border-violet-500/70 focus:shadow-[0_0_0_3px_rgba(139,92,246,0.12)] transition-all [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-50";
+  const iconInputClass = "relative";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50">
-      {/* Toast Notifications */}
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            borderRadius: "12px",
-            fontWeight: "600",
-            fontSize: "14px",
-            boxShadow: "0 8px 32px rgba(109,40,217,0.18)",
-          },
-          success: {
-            style: {
-              background: "#f5f3ff",
-              color: "#5b21b6",
-              border: "1.5px solid #c4b5fd",
-            },
-            iconTheme: { primary: "#7c3aed", secondary: "#fff" },
-          },
-          error: {
-            style: {
-              background: "#fff1f2",
-              color: "#be123c",
-              border: "1.5px solid #fecdd3",
-            },
-            iconTheme: { primary: "#e11d48", secondary: "#fff" },
-          },
-          loading: {
-            style: {
-              background: "#f5f3ff",
-              color: "#5b21b6",
-              border: "1.5px solid #c4b5fd",
-            },
-            iconTheme: { primary: "#7c3aed", secondary: "#fff" },
-          },
-        }}
-      />
-
-      {/* Custom Cancel Confirm Modal */}
-      {showCancelConfirm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 border-2 border-red-100 animate-[slideUp_0.25s_ease-out]">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center shrink-0">
-                <XCircle size={26} className="text-red-500" />
-              </div>
-              <div>
-                <h3 className="text-lg font-extrabold text-gray-900">
-                  Cancel Booking?
-                </h3>
-                <p className="text-sm text-gray-500">
-                  This action cannot be undone.
-                </p>
-              </div>
-            </div>
-            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-              Are you sure you want to cancel this booking? Your reservation
-              will be permanently removed.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowCancelConfirm(false)}
-                className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 transition-all duration-200"
-              >
-                Keep Booking
-              </button>
-              <button
-                onClick={handleCancelBooking}
-                disabled={cancelling}
-                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-all duration-200 active:scale-95 disabled:opacity-60 flex items-center justify-center gap-2"
-              >
-                {cancelling ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Cancelling...
-                  </>
-                ) : (
-                  "Yes, Cancel"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Success Modal */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border-2 border-green-200 animate-[slideUp_0.3s_ease-out]">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 px-6 py-5 text-center relative overflow-hidden">
-              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMiIgZmlsbD0id2hpdGUiIGZpbGwtb3BhY2l0eT0iMC4xIi8+PC9zdmc+')] opacity-20"></div>
-              <div className="relative">
-                <div className="w-16 h-16 mx-auto mb-3 bg-white rounded-full flex items-center justify-center shadow-lg animate-[bounce_1s_ease-in-out]">
-                  <CheckCircle size={36} className="text-green-500" />
-                </div>
-                <h3 className="text-xl font-black text-white mb-1 flex items-center justify-center gap-2">
-                  <Sparkles size={20} className="animate-pulse" />
-                  Booking Confirmed!
-                  <Sparkles size={20} className="animate-pulse" />
-                </h3>
-                <p className="text-green-100 text-xs">
-                  Your adventure is reserved
-                </p>
-              </div>
-            </div>
-
-            {/* Body */}
-            <div className="p-5 space-y-3">
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-3 border-2 border-green-200">
-                <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider mb-1">
-                  Booking ID
-                </p>
-                <p className="font-mono font-bold text-green-900 text-xs">
-                  {bookingId}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                {[
-                  { label: "Package", value: tourPackage.title },
-                  { label: "Location", value: tourPackage.destination },
-                  {
-                    label: "Dates",
-                    value: `${new Date(formData.startDate).toLocaleDateString(
-                      "en-US",
-                      { month: "short", day: "numeric" },
-                    )} - ${new Date(formData.endDate).toLocaleDateString(
-                      "en-US",
-                      { month: "short", day: "numeric" },
-                    )}`,
-                  },
-                  {
-                    label: "Guests",
-                    value: `${formData.numberOfAdults} Adults, ${formData.numberOfChildren} Children`,
-                  },
-                ].map((row) => (
-                  <div
-                    key={row.label}
-                    className="flex justify-between items-center py-1.5 border-b border-gray-100"
-                  >
-                    <span className="text-xs text-gray-600 font-medium">
-                      {row.label}
-                    </span>
-                    <span className="text-xs font-bold text-gray-900">
-                      {row.value}
-                    </span>
-                  </div>
-                ))}
-                <div className="flex justify-between items-center py-2 bg-green-50 rounded-lg px-3">
-                  <span className="text-sm text-green-700 font-bold">
-                    Total Amount
-                  </span>
-                  <span className="text-xl font-black text-green-600">
-                    Rs. {tourPackage.price}
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-4 flex gap-3">
-                <Shield
-                  className="text-purple-500 flex-shrink-0 mt-0.5"
-                  size={16}
-                />
-                <div className="text-xs text-purple-800">
-                  <p className="font-semibold mb-0.5">Payment Required</p>
-                  <p>
-                    Complete payment via Khalti to confirm your booking. Click
-                    "Pay Now" below.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer buttons */}
-            <div className="px-5 pb-5 flex gap-2">
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                className="flex-1 py-2.5 rounded-lg border-2 border-gray-300 text-gray-700 font-bold text-xs hover:bg-gray-50 transition-all duration-300"
-              >
-                Pay Later
-              </button>
-              <button
-                onClick={handlePayment}
-                disabled={processingPayment}
-                className="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-violet-500 text-white font-bold text-xs hover:from-purple-600 hover:to-violet-600 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg shadow-purple-300/40 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-              >
-                {processingPayment ? (
-                  <>
-                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard size={14} />
-                    Pay with Khalti
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="bg-white shadow-md sticky top-0 z-40 border-b-2 border-violet-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => window.history.back()}
-              className="flex items-center gap-2 text-gray-600 hover:text-violet-600 transition-colors duration-300 font-semibold group"
-            >
-              <ArrowLeft
-                size={20}
-                className="group-hover:-translate-x-1 transition-transform duration-300"
-              />
-              Back to Destinations
-            </button>
-            <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-2 text-sm">
-                <Shield className="text-green-500" size={18} />
-                <span className="text-gray-600 font-medium">
-                  Secure Booking
-                </span>
-              </div>
-              <button
-                onClick={() => setIsFavorite(!isFavorite)}
-                className={`p-3 rounded-full transition-all duration-300 ${
-                  isFavorite
-                    ? "bg-violet-600 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-violet-50"
-                }`}
-              >
-                <Heart size={20} className={isFavorite ? "fill-white" : ""} />
-              </button>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-[#07030f] text-white font-sans">
+      {/* Ambient blobs */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute top-[-10%] left-[15%] w-[540px] h-[540px] rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.16)_0%,transparent_70%)] blur-[70px]" />
+        <div className="absolute top-[40%] right-[-5%] w-[420px] h-[420px] rounded-full bg-[radial-gradient(circle,rgba(109,40,217,0.12)_0%,transparent_70%)] blur-[80px]" />
+        <div className="absolute bottom-0 left-0 w-[360px] h-[360px] rounded-full bg-[radial-gradient(circle,rgba(76,29,149,0.14)_0%,transparent_70%)] blur-[80px]" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left: Package Summary */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden sticky top-24 border-2 border-violet-100">
-              <div className="relative h-64 overflow-hidden">
-                <img
-                  src={tourPackage.imageUrls?.[0]}
-                  alt={tourPackage.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                <div className="absolute top-4 left-4 px-3 py-1 bg-white/95 backdrop-blur-sm rounded-full text-xs font-bold text-violet-600 capitalize">
-                  {tourPackage.status}
+      <Toaster position="top-right" toastOptions={{
+        duration: 4000,
+        style: { background: "#1a0a3e", color: "#e2d9f3", border: "1px solid rgba(139,92,246,0.35)", borderRadius: 14, fontWeight: 600, fontSize: 14, boxShadow: "0 8px 32px rgba(139,92,246,0.25)" },
+        success: { iconTheme: { primary: "#8b5cf6", secondary: "#1a0a3e" } },
+        error: { style: { background: "#2d0a1e", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.35)" }, iconTheme: { primary: "#ef4444", secondary: "#2d0a1e" } },
+      }} />
+
+      <div className="relative z-10">
+        {/* ── CANCEL MODAL ── */}
+        {showCancelConfirm && (
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-[10px] z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-[400px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#0f0524] border border-violet-500/40 shadow-[0_0_80px_rgba(139,92,246,0.3)] animate-[slideUp_0.3s_ease]">
+              <div className="p-7">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-[52px] h-[52px] rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
+                    <XCircle size={24} className="text-red-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-white text-lg mb-0.5">Cancel Booking?</h3>
+                    <p className="text-[#6b5a8e] text-sm">This action cannot be undone.</p>
+                  </div>
+                </div>
+                <p className="text-[#9e9ab5] text-sm leading-[1.7] mb-6">Are you sure you want to cancel? Your reservation will be permanently removed.</p>
+                <div className="flex gap-2.5">
+                  <button className="flex-1 py-3 rounded-[14px] font-bold text-sm text-violet-300 bg-violet-500/10 border border-violet-500/30 hover:bg-violet-500/20 transition-all cursor-pointer"
+                    onClick={() => setShowCancelConfirm(false)}>Keep Booking</button>
+                  <button className="flex-1 py-3 rounded-[14px] font-bold text-sm text-white bg-gradient-to-r from-red-500 to-red-700 shadow-[0_4px_15px_rgba(239,68,68,0.4)] hover:scale-[1.02] disabled:opacity-55 transition-all cursor-pointer flex items-center justify-center gap-2 border-none"
+                    onClick={handleCancelBooking} disabled={cancelling}>
+                    {cancelling ? <><div className="w-4 h-4 border-2 border-white/25 border-t-white rounded-full animate-spin" /> Cancelling...</> : "Yes, Cancel"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── SUCCESS MODAL ── */}
+        {showSuccessModal && (
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-[10px] z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-[460px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#0f0524] border border-violet-500/40 shadow-[0_0_80px_rgba(139,92,246,0.3)]">
+              {/* Header */}
+              <div className="relative overflow-hidden bg-gradient-to-r from-violet-500 via-violet-700 to-violet-900 px-7 py-7 text-center">
+                <div className="absolute inset-0 [background-image:radial-gradient(circle,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:24px_24px]" />
+                <div className="relative">
+                  <div className="w-16 h-16 mx-auto mb-3.5 bg-white/15 rounded-full border-2 border-white/30 flex items-center justify-center">
+                    <CheckCircle size={34} className="text-white" />
+                  </div>
+                  <h3 className="font-black text-white text-2xl mb-1 flex items-center justify-center gap-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+                    <Sparkles size={18} className="animate-pulse" /> Booking Confirmed! <Sparkles size={18} className="animate-pulse" />
+                  </h3>
+                  <p className="text-white/70 text-sm">Your adventure is reserved</p>
                 </div>
               </div>
 
-              <div className="p-6 space-y-4">
+              {/* Body */}
+              <div className="px-6 py-5">
+                <div className="bg-violet-500/12 border border-violet-500/30 rounded-[14px] px-4 py-3 mb-4">
+                  <p className="text-[0.65rem] font-bold tracking-[0.18em] uppercase text-violet-400 mb-1">Booking ID</p>
+                  <p className="font-mono font-bold text-white text-sm">{bookingId}</p>
+                </div>
                 <div>
-                  <h2 className="text-2xl font-extrabold text-gray-900 mb-2">
-                    {tourPackage.title}
-                  </h2>
-                  <div className="flex items-center gap-2 text-gray-600 text-sm">
-                    <MapPin size={16} className="text-violet-500" />
-                    <span>{tourPackage.destination}</span>
-                  </div>
-                </div>
-
-                <div className="flex gap-7 py-3 border-t border-b border-gray-200">
-                  <div className="flex gap-2">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Clock size={16} className="text-violet-500" />
-                      <span className="font-medium">
-                        {tourPackage.duration}
-                      </span>
-                    </div>
-                    <div className="text-gray-600 text-sm flex items-center gap-1">
-                      <Users size={16} className="text-violet-500" />
-                      <span className="font-medium">{tourPackage.group}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 text-yellow-500 text-sm font-bold">
-                    <Star size={16} className="fill-yellow-500" />
-                    <span>{tourPackage.rating}</span>
-                    <span className="text-gray-400 font-normal">
-                      ({tourPackage.reviews})
-                    </span>
-                  </div>
-                </div>
-
-                <div className="text-violet-500 text-sm font-bold">
-                  <span>
-                    <span className="text-gray-600 font-normal">
-                      Started at:{" "}
-                    </span>
-                    {new Date(tourPackage.startDate).toLocaleDateString(
-                      "en-US",
-                      {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      },
-                    )}
-                  </span>
-                </div>
-
-                <div className="space-y-3 pt-2">
-                  <div className="border-t-2 border-violet-200 pt-3 flex justify-between items-center">
-                    <span className="text-lg font-bold text-gray-900">
-                      Total
-                    </span>
-                    <span className="text-3xl font-black bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-                      Rs. {tourPackage.price}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-200">
                   {[
-                    "Free Cancellation",
-                    "Best Price",
-                    "24/7 Support",
-                    "Instant Confirm",
-                  ].map((item, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-2 text-xs text-gray-600"
-                    >
-                      <Check className="text-green-500" size={16} />
-                      <span>{item}</span>
+                    { label: "Package", value: tourPackage.title },
+                    { label: "Location", value: tourPackage.destination },
+                    { label: "Dates", value: `${new Date(formData.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${new Date(formData.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` },
+                    { label: "Guests", value: `${formData.numberOfAdults} Adults, ${formData.numberOfChildren} Children` },
+                  ].map((row) => (
+                    <div key={row.label} className="flex justify-between items-center py-2.5 border-b border-violet-500/12 last:border-b-0">
+                      <span className="text-[#6b5a8e] text-sm">{row.label}</span>
+                      <span className="text-white text-sm font-bold">{row.value}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between items-center px-4 py-3.5 bg-violet-500/12 border border-violet-500/25 rounded-[14px] mt-2.5">
+                    <span className="text-violet-300 font-bold">Total Amount</span>
+                    <span className="text-[1.6rem] font-black bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent" style={{ fontFamily: "'Playfair Display', serif" }}>Rs. {tourPackage.price}</span>
+                  </div>
+                </div>
+                <div className="mt-3.5 bg-violet-500/10 border border-violet-500/25 rounded-[14px] px-4 py-3 flex gap-2.5">
+                  <Shield size={15} className="text-violet-500 shrink-0 mt-0.5" />
+                  <div className="text-xs text-[#9e9ab5] leading-[1.6]">
+                    <p className="font-bold text-violet-300 mb-0.5">Payment Required</p>
+                    Complete payment via Khalti to confirm your booking.
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 pb-6 flex gap-2.5">
+                <button className="flex-1 py-3 rounded-[14px] font-bold text-sm text-violet-300 bg-violet-500/10 border border-violet-500/30 hover:bg-violet-500/20 transition-all cursor-pointer"
+                  onClick={() => setShowSuccessModal(false)}>Pay Later</button>
+                <button className="flex-1 py-3 rounded-[14px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-[1.02] disabled:opacity-55 transition-all cursor-pointer flex items-center justify-center gap-2 border-none"
+                  onClick={handlePayment} disabled={processingPayment}>
+                  {processingPayment ? <><div className="w-4 h-4 border-2 border-white/25 border-t-white rounded-full animate-spin" /> Processing...</> : <><CreditCard size={15} /> Pay with Khalti</>}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── HEADER ── */}
+        <div className="sticky top-0 z-40 bg-[rgba(10,5,30,0.85)] backdrop-blur-[20px] border-b border-violet-500/20">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <button onClick={() => window.history.back()}
+              className="flex items-center gap-2 bg-transparent border-none cursor-pointer text-violet-300 font-bold text-sm hover:text-white transition-colors p-0">
+              <ArrowLeft size={18} /> Back to Destinations
+            </button>
+            <div className="flex items-center gap-4">
+              <div className="hidden md:flex items-center gap-1.5 text-sm text-[#6b5a8e]">
+                <Shield size={15} className="text-emerald-500" /> Secure Booking
+              </div>
+              <button onClick={() => setIsFavorite(!isFavorite)}
+                className={`w-10 h-10 rounded-full flex items-center justify-center border cursor-pointer transition-all ${isFavorite ? "bg-violet-500/30 border-violet-500/30" : "bg-violet-500/10 border-violet-500/30 hover:bg-violet-500/20"}`}>
+                <Heart size={18} className={isFavorite ? "text-violet-300" : "text-[#6b5a8e]"} fill={isFavorite ? "#c4b5fd" : "none"} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── MAIN CONTENT ── */}
+        <div className="max-w-7xl mx-auto px-6 py-10 pb-20 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+
+          {/* LEFT: Summary */}
+          <div className="lg:col-span-1 lg:sticky lg:top-20">
+            <div className="rounded-[24px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22">
+              <div className="relative h-[240px] overflow-hidden">
+                <img src={tourPackage.imageUrls?.[0]} alt={tourPackage.title} className="w-full h-full object-cover block" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#07030f]/85 via-[#07030f]/20 to-transparent" />
+                <div className="absolute top-3.5 left-3.5 text-xs font-bold px-3 py-1.5 rounded-full bg-violet-500/12 text-violet-300 border border-violet-500/20">{tourPackage.status}</div>
+                <div className="absolute bottom-3.5 right-3.5 flex items-center gap-1.5 bg-[#07030f]/70 backdrop-blur-sm px-3 py-1.5 rounded-full border border-amber-500/25">
+                  <Star size={13} className="text-amber-400 fill-amber-400" />
+                  <span className="text-amber-300 font-bold text-sm">{tourPackage.rating}</span>
+                  <span className="text-white/40 text-xs">({tourPackage.reviews})</span>
+                </div>
+              </div>
+              <div className="p-6">
+                <h2 className="text-[1.4rem] font-black text-white mb-1.5" style={{ fontFamily: "'Playfair Display', serif" }}>{tourPackage.title}</h2>
+                <div className="flex items-center gap-1.5 mb-5">
+                  <MapPin size={14} className="text-violet-500" />
+                  <span className="text-violet-400 text-sm">{tourPackage.destination}</span>
+                </div>
+                <div className="flex gap-4 py-3.5 border-t border-b border-violet-500/15 mb-4">
+                  <div className="flex items-center gap-1.5">
+                    <Clock size={14} className="text-violet-500" />
+                    <span className="text-violet-300 text-sm font-semibold">{tourPackage.duration}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Users size={14} className="text-violet-500" />
+                    <span className="text-violet-300 text-sm font-semibold">{tourPackage.group}</span>
+                  </div>
+                </div>
+                <div className="mb-5">
+                  <span className="text-[#6b5a8e] text-xs">Starts: </span>
+                  <span className="text-violet-400 text-sm font-bold">{new Date(tourPackage.startDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</span>
+                </div>
+                <div className="flex justify-between items-center py-3.5 border-t border-violet-500/15 mb-5">
+                  <span className="font-bold text-violet-300">Total</span>
+                  <span className="text-[2rem] font-black bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent" style={{ fontFamily: "'Playfair Display', serif" }}>Rs. {tourPackage.price}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5 pt-3.5 border-t border-violet-500/12">
+                  {["Free Cancellation", "Best Price", "24/7 Support", "Instant Confirm"].map((item) => (
+                    <div key={item} className="flex items-center gap-2 text-xs text-[#9e9ab5]">
+                      <Check size={13} className="text-emerald-500 shrink-0" /> {item}
                     </div>
                   ))}
                 </div>
@@ -632,474 +317,195 @@ const BookingPage = () => {
             </div>
           </div>
 
-          {/* Right: Booking Form */}
+          {/* RIGHT: Form */}
           <div className="lg:col-span-2">
-            {/* Progress Steps */}
-            <div className="bg-white rounded-2xl shadow-lg p-5 sm:p-6 mb-6 border-2 border-violet-100">
-              <div className="flex items-center justify-between">
+            {/* Progress */}
+            <div className="bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22 rounded-[24px] px-7 py-6 mb-6">
+              <div className="flex items-center">
                 {[1, 2, 3].map((step) => (
                   <React.Fragment key={step}>
                     <div className="flex flex-col items-center flex-1">
-                      <div
-                        className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-base sm:text-lg transition-all duration-300 ${
-                          currentStep >= step
-                            ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-300/40 scale-110"
-                            : "bg-gray-200 text-gray-500"
-                        }`}
-                      >
-                        {currentStep > step ? <Check size={22} /> : step}
+                      <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-base transition-all ${currentStep > step ? "bg-gradient-to-r from-emerald-500 to-emerald-700 text-white shadow-[0_4px_16px_rgba(16,185,129,0.4)]" : currentStep === step ? "bg-gradient-to-r from-violet-500 to-violet-700 text-white shadow-[0_4px_16px_rgba(139,92,246,0.5)] scale-110" : "bg-violet-500/10 text-[#6b5a8e] border border-violet-500/20"}`}>
+                        {currentStep > step ? <Check size={20} /> : step}
                       </div>
-                      <p
-                        className={`text-xs mt-2 font-semibold ${
-                          currentStep >= step
-                            ? "text-violet-600"
-                            : "text-gray-400"
-                        }`}
-                      >
+                      <p className={`text-xs mt-2 font-bold ${currentStep >= step ? "text-violet-400" : "text-[#4a3a6a]"}`}>
                         {["Trip Details", "Your Info", "Review"][step - 1]}
                       </p>
                     </div>
                     {step < 3 && (
-                      <div
-                        className={`flex-1 h-1 mx-2 rounded-full transition-all duration-300 ${
-                          currentStep > step
-                            ? "bg-gradient-to-r from-violet-600 to-purple-600"
-                            : "bg-gray-200"
-                        }`}
-                      />
+                      <div className={`flex-1 h-[3px] rounded-full mx-1 mb-[22px] transition-all ${currentStep > step ? "bg-gradient-to-r from-violet-500 to-violet-700" : "bg-violet-500/15"}`} />
                     )}
                   </React.Fragment>
                 ))}
               </div>
             </div>
 
-            {/* Form */}
-            <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-              {/* STEP 1: Trip Details */}
-              {currentStep === 1 && (
-                <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 space-y-6 border-2 border-violet-100">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-violet-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-200">
-                      <Calendar className="text-white" size={24} />
-                    </div>
-                    <div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
-                        Trip Details
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        When do you want to travel?
-                      </p>
-                    </div>
+            {/* STEP 1 */}
+            {currentStep === 1 && (
+              <div className="bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22 rounded-[24px] px-8 py-7 mb-5">
+                <div className="flex items-center gap-4 mb-7">
+                  <div className="w-12 h-12 rounded-[14px] bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-[0_4px_16px_rgba(139,92,246,0.4)] shrink-0">
+                    <Calendar size={22} className="text-white" />
                   </div>
-
-                  <div className="grid sm:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
-                        Start Date *
-                      </label>
-                      <input
-                        type="date"
-                        name="startDate"
-                        value={formData.startDate}
-                        onChange={handleInputChange}
-                        required
-                        min={new Date().toISOString().split("T")[0]}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-violet-500 focus:ring-4 focus:ring-violet-100 transition-all duration-300 outline-none font-medium cursor-pointer"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
-                        End Date *
-                      </label>
-                      <input
-                        type="date"
-                        name="endDate"
-                        value={formData.endDate}
-                        onChange={handleInputChange}
-                        required
-                        min={
-                          formData.startDate ||
-                          new Date().toISOString().split("T")[0]
-                        }
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-violet-500 focus:ring-4 focus:ring-violet-100 transition-all duration-300 outline-none font-medium cursor-pointer"
-                      />
-                    </div>
+                  <div>
+                    <h3 className="text-[1.35rem] font-black text-white leading-tight" style={{ fontFamily: "'Playfair Display', serif" }}>Trip Details</h3>
+                    <p className="text-[#6b5a8e] text-sm">When do you want to travel?</p>
                   </div>
-
-                  <div className="grid sm:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
-                        Number of Adults *
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              numberOfAdults: Math.max(
-                                1,
-                                prev.numberOfAdults - 1,
-                              ),
-                            }))
-                          }
-                          className="w-12 h-12 bg-gray-100 hover:bg-violet-600 hover:text-white rounded-xl font-bold transition-all duration-300 active:scale-95"
-                        >
-                          -
-                        </button>
-                        <div className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl text-center font-bold text-xl">
-                          {formData.numberOfAdults}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              numberOfAdults: prev.numberOfAdults + 1,
-                            }))
-                          }
-                          className="w-12 h-12 bg-gray-100 hover:bg-violet-600 hover:text-white rounded-xl font-bold transition-all duration-300 active:scale-95"
-                        >
-                          +
-                        </button>
+                </div>
+                <div className="grid grid-cols-2 gap-5 mb-6">
+                  {[{ label: "Start Date", name: "startDate", min: new Date().toISOString().split("T")[0] }, { label: "End Date", name: "endDate", min: formData.startDate || new Date().toISOString().split("T")[0] }].map(({ label, name, min }) => (
+                    <div key={name}>
+                      <label className="block text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">{label} *</label>
+                      <input type="date" name={name} value={formData[name]} onChange={handleInputChange} required min={min} className={inputClass} />
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-5">
+                  {[{ label: "Adults *", key: "numberOfAdults", min: 1 }, { label: "Children", key: "numberOfChildren", min: 0 }].map(({ label, key, min }) => (
+                    <div key={key}>
+                      <label className="block text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">{label}</label>
+                      <div className="flex items-center gap-2.5">
+                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, [key]: Math.max(min, prev[key] - 1) }))}
+                          className="w-11 h-11 rounded-[12px] border border-violet-500/30 bg-violet-500/10 text-violet-300 text-xl font-bold cursor-pointer hover:bg-violet-500/25 hover:border-violet-500/60 transition-all flex items-center justify-center shrink-0">−</button>
+                        <div className="flex-1 bg-violet-500/8 border border-violet-500/20 text-white rounded-[14px] text-center font-extrabold text-xl py-2.5">{formData[key]}</div>
+                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, [key]: prev[key] + 1 }))}
+                          className="w-11 h-11 rounded-[12px] border border-violet-500/30 bg-violet-500/10 text-violet-300 text-xl font-bold cursor-pointer hover:bg-violet-500/25 hover:border-violet-500/60 transition-all flex items-center justify-center shrink-0">+</button>
                       </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
+            {/* STEP 2 */}
+            {currentStep === 2 && (
+              <div className="bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22 rounded-[24px] px-8 py-7 mb-5">
+                <div className="flex items-center gap-4 mb-7">
+                  <div className="w-12 h-12 rounded-[14px] bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-[0_4px_16px_rgba(139,92,246,0.4)] shrink-0">
+                    <User size={22} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-[1.35rem] font-black text-white leading-tight" style={{ fontFamily: "'Playfair Display', serif" }}>Personal Information</h3>
+                    <p className="text-[#6b5a8e] text-sm">Tell us about yourself</p>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <label className="block text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">Full Name *</label>
+                    <div className="relative">
+                      <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-500 pointer-events-none" />
+                      <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} required placeholder="John Doe" className={`${inputClass} pl-10`} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
-                        Number of Children
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              numberOfChildren: Math.max(
-                                0,
-                                prev.numberOfChildren - 1,
-                              ),
-                            }))
-                          }
-                          className="w-12 h-12 bg-gray-100 hover:bg-violet-600 hover:text-white rounded-xl font-bold transition-all duration-300 active:scale-95"
-                        >
-                          -
-                        </button>
-                        <div className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl text-center font-bold text-xl">
-                          {formData.numberOfChildren}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              numberOfChildren: prev.numberOfChildren + 1,
-                            }))
-                          }
-                          className="w-12 h-12 bg-gray-100 hover:bg-violet-600 hover:text-white rounded-xl font-bold transition-all duration-300 active:scale-95"
-                        >
-                          +
-                        </button>
+                      <label className="block text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">Email *</label>
+                      <div className="relative">
+                        <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-500 pointer-events-none" />
+                        <input type="email" name="email" value={formData.email} onChange={handleInputChange} required placeholder="john@example.com" className={`${inputClass} pl-10`} />
                       </div>
+                    </div>
+                    <div>
+                      <label className="block text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">Phone *</label>
+                      <div className="relative">
+                        <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-500 pointer-events-none" />
+                        <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required placeholder="+977 98xxxxxxxx" className={`${inputClass} pl-10`} />
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">Country *</label>
+                    <div className="relative">
+                      <Globe size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-500 pointer-events-none" />
+                      <input type="text" name="country" value={formData.country} onChange={handleInputChange} required placeholder="Nepal" className={`${inputClass} pl-10`} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">Special Requests</label>
+                    <div className="relative">
+                      <MessageSquare size={16} className="absolute left-3.5 top-4 text-violet-500 pointer-events-none" />
+                      <textarea name="specialRequests" value={formData.specialRequests} onChange={handleInputChange} rows={4} placeholder="Any special requirements..." className={`${inputClass} pl-10 resize-none`} />
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* STEP 2: Personal Info */}
-              {currentStep === 2 && (
-                <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 space-y-6 border-2 border-violet-100">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-violet-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-200">
-                      <User className="text-white" size={24} />
-                    </div>
-                    <div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
-                        Personal Information
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        Tell us about yourself
-                      </p>
-                    </div>
+            {/* STEP 3 */}
+            {currentStep === 3 && (
+              <div className="bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22 rounded-[24px] px-8 py-7 mb-5">
+                <div className="flex items-center gap-4 mb-7">
+                  <div className="w-12 h-12 rounded-[14px] bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-[0_4px_16px_rgba(139,92,246,0.4)] shrink-0">
+                    <CheckCircle size={22} className="text-white" />
                   </div>
-
-                  <div className="grid sm:grid-cols-2 gap-6">
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
-                        Full Name *
-                      </label>
-                      <div className="relative">
-                        <User
-                          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                          size={20}
-                        />
-                        <input
-                          type="text"
-                          name="fullName"
-                          value={formData.fullName}
-                          onChange={handleInputChange}
-                          required
-                          placeholder="John Doe"
-                          className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-violet-500 focus:ring-4 focus:ring-violet-100 transition-all duration-300 outline-none font-medium"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
-                        Email Address *
-                      </label>
-                      <div className="relative">
-                        <Mail
-                          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                          size={20}
-                        />
-                        <input
-                          type="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          required
-                          placeholder="john@example.com"
-                          className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-violet-500 focus:ring-4 focus:ring-violet-100 transition-all duration-300 outline-none font-medium"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
-                        Phone Number *
-                      </label>
-                      <div className="relative">
-                        <Phone
-                          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                          size={20}
-                        />
-                        <input
-                          type="tel"
-                          name="phone"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          required
-                          placeholder="+977 98xxxxxxxx"
-                          className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-violet-500 focus:ring-4 focus:ring-violet-100 transition-all duration-300 outline-none font-medium"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
-                        Country *
-                      </label>
-                      <div className="relative">
-                        <Globe
-                          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                          size={20}
-                        />
-                        <input
-                          type="text"
-                          name="country"
-                          value={formData.country}
-                          onChange={handleInputChange}
-                          required
-                          placeholder="Nepal"
-                          className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-violet-500 focus:ring-4 focus:ring-violet-100 transition-all duration-300 outline-none font-medium"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-bold text-gray-700 mb-2">
-                        Special Requests
-                      </label>
-                      <div className="relative">
-                        <MessageSquare
-                          className="absolute left-4 top-4 text-gray-400"
-                          size={20}
-                        />
-                        <textarea
-                          name="specialRequests"
-                          value={formData.specialRequests}
-                          onChange={handleInputChange}
-                          rows="4"
-                          placeholder="Any special requirements or preferences..."
-                          className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-violet-500 focus:ring-4 focus:ring-violet-100 transition-all duration-300 outline-none font-medium resize-none"
-                        />
-                      </div>
-                    </div>
+                  <div>
+                    <h3 className="text-[1.35rem] font-black text-white leading-tight" style={{ fontFamily: "'Playfair Display', serif" }}>Review & Confirm</h3>
+                    <p className="text-[#6b5a8e] text-sm">Check your booking details</p>
                   </div>
                 </div>
-              )}
-
-              {/* STEP 3: Review & Confirm */}
-              {currentStep === 3 && (
-                <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 space-y-6 border-2 border-violet-100">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-violet-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-200">
-                      <CheckCircle className="text-white" size={24} />
-                    </div>
-                    <div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
-                        Review & Confirm
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        Check your booking details
-                      </p>
-                    </div>
+                <div className="bg-violet-500/8 border border-violet-500/20 rounded-[18px] px-5 py-5 mb-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <MapPin size={15} className="text-violet-500" />
+                    <span className="font-extrabold text-white text-sm">Trip Summary</span>
                   </div>
-
-                  <div className="space-y-4">
-                    <div className="bg-gradient-to-r from-violet-50 to-purple-50 rounded-2xl p-5 sm:p-6 border-2 border-violet-200">
-                      <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <MapPin size={18} className="text-violet-500" />
-                        Trip Summary
-                      </h4>
-                      <div className="space-y-2">
-                        {[
-                          { label: "Package", value: tourPackage.title },
-                          {
-                            label: "Destination",
-                            value: tourPackage.destination,
-                          },
-                          { label: "Duration", value: tourPackage.duration },
-                          {
-                            label: "Dates",
-                            value: `${new Date(
-                              formData.startDate,
-                            ).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            })} - ${new Date(
-                              formData.endDate,
-                            ).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}`,
-                          },
-                          {
-                            label: "Guests",
-                            value: `${formData.numberOfAdults} Adults, ${formData.numberOfChildren} Children`,
-                          },
-                        ].map((row) => (
-                          <div key={row.label} className="flex justify-between">
-                            <span className="text-sm text-gray-600">
-                              {row.label}
-                            </span>
-                            <span className="text-sm font-bold text-gray-900">
-                              {row.value}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                  {[
+                    { label: "Package", value: tourPackage.title },
+                    { label: "Destination", value: tourPackage.destination },
+                    { label: "Duration", value: tourPackage.duration },
+                    { label: "Dates", value: `${new Date(formData.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${new Date(formData.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` },
+                    { label: "Guests", value: `${formData.numberOfAdults} Adults, ${formData.numberOfChildren} Children` },
+                  ].map((row) => (
+                    <div key={row.label} className="flex justify-between items-center py-2.5 border-b border-violet-500/12 last:border-b-0">
+                      <span className="text-[#6b5a8e] text-sm">{row.label}</span>
+                      <span className="text-white text-sm font-bold">{row.value}</span>
                     </div>
-
-                    <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 flex gap-3">
-                      <Shield
-                        className="text-green-500 flex-shrink-0"
-                        size={20}
-                      />
-                      <div className="text-sm text-green-800">
-                        <p className="font-semibold mb-1">Ready to Book</p>
-                        <p>
-                          Click "Confirm Booking" below to reserve your spot.
-                          You'll be able to pay via Khalti immediately or later.
-                        </p>
-                      </div>
-                    </div>
+                  ))}
+                </div>
+                <div className="bg-emerald-500/8 border border-emerald-500/25 rounded-[14px] px-4 py-3.5 flex gap-3">
+                  <Shield size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                  <div className="text-sm text-[#9e9ab5] leading-[1.65]">
+                    <p className="font-bold text-emerald-400 mb-1">Ready to Book</p>
+                    Click "Confirm Booking" to reserve your spot. Pay via Khalti immediately or later.
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Navigation Buttons */}
-              <div className="flex flex-wrap items-center justify-between gap-3 bg-white rounded-2xl shadow-lg p-5 sm:p-6 border-2 border-violet-100">
-                <button
-                  type="button"
-                  onClick={prevStep}
-                  disabled={currentStep === 1}
-                  className={`flex items-center gap-2 px-6 sm:px-8 py-3 rounded-xl font-bold transition-all duration-300 ${
-                    currentStep === 1
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300 active:scale-95"
-                  }`}
-                >
-                  <ArrowLeft size={20} />
-                  Previous
-                </button>
+            {/* Navigation */}
+            <div className="bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22 rounded-[24px] px-7 py-5 flex items-center justify-between gap-3 flex-wrap">
+              <button type="button" onClick={() => setCurrentStep(s => Math.max(1, s - 1))} disabled={currentStep === 1}
+                className="flex items-center gap-2 px-6 py-3 rounded-[14px] font-bold text-sm text-violet-300 bg-violet-500/10 border border-violet-500/30 hover:bg-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer">
+                <ArrowLeft size={17} /> Previous
+              </button>
 
-                {/* Pay / Cancel buttons — only on step 3 when already booked */}
+              <div className="flex items-center gap-2.5 flex-wrap">
                 {bookingId && currentStep === 3 && (
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={handlePayment}
-                      disabled={processingPayment}
-                      className="flex items-center gap-2 px-6 sm:px-8 py-3 bg-gradient-to-r from-purple-500 to-violet-500 text-white rounded-xl font-bold hover:from-purple-600 hover:to-violet-600 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg shadow-purple-300/40 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      {processingPayment ? (
-                        <>
-                          <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard size={20} />
-                          Pay Rs. {tourPackage.price}
-                        </>
-                      )}
+                  <>
+                    <button type="button" onClick={handlePayment} disabled={processingPayment}
+                      className="flex items-center gap-2 px-6 py-3 rounded-[14px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-[1.03] disabled:opacity-55 disabled:cursor-not-allowed transition-all border-none cursor-pointer">
+                      {processingPayment ? <><div className="w-4 h-4 border-2 border-white/25 border-t-white rounded-full animate-spin" /> Processing...</> : <><CreditCard size={17} /> Pay Rs. {tourPackage.price}</>}
                     </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowCancelConfirm(true)}
-                      disabled={cancelling}
-                      className="flex items-center gap-2 px-5 sm:px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg shadow-red-300/40 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      <XCircle size={20} />
-                      Cancel
+                    <button type="button" onClick={() => setShowCancelConfirm(true)} disabled={cancelling}
+                      className="flex items-center gap-2 px-5 py-3 rounded-[14px] font-bold text-sm text-white bg-gradient-to-r from-red-500 to-red-700 shadow-[0_4px_15px_rgba(239,68,68,0.4)] hover:scale-[1.03] disabled:opacity-55 disabled:cursor-not-allowed transition-all border-none cursor-pointer">
+                      <XCircle size={17} /> Cancel
                     </button>
-                  </div>
+                  </>
                 )}
-
                 {currentStep < 3 ? (
-                  <button
-                    type="button"
-                    onClick={nextStep}
-                    className="flex items-center gap-2 px-6 sm:px-8 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-bold hover:from-violet-700 hover:to-purple-700 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg shadow-violet-300/40"
-                  >
-                    Next Step
-                    <ArrowRight size={20} />
+                  <button type="button" onClick={() => setCurrentStep(s => Math.min(3, s + 1))}
+                    className="flex items-center gap-2 px-7 py-3 rounded-[14px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-[1.03] transition-all border-none cursor-pointer">
+                    Next Step <ArrowRight size={17} />
                   </button>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleBooking(e);
-                    }}
-                    disabled={submitting || !!bookingId}
-                    className="flex items-center gap-2 px-6 sm:px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-bold hover:from-green-600 hover:to-emerald-600 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {submitting ? (
-                      <>
-                        <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Booking...
-                      </>
-                    ) : bookingId ? (
-                      <>
-                        <CheckCircle size={20} />
-                        Already Booked ✓
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle size={20} />
-                        Confirm Booking
-                      </>
-                    )}
+                  <button type="button" onClick={handleBooking} disabled={submitting || !!bookingId}
+                    className="flex items-center gap-2 px-7 py-3 rounded-[14px] font-bold text-sm text-white bg-gradient-to-r from-emerald-500 to-emerald-700 shadow-[0_4px_15px_rgba(16,185,129,0.4)] hover:scale-[1.03] disabled:opacity-55 disabled:cursor-not-allowed transition-all border-none cursor-pointer">
+                    {submitting ? <><div className="w-4 h-4 border-2 border-white/25 border-t-white rounded-full animate-spin" /> Booking...</>
+                      : bookingId ? <><CheckCircle size={17} /> Already Booked ✓</>
+                      : <><CheckCircle size={17} /> Confirm Booking</>}
                   </button>
                 )}
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>

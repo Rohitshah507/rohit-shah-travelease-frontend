@@ -16,6 +16,8 @@ import KhaltiSuccess from "./Components/KhaltiSuccess.jsx";
 import useUser from "./hooks/useUser.jsx";
 import PlacesToVisit from "./pages/Tourist Role/PlacesToVisit.jsx";
 import AdminDashboard from "./pages/Admin Role/AdminDashboard.jsx";
+import Packages from "./pages/Tourist Role/Packages.jsx";
+import TourList from "./pages/Tourist Role/TourList.jsx";
 
 export const serverURL = "http://localhost:5000";
 
@@ -76,6 +78,16 @@ const App = () => {
         <Route path="/khalti/payment_success" element={<KhaltiSuccess />} />
 
         <Route path="/admin/*" element={<AdminDashboard />} />
+
+        <Route
+          path="/packages"
+          element={token ? <Packages/> : <Navigate to="/login" />}
+        />
+        
+        <Route
+          path="/tourList"
+          element={token ? <TourList/> : <Navigate to="/login" />}
+        />
       </Routes>
     </div>
   );

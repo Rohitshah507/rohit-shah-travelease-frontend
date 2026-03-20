@@ -112,7 +112,7 @@ const Navbar = () => {
               Places to Visit
             </DesktopNavLink>
             <DesktopNavLink to="/packages">Packages</DesktopNavLink>
-            <DesktopNavLink to="/tour">TourList</DesktopNavLink>
+            <DesktopNavLink to="/tourList">TourList</DesktopNavLink>
           </div>
 
           {/* Right Section */}
@@ -163,11 +163,6 @@ const Navbar = () => {
 
                   {/* Profile Actions */}
                   <div className="p-2">
-                    <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-violet-50 rounded-xl text-left">
-                      <UserCircle size={18} />
-                      My Profile
-                    </button>
-
                     <button
                       onClick={handleLogout}
                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 rounded-xl text-left text-red-600"
