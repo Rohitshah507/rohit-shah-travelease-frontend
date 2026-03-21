@@ -10,6 +10,7 @@ import axios from "axios";
 import { serverURL } from "../../App";
 import Footer from "../../Components/Footer";
 import Navbar from "../../Components/Navbar";
+import { getToken } from "../Login";
 
 // ─── AI Description Modal ─────────────────────────────────────────────────────
 const AIModal = ({ place, onClose }) => {
@@ -365,7 +366,7 @@ const PlacesToVisit = () => {
     const fetchPlaces = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("token");
+        const token = getToken();
         const response = await axios.get(`${serverURL}/api/user/package`, {
           headers: { Authorization: `Bearer ${token}` },
         });

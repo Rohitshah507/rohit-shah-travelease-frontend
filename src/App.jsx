@@ -17,7 +17,7 @@ import useUser from "./hooks/useUser.jsx";
 import PlacesToVisit from "./pages/Tourist Role/PlacesToVisit.jsx";
 import AdminDashboard from "./pages/Admin Role/AdminDashboard.jsx";
 import Packages from "./pages/Tourist Role/Packages.jsx";
-import TourList from "./pages/Tourist Role/TourList.jsx";
+import MyBookings from "./pages/Tourist Role/MyBookings.jsx";
 
 export const serverURL = "http://localhost:5000";
 
@@ -81,12 +81,12 @@ const App = () => {
 
         <Route
           path="/packages"
-          element={token ? <Packages/> : <Navigate to="/login" />}
+          element={token ? <Packages /> : <Navigate to="/login" />}
         />
-        
+
         <Route
-          path="/tourList"
-          element={token ? <TourList/> : <Navigate to="/login" />}
+          path="/mybookings"
+          element={token ? <MyBookings /> : <Navigate to="/login" />}
         />
       </Routes>
     </div>

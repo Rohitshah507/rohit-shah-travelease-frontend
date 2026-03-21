@@ -289,7 +289,7 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
 };
 
 // ── Main Component ────────────────────────────────────────────────────────────
-const TourList = () => {
+const MyBookings = () => {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -582,4 +582,4 @@ const TourList = () => {
   );
 };
 
-export default TourList;
+export default MyBookings;
