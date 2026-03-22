@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSelector } from "react-redux";
+import { io as socketIO } from "socket.io-client";
+import toast, { Toaster } from "react-hot-toast";
 
 import {
   LayoutDashboard,
@@ -16,6 +18,11 @@ import {
   Navigation,
   ChevronRight,
   Sparkles,
+  CheckCircle,
+  XCircle,
+  CreditCard,
+  Package,
+  RefreshCw,
 } from "lucide-react";
 import axios from "axios";
 import { serverURL } from "../../App";
@@ -31,6 +38,374 @@ import { Earnings } from "./Earnings";
 import { Profile } from "./Profile";
 import { getToken } from "../Login";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Notification helpers  (same palette as Navbar for consistency)
+// ─────────────────────────────────────────────────────────────────────────────
+const getNotifStyle = (type = "", message = "") => {
+  const t = type.toUpperCase();
+  const m = message.toLowerCase();
+
+  if (t === "PAYMENT" || m.includes("payment") || m.includes("paid"))
+    return {
+      Icon: CreditCard,
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
+      border: "border-emerald-200",
+      dot: "bg-emerald-500",
+    };
+  if (t === "BOOKING" || m.includes("confirm"))
+    return {
+      Icon: CheckCircle,
+      color: "text-violet-600",
+      bg: "bg-violet-50",
+      border: "border-violet-200",
+      dot: "bg-violet-500",
+    };
+  if (m.includes("cancel"))
+    return {
+      Icon: XCircle,
+      color: "text-red-500",
+      bg: "bg-red-50",
+      border: "border-red-200",
+      dot: "bg-red-500",
+    };
+  return {
+    Icon: Package,
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+    border: "border-amber-200",
+    dot: "bg-amber-500",
+  };
+};
+
+const timeAgo = (dateStr) => {
+  if (!dateStr) return "";
+  const s = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  if (s < 60) return "Just now";
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+};
+
+// Toast for guide — light theme to match the dashboard's white/violet aesthetic
+const showGuideToast = (notif) => {
+  const style = getNotifStyle(notif.type, notif.message);
+  toast.custom(
+    (t) => (
+      <div
+        onClick={() => toast.dismiss(t.id)}
+        className={`flex items-start gap-3 px-4 py-3.5 rounded-2xl shadow-xl cursor-pointer border transition-all duration-300 ${style.bg} ${style.border} ${
+          t.visible
+            ? "opacity-100 translate-y-0 scale-100"
+            : "opacity-0 -translate-y-3 scale-95"
+        }`}
+        style={{ minWidth: 280, maxWidth: 340 }}
+      >
+        <div
+          className={`w-9 h-9 rounded-xl ${style.bg} ${style.border} border flex items-center justify-center shrink-0 mt-0.5`}
+        >
+          <style.Icon size={17} className={style.color} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className={`font-bold text-sm ${style.color}`}>
+            {notif.type === "PAYMENT"
+              ? "Payment Update 💰"
+              : "Booking Update 🧳"}
+          </p>
+          <p className="text-gray-600 text-xs mt-0.5 leading-snug">
+            {notif.message}
+          </p>
+        </div>
+        <X
+          size={13}
+          className="text-gray-400 hover:text-gray-600 transition-colors shrink-0 mt-1"
+        />
+      </div>
+    ),
+    { duration: 5000 },
+  );
+};
+
+const socketEventToNotif = (event, payload) => {
+  const map = {
+    bookingConfirmed: {
+      type: "BOOKING",
+      message: payload.message || "🎉 A booking has been confirmed!",
+    },
+    bookingCancelled: {
+      type: "BOOKING",
+      message: payload.message || "❌ A booking was cancelled.",
+    },
+    newBooking: {
+      type: "BOOKING",
+      message: payload.message || "📢 New booking received!",
+    },
+    paymentSuccess: {
+      type: "PAYMENT",
+      message: payload.message || "💰 Payment successful!",
+    },
+    guideApproved: {
+      type: "USER",
+      message: payload.message || "🎉 Your guide account has been approved!",
+    },
+  };
+  return (
+    map[event] || {
+      type: "BOOKING",
+      message: payload.message || "New notification",
+    }
+  );
+};
+
+const POLL_MS = 10000;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// useGuideNotifications — polling + Socket.io
+// ─────────────────────────────────────────────────────────────────────────────
+const useGuideNotifications = (userId) => {
+  const [notifs, setNotifs] = useState([]);
+  const [unread, setUnread] = useState(0);
+  const [connected, setConnected] = useState(false);
+
+  const knownIds = useRef(null); // null = first fetch not done yet
+  const mounted = useRef(true);
+  const timerRef = useRef(null);
+
+  const doFetch = useCallback(async () => {
+    try {
+      const token = getToken();
+      if (!token) return;
+      const res = await axios.get(`${serverURL}/api/notifications`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!mounted.current) return;
+
+      const raw = (res.data.data || res.data || []).sort(
+        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+      );
+
+      setNotifs(raw);
+      setConnected(true);
+      setUnread(raw.filter((n) => !n.isRead).length);
+
+      if (knownIds.current === null) {
+        // First fetch — silently seed, no toasts
+        knownIds.current = new Set(raw.map((n) => n._id));
+      } else {
+        const newOnes = raw.filter((n) => !knownIds.current.has(n._id));
+        newOnes.forEach((n) => {
+          showGuideToast(n);
+          knownIds.current.add(n._id);
+        });
+      }
+    } catch {
+      if (mounted.current) setConnected(false);
+    }
+  }, []);
+
+  // ── Socket.io ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!userId) return;
+
+    const socket = socketIO(serverURL, {
+      query: { userId },
+      transports: ["websocket"],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
+    });
+
+    const EVENTS = [
+      "bookingConfirmed",
+      "bookingCancelled",
+      "newBooking",
+      "paymentSuccess",
+      "guideApproved",
+    ];
+
+    EVENTS.forEach((event) => {
+      socket.on(event, (payload) => {
+        if (!mounted.current) return;
+
+        const pseudoNotif = {
+          _id: `socket-${Date.now()}-${Math.random()}`,
+          ...socketEventToNotif(event, payload),
+          isRead: false,
+          createdAt: new Date().toISOString(),
+        };
+
+        showGuideToast(pseudoNotif);
+        setNotifs((prev) => [pseudoNotif, ...prev]);
+        setUnread((prev) => prev + 1);
+
+        if (knownIds.current) knownIds.current.add(pseudoNotif._id);
+
+        // Re-fetch after short delay to sync real DB record
+        setTimeout(() => {
+          if (mounted.current) doFetch();
+        }, 1500);
+      });
+    });
+
+    return () => socket.disconnect();
+  }, [userId, doFetch]);
+
+  // ── Polling ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    mounted.current = true;
+    doFetch();
+    timerRef.current = setInterval(doFetch, POLL_MS);
+    return () => {
+      mounted.current = false;
+      clearInterval(timerRef.current);
+    };
+  }, [doFetch]);
+
+  // ── Mark all read ────────────────────────────────────────────────────────
+  const markAllRead = useCallback(async () => {
+    const unreadNotifs = notifs.filter((n) => !n.isRead);
+    if (unreadNotifs.length === 0) return;
+
+    setNotifs((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setUnread(0);
+
+    const token = getToken();
+    if (!token) return;
+    const dbUnread = unreadNotifs.filter(
+      (n) => !String(n._id).startsWith("socket-"),
+    );
+    await Promise.allSettled(
+      dbUnread.map((n) =>
+        axios.patch(
+          `${serverURL}/api/notifications/${n._id}/read`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } },
+        ),
+      ),
+    );
+  }, [notifs]);
+
+  const refreshNow = useCallback(() => doFetch(), [doFetch]);
+
+  return { notifs, unread, connected, markAllRead, refreshNow };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notification Dropdown Panel  (light theme for guide dashboard)
+// ─────────────────────────────────────────────────────────────────────────────
+const GuideNotifPanel = ({
+  notifs,
+  connected,
+  onClose,
+  onRefresh,
+  onMarkRead,
+}) => (
+  <div className="absolute right-0 top-12 w-[340px] rounded-2xl overflow-hidden z-50 bg-white border border-violet-100 shadow-2xl shadow-violet-200/60">
+    {/* Header */}
+    <div className="flex items-center justify-between px-4 py-3 border-b border-violet-50 bg-violet-50/50">
+      <div className="flex items-center gap-2">
+        <Bell size={14} className="text-violet-600" />
+        <span className="font-black text-violet-900 text-sm">
+          Notifications
+        </span>
+        {/* Live indicator */}
+        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white border border-emerald-200">
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-emerald-500 animate-pulse" : "bg-gray-400"}`}
+          />
+          <span
+            className={`text-[9px] font-bold ${connected ? "text-emerald-600" : "text-gray-400"}`}
+          >
+            {connected ? "Live" : "Offline"}
+          </span>
+        </div>
+      </div>
+      <div className="flex items-center gap-1">
+        {notifs.some((n) => !n.isRead) && (
+          <button
+            onClick={onMarkRead}
+            className="text-[10px] text-violet-500 hover:text-violet-700 font-semibold px-2 py-0.5 rounded-lg hover:bg-violet-50 transition-all border-none bg-transparent cursor-pointer"
+          >
+            Mark all read
+          </button>
+        )}
+        <button
+          onClick={onRefresh}
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-violet-400 hover:text-violet-600 hover:bg-violet-50 transition-all border-none bg-transparent cursor-pointer"
+          title="Refresh"
+        >
+          <RefreshCw size={12} />
+        </button>
+        <button
+          onClick={onClose}
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-violet-400 hover:text-violet-600 hover:bg-violet-50 transition-all border-none bg-transparent cursor-pointer"
+        >
+          <X size={13} />
+        </button>
+      </div>
+    </div>
+
+    {/* List */}
+    <div
+      className="max-h-[380px] overflow-y-auto"
+      style={{ scrollbarWidth: "thin", scrollbarColor: "#ddd6fe transparent" }}
+    >
+      {notifs.length === 0 ? (
+        <div className="text-center py-10 px-6">
+          <div className="w-12 h-12 rounded-full bg-violet-50 border border-violet-100 flex items-center justify-center mx-auto mb-3">
+            <Bell size={20} className="text-violet-300" />
+          </div>
+          <p className="text-violet-400 text-sm font-semibold">
+            No notifications yet
+          </p>
+          <p className="text-violet-300 text-xs mt-1">
+            Booking updates appear here
+          </p>
+        </div>
+      ) : (
+        <div className="p-2 flex flex-col gap-1">
+          {notifs.map((n) => {
+            const style = getNotifStyle(n.type, n.message);
+            const isUnread = !n.isRead;
+            return (
+              <div
+                key={n._id}
+                className={`relative flex items-start gap-3 p-3 rounded-xl border transition-all duration-200 hover:shadow-sm ${style.bg} ${style.border} ${isUnread ? "shadow-sm" : "opacity-75"}`}
+              >
+                {isUnread && (
+                  <span
+                    className={`absolute top-2.5 right-2.5 w-2 h-2 rounded-full ${style.dot} animate-pulse`}
+                  />
+                )}
+                <div
+                  className={`w-8 h-8 rounded-xl border ${style.border} ${style.bg} flex items-center justify-center shrink-0`}
+                >
+                  <style.Icon size={15} className={style.color} />
+                </div>
+                <div className="flex-1 min-w-0 pr-4">
+                  <p className={`font-bold text-xs ${style.color}`}>
+                    {n.type === "PAYMENT"
+                      ? "Payment Update 💰"
+                      : "Booking Update 🧳"}
+                  </p>
+                  <p className="text-gray-600 text-xs mt-0.5 leading-snug">
+                    {n.message}
+                  </p>
+                  <span className="text-gray-400 text-[10px] mt-1 block">
+                    {timeAgo(n.createdAt)}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main GuideDashboard
+// ─────────────────────────────────────────────────────────────────────────────
 export default function GuideDashboard() {
   const { userData } = useSelector((state) => state.user);
   const GUIDE_ID = userData?.userDetails?._id;
@@ -41,7 +416,23 @@ export default function GuideDashboard() {
   const [profile, setProfile] = useState(null);
   const [pendingCount, setPendingCount] = useState(0);
 
-  // ── Tracking state ────────────────────────────────────────
+  const notifPanelRef = useRef(null);
+
+  // ── Notifications (polling + socket) ─────────────────────────────────────
+  const { notifs, unread, connected, markAllRead, refreshNow } =
+    useGuideNotifications(GUIDE_ID);
+
+  // Close notif panel on outside click
+  useEffect(() => {
+    const fn = (e) => {
+      if (notifPanelRef.current && !notifPanelRef.current.contains(e.target))
+        setNotifOpen(false);
+    };
+    document.addEventListener("mousedown", fn);
+    return () => document.removeEventListener("mousedown", fn);
+  }, []);
+
+  // ── Tracking state ────────────────────────────────────────────────────────
   const [isTracking, setIsTracking] = useState(false);
   const [trackingTime, setTrackingTime] = useState(0);
   const [sessionId, setSessionId] = useState(null);
@@ -82,7 +473,11 @@ export default function GuideDashboard() {
             navigator.geolocation?.getCurrentPosition((p) => {
               axios.patch(
                 `${serverURL}/api/guide/tracking/update`,
-                { sessionId: res.data.sessionId, lat: p.coords.latitude, lng: p.coords.longitude },
+                {
+                  sessionId: res.data.sessionId,
+                  lat: p.coords.latitude,
+                  lng: p.coords.longitude,
+                },
                 { headers: { Authorization: `Bearer ${token}` } },
               );
             });
@@ -114,14 +509,18 @@ export default function GuideDashboard() {
     }
   };
 
+  // ── Profile + pending bookings ────────────────────────────────────────────
   useEffect(() => {
     if (!GUIDE_ID) return;
     const fetchProfile = async () => {
       try {
         const token = getToken();
-        const res = await axios.get(`${serverURL}/api/guide/${GUIDE_ID}/profile`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get(
+          `${serverURL}/api/guide/${GUIDE_ID}/profile`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         setProfile(res.data.guide || res.data);
       } catch (err) {
         console.error("Profile fetch error:", err);
@@ -130,9 +529,12 @@ export default function GuideDashboard() {
     const fetchPending = async () => {
       try {
         const token = getToken();
-        const res = await axios.get(`${serverURL}/api/guide/${GUIDE_ID}/bookings`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get(
+          `${serverURL}/api/guide/${GUIDE_ID}/bookings`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         const bookings = res.data.bookings || [];
         setPendingCount(bookings.filter((b) => b.status === "pending").length);
       } catch (err) {
@@ -144,17 +546,25 @@ export default function GuideDashboard() {
   }, [GUIDE_ID]);
 
   const initials =
-    userData?.userDetails?.username?.split(" ").map((n) => n[0]).join("") ?? "G";
+    userData?.userDetails?.username
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("") ?? "G";
 
   const navItems = [
-    { id: "dashboard", label: "Dashboard",    icon: LayoutDashboard },
-    { id: "bookings",  label: "Bookings",     icon: CalendarDays, badge: pendingCount },
-    { id: "tours",     label: "My Tours",     icon: Map },
-    { id: "history",   label: "History",      icon: History },
-    { id: "tracking",  label: "Live Tracking",icon: Navigation },
-    { id: "reviews",   label: "Reviews",      icon: Star },
-    { id: "earnings",  label: "Earnings",     icon: DollarSign },
-    { id: "profile",   label: "Profile",      icon: Settings },
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    {
+      id: "bookings",
+      label: "Bookings",
+      icon: CalendarDays,
+      badge: pendingCount,
+    },
+    { id: "tours", label: "My Tours", icon: Map },
+    { id: "history", label: "History", icon: History },
+    { id: "tracking", label: "Live Tracking", icon: Navigation },
+    { id: "reviews", label: "Reviews", icon: Star },
+    { id: "earnings", label: "Earnings", icon: DollarSign },
+    { id: "profile", label: "Profile", icon: Settings },
   ];
 
   const pageTitle =
@@ -163,31 +573,35 @@ export default function GuideDashboard() {
       : navItems.find((n) => n.id === activePage)?.label;
 
   const today = new Date().toLocaleDateString("en-US", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
   return (
     <div className="flex h-screen bg-violet-50 font-sans overflow-hidden">
+      {/* Toaster — light theme */}
+      <Toaster position="top-right" containerStyle={{ top: 72 }} />
 
       {/* ══════════════ SIDEBAR ══════════════ */}
       <aside
-        className={`
-          ${sidebarOpen ? "w-64" : "w-[72px]"}
-          relative flex flex-col flex-shrink-0 z-20
-          transition-all duration-300 ease-in-out
-        `}
+        className={`${sidebarOpen ? "w-64" : "w-[72px]"} relative flex flex-col flex-shrink-0 z-20 transition-all duration-300 ease-in-out`}
         style={{
-          background: "linear-gradient(160deg, #4c1d95 0%, #5b21b6 35%, #6d28d9 65%, #7c3aed 100%)",
+          background:
+            "linear-gradient(160deg, #4c1d95 0%, #5b21b6 35%, #6d28d9 65%, #7c3aed 100%)",
         }}
       >
-        {/* Decorative top glow blob */}
-        <div className="absolute top-0 left-0 w-full h-48 pointer-events-none overflow-hidden rounded-none">
+        {/* Decorative top glow */}
+        <div className="absolute top-0 left-0 w-full h-48 pointer-events-none overflow-hidden">
           <div className="absolute -top-16 -left-10 w-48 h-48 bg-fuchsia-400/20 rounded-full blur-3xl" />
           <div className="absolute top-4 right-0 w-32 h-32 bg-violet-300/10 rounded-full blur-2xl" />
         </div>
 
-        {/* ── Logo ── */}
-        <div className={`relative flex items-center ${sidebarOpen ? "justify-between px-5" : "justify-center px-0"} py-5 border-b border-white/10`}>
+        {/* Logo */}
+        <div
+          className={`relative flex items-center ${sidebarOpen ? "justify-between px-5" : "justify-center px-0"} py-5 border-b border-white/10`}
+        >
           {sidebarOpen ? (
             <>
               <div className="flex items-center gap-2.5">
@@ -195,10 +609,14 @@ export default function GuideDashboard() {
                   <span className="text-violet-700 font-black text-lg">G</span>
                 </div>
                 <div>
-                  <span className="text-white font-black text-lg tracking-tight leading-none">GuideHub</span>
+                  <span className="text-white font-black text-lg tracking-tight leading-none">
+                    GuideHub
+                  </span>
                   <div className="flex items-center gap-1 mt-0.5">
                     <Sparkles size={9} className="text-violet-300" />
-                    <span className="text-violet-300 text-[9px] font-semibold tracking-widest uppercase">Pro Dashboard</span>
+                    <span className="text-violet-300 text-[9px] font-semibold tracking-widest uppercase">
+                      Pro Dashboard
+                    </span>
                   </div>
                 </div>
               </div>
@@ -219,7 +637,7 @@ export default function GuideDashboard() {
           )}
         </div>
 
-        {/* ── Guide Info Card ── */}
+        {/* Guide Info Card */}
         {sidebarOpen && (
           <div className="relative mx-3 my-3 p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/15">
             <div className="flex items-center gap-2.5">
@@ -241,14 +659,13 @@ export default function GuideDashboard() {
           </div>
         )}
 
-        {/* ── Nav Label ── */}
         {sidebarOpen && (
           <p className="px-5 text-[9px] font-black text-violet-300/60 uppercase tracking-[0.15em] mb-1.5">
             Navigation
           </p>
         )}
 
-        {/* ── Nav Links ── */}
+        {/* Nav Links */}
         <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto pb-2">
           {navItems.map(({ id, label, icon: Icon, badge }) => {
             const isActive = activePage === id;
@@ -256,13 +673,11 @@ export default function GuideDashboard() {
               <button
                 key={id}
                 onClick={() => setActivePage(id)}
-                className={`
-                  w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative group
-                  ${isActive
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative group ${
+                  isActive
                     ? "bg-white text-violet-700 shadow-lg shadow-violet-900/25 font-bold"
                     : "text-violet-200 hover:bg-white/10 hover:text-white font-medium"
-                  }
-                `}
+                }`}
               >
                 <Icon
                   size={18}
@@ -274,20 +689,13 @@ export default function GuideDashboard() {
                 {sidebarOpen && isActive && (
                   <ChevronRight size={13} className="text-violet-400 ml-auto" />
                 )}
-                {/* Badge */}
                 {badge > 0 && (
                   <span
-                    className={`
-                      text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-black
-                      ${sidebarOpen ? "ml-auto" : "absolute top-1.5 right-1.5"}
-                      ${isActive ? "bg-violet-600 text-white" : "bg-fuchsia-400 text-white"}
-                    `}
+                    className={`text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-black ${sidebarOpen ? "ml-auto" : "absolute top-1.5 right-1.5"} ${isActive ? "bg-violet-600 text-white" : "bg-fuchsia-400 text-white"}`}
                   >
                     {badge}
                   </span>
                 )}
-
-                {/* Tooltip when collapsed */}
                 {!sidebarOpen && (
                   <div className="absolute left-full ml-3 px-2.5 py-1 bg-violet-900 text-white text-xs font-semibold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all whitespace-nowrap shadow-lg z-50">
                     {label}
@@ -298,7 +706,7 @@ export default function GuideDashboard() {
           })}
         </nav>
 
-        {/* ── Logout ── */}
+        {/* Logout */}
         <div className="px-3 pb-4 pt-2 border-t border-white/10">
           <button
             onClick={() => {
@@ -308,7 +716,9 @@ export default function GuideDashboard() {
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-violet-300 hover:bg-red-400/20 hover:text-red-300 transition-all duration-200 group"
           >
             <LogOut size={18} className="flex-shrink-0" />
-            {sidebarOpen && <span className="text-[13px] font-medium">Logout</span>}
+            {sidebarOpen && (
+              <span className="text-[13px] font-medium">Logout</span>
+            )}
             {!sidebarOpen && (
               <div className="absolute left-full ml-3 px-2.5 py-1 bg-violet-900 text-white text-xs font-semibold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all whitespace-nowrap shadow-lg z-50">
                 Logout
@@ -317,7 +727,6 @@ export default function GuideDashboard() {
           </button>
         </div>
 
-        {/* Bottom decorative glow */}
         <div className="absolute bottom-0 left-0 w-full h-24 pointer-events-none overflow-hidden">
           <div className="absolute -bottom-8 -right-8 w-36 h-36 bg-fuchsia-500/15 rounded-full blur-3xl" />
         </div>
@@ -325,8 +734,7 @@ export default function GuideDashboard() {
 
       {/* ══════════════ MAIN AREA ══════════════ */}
       <div className="flex-1 flex flex-col overflow-hidden">
-
-        {/* ── Topbar ── */}
+        {/* Topbar */}
         <header className="bg-white border-b border-violet-100 px-6 py-3.5 flex items-center justify-between flex-shrink-0 shadow-sm shadow-violet-100/50">
           <div className="flex items-center gap-4">
             {!sidebarOpen && (
@@ -338,7 +746,9 @@ export default function GuideDashboard() {
               </button>
             )}
             <div>
-              <h1 className="text-lg font-black text-violet-900 leading-tight">{pageTitle}</h1>
+              <h1 className="text-lg font-black text-violet-900 leading-tight">
+                {pageTitle}
+              </h1>
               <p className="text-[11px] text-violet-400 font-medium">{today}</p>
             </div>
           </div>
@@ -348,39 +758,40 @@ export default function GuideDashboard() {
             {isTracking && (
               <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-emerald-700 text-xs font-bold">Live · {fmtTime(trackingTime)}</span>
+                <span className="text-emerald-700 text-xs font-bold">
+                  Live · {fmtTime(trackingTime)}
+                </span>
               </div>
             )}
 
-            {/* Notifications */}
-            <div className="relative">
+            {/* ── Notification Bell ── */}
+            <div className="relative" ref={notifPanelRef}>
               <button
-                onClick={() => setNotifOpen(!notifOpen)}
+                onClick={() => {
+                  setNotifOpen((v) => {
+                    if (!v) markAllRead(); // mark read when opening
+                    return !v;
+                  });
+                }}
                 className="relative w-9 h-9 bg-violet-50 hover:bg-violet-100 rounded-xl flex items-center justify-center transition-all active:scale-95"
               >
                 <Bell size={17} className="text-violet-600" />
-                {pendingCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-fuchsia-500 rounded-full" />
+                {/* Unread badge */}
+                {unread > 0 && (
+                  <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-red-500 text-white text-[0.5rem] font-black rounded-full flex items-center justify-center px-0.5 shadow animate-bounce">
+                    {unread > 9 ? "9+" : unread}
+                  </span>
                 )}
               </button>
+
               {notifOpen && (
-                <div className="absolute right-0 top-12 w-72 bg-white rounded-2xl shadow-2xl shadow-violet-200/60 border border-violet-100 z-50 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-violet-50 flex justify-between items-center bg-violet-50/50">
-                    <span className="font-black text-violet-900 text-sm">Notifications</span>
-                    <span className="text-[10px] text-fuchsia-600 font-bold bg-fuchsia-50 px-2 py-0.5 rounded-full border border-fuchsia-200">
-                      {pendingCount} pending
-                    </span>
-                  </div>
-                  <div
-                    className="px-4 py-3.5 hover:bg-violet-50 cursor-pointer transition-colors"
-                    onClick={() => { setActivePage("bookings"); setNotifOpen(false); }}
-                  >
-                    <p className="text-sm text-violet-800 font-medium">
-                      📅 You have <strong className="text-violet-900">{pendingCount}</strong> pending booking{pendingCount !== 1 ? "s" : ""}
-                    </p>
-                    <p className="text-[11px] text-violet-400 mt-0.5">Click to review →</p>
-                  </div>
-                </div>
+                <GuideNotifPanel
+                  notifs={notifs}
+                  connected={connected}
+                  onClose={() => setNotifOpen(false)}
+                  onRefresh={refreshNow}
+                  onMarkRead={markAllRead}
+                />
               )}
             </div>
 
@@ -391,7 +802,7 @@ export default function GuideDashboard() {
           </div>
         </header>
 
-        {/* ── Page Content ── */}
+        {/* Page Content */}
         <main className="flex-1 overflow-y-auto p-6 bg-violet-50/60">
           {activePage === "dashboard" && (
             <Dashboard
@@ -399,14 +810,16 @@ export default function GuideDashboard() {
               isTracking={isTracking}
               trackingTime={trackingTime}
               fmtTime={fmtTime}
-              onToggleTracking={() => isTracking ? handleStopTracking() : handleStartTracking()}
+              onToggleTracking={() =>
+                isTracking ? handleStopTracking() : handleStartTracking()
+              }
               setActivePage={setActivePage}
             />
           )}
-          {activePage === "bookings"  && <Bookings guideId={GUIDE_ID} />}
-          {activePage === "tours"     && <Tours guideId={GUIDE_ID} />}
-          {activePage === "history"   && <HistoryPage guideId={GUIDE_ID} />}
-          {activePage === "tracking"  && (
+          {activePage === "bookings" && <Bookings guideId={GUIDE_ID} />}
+          {activePage === "tours" && <Tours guideId={GUIDE_ID} />}
+          {activePage === "history" && <HistoryPage guideId={GUIDE_ID} />}
+          {activePage === "tracking" && (
             <Tracking
               guideId={GUIDE_ID}
               isTracking={isTracking}
@@ -416,9 +829,9 @@ export default function GuideDashboard() {
               onStop={handleStopTracking}
             />
           )}
-          {activePage === "reviews"   && <Reviews guideId={GUIDE_ID} />}
-          {activePage === "earnings"  && <Earnings guideId={GUIDE_ID} />}
-          {activePage === "profile"   && <Profile guideId={GUIDE_ID} />}
+          {activePage === "reviews" && <Reviews guideId={GUIDE_ID} />}
+          {activePage === "earnings" && <Earnings guideId={GUIDE_ID} />}
+          {activePage === "profile" && <Profile guideId={GUIDE_ID} />}
         </main>
       </div>
     </div>

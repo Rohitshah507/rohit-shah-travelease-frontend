@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useSelector } from "react-redux";
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import axios from "axios";
+import { io as socketIO } from "socket.io-client";
 import {
   Menu,
   X,
@@ -10,53 +11,66 @@ import {
   ChevronDown,
   Bell,
   CheckCircle,
-  Clock,
   XCircle,
-  MapPin,
+  CreditCard,
   Compass,
   RefreshCw,
+  Package,
 } from "lucide-react";
 import useUser from "../hooks/useUser";
 import { serverURL } from "../App";
 import { getToken } from "../Pages/Login";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Constants & Helpers
+// Notification type config
 // ─────────────────────────────────────────────────────────────────────────────
-const POLL_MS = 10000;
+const getNotifStyle = (type = "", message = "") => {
+  const t = type.toUpperCase();
+  const m = message.toLowerCase();
 
-const STATUS_CFG = {
-  confirmed: {
-    label: "Booking Confirmed! 🎉",
-    Icon: CheckCircle,
-    color: "text-emerald-400",
-    bg: "bg-emerald-500/15 border-emerald-500/30",
-    ring: "ring-emerald-500/25",
-    toastBorder: "rgba(16,185,129,0.4)",
-    toastGlow: "rgba(16,185,129,0.12)",
-  },
-  pending: {
-    label: "Booking Pending",
-    Icon: Clock,
+  if (t === "PAYMENT" || m.includes("payment") || m.includes("paid")) {
+    return {
+      Icon: CreditCard,
+      color: "text-emerald-400",
+      bg: "bg-emerald-500/15 border-emerald-500/30",
+      ring: "ring-emerald-500/25",
+      toastBorder: "rgba(16,185,129,0.45)",
+      toastGlow: "rgba(16,185,129,0.15)",
+      dot: "bg-emerald-400",
+    };
+  }
+  if (t === "BOOKING" || m.includes("confirm")) {
+    return {
+      Icon: CheckCircle,
+      color: "text-violet-400",
+      bg: "bg-violet-500/15 border-violet-500/30",
+      ring: "ring-violet-500/25",
+      toastBorder: "rgba(139,92,246,0.45)",
+      toastGlow: "rgba(139,92,246,0.15)",
+      dot: "bg-violet-400",
+    };
+  }
+  if (m.includes("cancel")) {
+    return {
+      Icon: XCircle,
+      color: "text-red-400",
+      bg: "bg-red-500/15 border-red-500/30",
+      ring: "ring-red-500/25",
+      toastBorder: "rgba(239,68,68,0.4)",
+      toastGlow: "rgba(239,68,68,0.1)",
+      dot: "bg-red-400",
+    };
+  }
+  return {
+    Icon: Package,
     color: "text-amber-400",
-    bg: "bg-amber-500/12 border-amber-500/25",
+    bg: "bg-amber-500/15 border-amber-500/30",
     ring: "ring-amber-500/20",
-    toastBorder: "rgba(245,158,11,0.35)",
-    toastGlow: "rgba(245,158,11,0.08)",
-  },
-  cancelled: {
-    label: "Booking Cancelled",
-    Icon: XCircle,
-    color: "text-red-400",
-    bg: "bg-red-500/12 border-red-500/25",
-    ring: "ring-red-500/20",
-    toastBorder: "rgba(239,68,68,0.35)",
-    toastGlow: "rgba(239,68,68,0.08)",
-  },
+    toastBorder: "rgba(245,158,11,0.4)",
+    toastGlow: "rgba(245,158,11,0.1)",
+    dot: "bg-amber-400",
+  };
 };
-
-const getCfg = (status = "") =>
-  STATUS_CFG[status.toLowerCase()] || STATUS_CFG.pending;
 
 const timeAgo = (dateStr) => {
   if (!dateStr) return "";
@@ -67,44 +81,8 @@ const timeAgo = (dateStr) => {
   return `${Math.floor(s / 86400)}d ago`;
 };
 
-// ── localStorage helpers ──────────────────────────────────────────────────────
-const loadSeen = () => {
-  try {
-    return new Set(JSON.parse(localStorage.getItem("nf_seen") || "[]"));
-  } catch {
-    return new Set();
-  }
-};
-const saveSeen = (set) =>
-  localStorage.setItem("nf_seen", JSON.stringify([...set]));
-
-// statusMap: persisted so page refresh doesn't re-trigger toasts
-const loadStatusMap = () => {
-  try {
-    return JSON.parse(localStorage.getItem("nf_smap") || "{}");
-  } catch {
-    return {};
-  }
-};
-const saveStatusMap = (obj) =>
-  localStorage.setItem("nf_smap", JSON.stringify(obj));
-
-// toastedIds: tracks which booking IDs have already shown a toast THIS session
-// This prevents re-toasting on re-mount/refresh
-const loadToasted = () => {
-  try {
-    return new Set(JSON.parse(localStorage.getItem("nf_toasted") || "[]"));
-  } catch {
-    return new Set();
-  }
-};
-const saveToasted = (set) =>
-  localStorage.setItem("nf_toasted", JSON.stringify([...set]));
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Custom Toast renderer
-// ─────────────────────────────────────────────────────────────────────────────
-const fireToast = (booking, cfg) => {
+const showNotifToast = (notif) => {
+  const style = getNotifStyle(notif.type, notif.message);
   toast.custom(
     (t) => (
       <div
@@ -116,28 +94,26 @@ const fireToast = (booking, cfg) => {
         }`}
         style={{
           background: "linear-gradient(145deg,#1a0a3e,#120630)",
-          border: `1px solid ${cfg.toastBorder}`,
-          boxShadow: `0 8px 32px ${cfg.toastGlow}`,
+          border: `1px solid ${style.toastBorder}`,
+          boxShadow: `0 8px 32px ${style.toastGlow}`,
           minWidth: 290,
-          maxWidth: 350,
+          maxWidth: 360,
         }}
       >
         <div
-          className={`w-9 h-9 rounded-full ${cfg.bg} border flex items-center justify-center shrink-0 mt-0.5`}
+          className={`w-9 h-9 rounded-full ${style.bg} border flex items-center justify-center shrink-0 mt-0.5`}
         >
-          <cfg.Icon size={17} className={cfg.color} />
+          <style.Icon size={17} className={style.color} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-white font-bold text-sm">{cfg.label}</p>
-          <p className={`text-xs font-semibold mt-0.5 truncate ${cfg.color}`}>
-            {booking.tourPackageId?.title || "Tour Package"}
+          <p className={`font-bold text-sm ${style.color}`}>
+            {notif.type === "PAYMENT"
+              ? "Payment Successful 💰"
+              : "Booking Update 🧳"}
           </p>
-          {booking.tourPackageId?.destination && (
-            <p className="text-[#6b5a8e] text-xs mt-0.5 flex items-center gap-1">
-              <MapPin size={9} />
-              {booking.tourPackageId.destination}
-            </p>
-          )}
+          <p className="text-white/90 text-xs mt-0.5 leading-snug">
+            {notif.message}
+          </p>
         </div>
         <X
           size={13}
@@ -149,148 +125,219 @@ const fireToast = (booking, cfg) => {
   );
 };
 
+const POLL_MS = 10000;
+// After a socket event fires, suppress toast from the follow-up poll/refetch
+// for this many ms.  Covers the 1.5 s refetch delay + backend write lag.
+const SOCKET_COOLDOWN_MS = 4000;
+
+const socketEventToNotif = (event, payload) => {
+  const map = {
+    bookingConfirmed: {
+      type: "BOOKING",
+      message: payload.message || "🎉 Your booking has been confirmed!",
+    },
+    bookingCancelled: {
+      type: "BOOKING",
+      message: payload.message || "❌ Your booking was cancelled by the guide.",
+    },
+    newBooking: {
+      type: "BOOKING",
+      message: payload.message || "📢 New booking received!",
+    },
+    paymentSuccess: {
+      type: "PAYMENT",
+      message: payload.message || "💰 Payment successful!",
+    },
+    guideApproved: {
+      type: "USER",
+      message: payload.message || "🎉 Your guide account has been approved!",
+    },
+  };
+  return (
+    map[event] || {
+      type: "BOOKING",
+      message: payload.message || "New notification",
+    }
+  );
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
-// useRealTimeBookings
-//
-// Toast rules:
-//   1. First load: show toast ONLY for confirmed bookings that are
-//      NOT already in "nf_toasted" localStorage (i.e., truly new confirmations).
-//   2. Subsequent polls: show toast ONLY when a booking's status CHANGES
-//      compared to the persisted statusMap.
-//   3. Never re-toast the same booking+status combo twice.
+// useNotifications
 // ─────────────────────────────────────────────────────────────────────────────
-const useRealTimeBookings = () => {
-  const [bookings, setBookings] = useState([]);
-  const [seenIds, setSeenIds] = useState(loadSeen);
+const useNotifications = (userId) => {
+  const [notifs, setNotifs] = useState([]);
   const [unread, setUnread] = useState(0);
   const [connected, setConnected] = useState(false);
 
-  const isFirstFetch = useRef(true);
-  const statusMapRef = useRef(loadStatusMap()); // { bookingId: "confirmed"|"pending"|"cancelled" }
-  const toastedRef = useRef(loadToasted()); // { bookingId } — shown toast at least once
+  const knownIds = useRef(null); // null = first fetch not seeded yet
   const mounted = useRef(true);
+  const timerRef = useRef(null);
+  const socketRef = useRef(null);
 
+  // ── Cooldown flag ─────────────────────────────────────────────────────────
+  // Set to true when a socket event arrives.  While true, doFetch will seed
+  // new DB IDs silently (no toast) because the socket already toasted the user.
+  const socketCooldown = useRef(false);
+  const cooldownTimer = useRef(null);
+
+  const activateCooldown = () => {
+    socketCooldown.current = true;
+    clearTimeout(cooldownTimer.current);
+    cooldownTimer.current = setTimeout(() => {
+      socketCooldown.current = false;
+    }, SOCKET_COOLDOWN_MS);
+  };
+
+  // ── REST fetch ────────────────────────────────────────────────────────────
   const doFetch = useCallback(async () => {
     try {
       const token = getToken();
       if (!token) return;
 
-      const res = await axios.get(`${serverURL}/api/booking/tourist`, {
+      const res = await axios.get(`${serverURL}/api/notifications`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!mounted.current) return;
 
-      const raw = res.data.data || [];
-
-      // Sort newest-first by updatedAt / createdAt
-      const sorted = [...raw].sort(
-        (a, b) =>
-          new Date(b.updatedAt || b.createdAt || 0) -
-          new Date(a.updatedAt || a.createdAt || 0),
+      const raw = (res.data.data || res.data || []).sort(
+        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
       );
 
-      setBookings(sorted);
+      setNotifs(raw);
       setConnected(true);
+      setUnread(raw.filter((n) => !n.isRead).length);
 
-      const newStatusMap = { ...statusMapRef.current };
-      const newToasted = new Set(toastedRef.current);
-
-      if (isFirstFetch.current) {
-        // ── FIRST FETCH ──────────────────────────────────────────────────────
-        // Build the status map silently.
-        // ONLY toast for confirmed bookings that we've NEVER toasted before.
-        sorted.forEach((b) => {
-          const currStatus = b.bookingStatus?.toLowerCase() || "pending";
-          newStatusMap[b._id] = currStatus;
-
-          // Show toast for confirmed + never toasted before
-          if (currStatus === "confirmed" && !newToasted.has(b._id)) {
-            fireToast(b, getCfg("confirmed"));
-            newToasted.add(b._id);
-          }
-        });
-
-        isFirstFetch.current = false;
+      if (knownIds.current === null) {
+        // Very first fetch — seed all IDs silently, no toasts ever
+        knownIds.current = new Set(raw.map((n) => n._id));
       } else {
-        // ── SUBSEQUENT POLLS ─────────────────────────────────────────────────
-        // Compare current status with stored map.
-        // Toast only when status genuinely changed.
-        sorted.forEach((b) => {
-          const prevStatus = newStatusMap[b._id];
-          const currStatus = b.bookingStatus?.toLowerCase() || "pending";
+        const newOnes = raw.filter((n) => !knownIds.current.has(n._id));
 
-          if (prevStatus === undefined) {
-            // Brand-new booking — record it, no toast
-            newStatusMap[b._id] = currStatus;
-          } else if (prevStatus !== currStatus) {
-            // Status changed → toast
-            fireToast(b, getCfg(currStatus));
-            newStatusMap[b._id] = currStatus;
-            // Mark as toasted so if page refreshes it won't re-fire
-            // (unless status changes again later)
-            // We intentionally do NOT add to newToasted here so that
-            // the next refresh will detect the new status via statusMap diff.
-          }
-          // Same status → do nothing
-        });
+        // Always add to knownIds so they are never processed again
+        newOnes.forEach((n) => knownIds.current.add(n._id));
+
+        // ── THE FIX ───────────────────────────────────────────────────────
+        // Only show a poll-triggered toast when no socket event has fired
+        // recently.  If the cooldown is active, the socket already showed the
+        // toast — swallow the duplicate silently.
+        if (!socketCooldown.current) {
+          newOnes.forEach((n) => showNotifToast(n));
+        }
       }
-
-      // Persist
-      statusMapRef.current = newStatusMap;
-      toastedRef.current = newToasted;
-      saveStatusMap(newStatusMap);
-      saveToasted(newToasted);
-
-      // Unread count
-      const currentSeen = loadSeen();
-      setUnread(sorted.filter((b) => !currentSeen.has(b._id)).length);
     } catch {
       if (mounted.current) setConnected(false);
     }
   }, []);
 
+  // ── Socket.io ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!userId) return;
+
+    const socket = socketIO(serverURL, {
+      query: { userId },
+      transports: ["websocket"],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
+    });
+    socketRef.current = socket;
+
+    const SOCKET_EVENTS = [
+      "bookingConfirmed",
+      "bookingCancelled",
+      "newBooking",
+      "paymentSuccess",
+      "guideApproved",
+    ];
+
+    SOCKET_EVENTS.forEach((event) => {
+      socket.on(event, (payload) => {
+        if (!mounted.current) return;
+
+        // 1️⃣  Start cooldown BEFORE showing toast so doFetch can't race ahead
+        activateCooldown();
+
+        // 2️⃣  Build pseudo-notif and show exactly ONE toast
+        const pseudoNotif = {
+          _id: `socket-${Date.now()}-${Math.random()}`,
+          ...socketEventToNotif(event, payload),
+          isRead: false,
+          createdAt: new Date().toISOString(),
+        };
+
+        showNotifToast(pseudoNotif);
+
+        // 3️⃣  Optimistically prepend & bump badge
+        setNotifs((prev) => [pseudoNotif, ...prev]);
+        setUnread((prev) => prev + 1);
+
+        // 4️⃣  Seed pseudo-ID (belt-and-suspenders)
+        if (knownIds.current) knownIds.current.add(pseudoNotif._id);
+
+        // 5️⃣  Re-fetch to replace pseudo-entry with real DB record (silently)
+        setTimeout(() => {
+          if (mounted.current) doFetch();
+        }, 1500);
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [userId, doFetch]);
+
+  // ── Polling ───────────────────────────────────────────────────────────────
   useEffect(() => {
     mounted.current = true;
     doFetch();
-    const timer = setInterval(doFetch, POLL_MS);
+    timerRef.current = setInterval(doFetch, POLL_MS);
     return () => {
       mounted.current = false;
-      clearInterval(timer);
+      clearInterval(timerRef.current);
+      clearTimeout(cooldownTimer.current);
     };
   }, [doFetch]);
 
-  const markAllSeen = useCallback(() => {
-    setBookings((prev) => {
-      const ids = new Set(prev.map((b) => b._id));
-      saveSeen(ids);
-      setSeenIds(ids);
-      setUnread(0);
-      return prev;
-    });
-  }, []);
+  // ── Mark all as read ──────────────────────────────────────────────────────
+  const markAllRead = useCallback(async () => {
+    const unreadNotifs = notifs.filter((n) => !n.isRead);
+    if (unreadNotifs.length === 0) return;
+
+    setNotifs((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setUnread(0);
+
+    const token = getToken();
+    if (!token) return;
+
+    const dbUnread = unreadNotifs.filter(
+      (n) => !String(n._id).startsWith("socket-"),
+    );
+    await Promise.allSettled(
+      dbUnread.map((n) =>
+        axios.patch(
+          `${serverURL}/api/notifications/${n._id}/read`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } },
+        ),
+      ),
+    );
+  }, [notifs]);
 
   const refreshNow = useCallback(() => doFetch(), [doFetch]);
 
-  return { bookings, seenIds, unread, connected, markAllSeen, refreshNow };
+  return { notifs, unread, connected, markAllRead, refreshNow };
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Notification Panel
 // ─────────────────────────────────────────────────────────────────────────────
-const NotifPanel = ({
-  bookings,
-  seenIds,
-  connected,
-  onClose,
-  onNavigate,
-  onRefresh,
-}) => (
+const NotifPanel = ({ notifs, connected, onClose, onNavigate, onRefresh }) => (
   <div
-    className="absolute right-0 mt-2 w-[370px] rounded-[22px] overflow-hidden z-50"
+    className="absolute right-0 mt-2 w-[380px] rounded-[22px] overflow-hidden z-50"
     style={{
       background: "linear-gradient(145deg,#180a38,#0e051f)",
       border: "1px solid rgba(139,92,246,0.28)",
-      boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+      boxShadow:
+        "0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(139,92,246,0.06)",
     }}
   >
     {/* Header */}
@@ -298,21 +345,22 @@ const NotifPanel = ({
       <div className="flex items-center gap-2.5">
         <Bell size={15} className="text-violet-400" />
         <span className="font-bold text-white text-sm">Notifications</span>
-        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/20">
+        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/12 border border-emerald-500/18">
           <span
             className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-emerald-400 animate-pulse" : "bg-gray-500"}`}
           />
           <span
-            className={`text-[0.58rem] font-bold ${connected ? "text-emerald-400" : "text-gray-500"}`}
+            className={`text-[0.57rem] font-bold ${connected ? "text-emerald-400" : "text-gray-500"}`}
           >
             {connected ? "Live" : "Offline"}
           </span>
         </div>
       </div>
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1">
         <button
           onClick={onRefresh}
           className="p-1.5 rounded-[8px] text-[#6b5a8e] hover:text-violet-300 hover:bg-violet-500/10 transition-all cursor-pointer border-none bg-transparent"
+          title="Refresh"
         >
           <RefreshCw size={13} />
         </button>
@@ -327,11 +375,11 @@ const NotifPanel = ({
 
     {/* List */}
     <div
-      className="max-h-[400px] overflow-y-auto"
+      className="max-h-[420px] overflow-y-auto"
       style={{ scrollbarWidth: "thin", scrollbarColor: "#4c1d95 transparent" }}
     >
-      {bookings.length === 0 ? (
-        <div className="text-center py-12 px-6">
+      {notifs.length === 0 ? (
+        <div className="text-center py-14 px-6">
           <div className="w-14 h-14 rounded-full bg-violet-500/10 border border-violet-500/15 flex items-center justify-center mx-auto mb-4">
             <Bell size={24} className="text-violet-500/40" />
           </div>
@@ -339,48 +387,42 @@ const NotifPanel = ({
             No notifications yet
           </p>
           <p className="text-[#4a3a6a] text-xs mt-1">
-            Booking updates appear here in real-time
+            Booking & payment updates appear here
           </p>
         </div>
       ) : (
         <div className="p-3 flex flex-col gap-1.5">
-          {bookings.map((b) => {
-            const cfg = getCfg(b.bookingStatus);
-            const isNew = !seenIds.has(b._id);
+          {notifs.map((n) => {
+            const style = getNotifStyle(n.type, n.message);
+            const isUnread = !n.isRead;
             return (
               <div
-                key={b._id}
+                key={n._id}
                 onClick={onNavigate}
-                className={`relative flex items-start gap-3 p-3.5 rounded-[14px] border cursor-pointer transition-all duration-200 hover:scale-[1.015] hover:brightness-110 ${cfg.bg} ${isNew ? `ring-1 ${cfg.ring}` : ""}`}
+                className={`relative flex items-start gap-3 p-3.5 rounded-[14px] border cursor-pointer transition-all duration-200 hover:scale-[1.012] hover:brightness-110 ${style.bg} ${isUnread ? `ring-1 ${style.ring}` : "opacity-85"}`}
               >
-                {isNew && (
-                  <span className="absolute top-3 right-3 w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+                {isUnread && (
+                  <span
+                    className={`absolute top-3 right-3 w-2 h-2 rounded-full ${style.dot} animate-pulse`}
+                  />
                 )}
-
                 <div
-                  className={`w-9 h-9 rounded-full border ${cfg.bg} flex items-center justify-center shrink-0`}
+                  className={`w-9 h-9 rounded-full border ${style.bg} flex items-center justify-center shrink-0`}
                 >
-                  <cfg.Icon size={16} className={cfg.color} />
+                  <style.Icon size={16} className={style.color} />
                 </div>
-
-                <div className="flex-1 min-w-0 pr-4">
-                  <p className={`font-bold text-xs ${cfg.color}`}>
-                    {cfg.label}
+                <div className="flex-1 min-w-0 pr-5">
+                  <p className={`font-bold text-xs ${style.color}`}>
+                    {n.type === "PAYMENT"
+                      ? "Payment Successful 💰"
+                      : "Booking Update 🧳"}
                   </p>
-                  <p className="text-white/85 text-xs font-semibold mt-0.5 truncate">
-                    {b.tourPackageId?.title || "Tour Package"}
+                  <p className="text-white/88 text-xs mt-0.5 leading-snug">
+                    {n.message}
                   </p>
-                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                    {b.tourPackageId?.destination && (
-                      <span className="flex items-center gap-1 text-[#6b5a8e] text-[0.62rem]">
-                        <MapPin size={9} className="shrink-0" />
-                        {b.tourPackageId.destination}
-                      </span>
-                    )}
-                    <span className="text-[#4a3a6a] text-[0.58rem] ml-auto">
-                      {timeAgo(b.updatedAt || b.createdAt)}
-                    </span>
-                  </div>
+                  <span className="text-[#4a3a6a] text-[0.57rem] mt-1.5 block">
+                    {timeAgo(n.createdAt)}
+                  </span>
                 </div>
               </div>
             );
@@ -389,11 +431,12 @@ const NotifPanel = ({
       )}
     </div>
 
-    {bookings.length > 0 && (
+    {/* Footer */}
+    {notifs.length > 0 && (
       <div className="px-4 py-3 border-t border-violet-500/12">
         <button
           onClick={onNavigate}
-          className="w-full py-2.5 rounded-[12px] text-xs font-bold text-violet-300 bg-violet-500/10 border border-violet-500/18 hover:bg-violet-500/20 transition-all cursor-pointer border-none bg-transparent"
+          className="w-full py-2.5 rounded-[12px] text-xs font-bold text-violet-300 bg-violet-500/10 border border-violet-500/18 hover:bg-violet-500/20 hover:text-violet-200 transition-all cursor-pointer"
         >
           View All Bookings →
         </button>
@@ -403,7 +446,7 @@ const NotifPanel = ({
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Navbar — ALWAYS dark glass, no white mode at all
+// Navbar
 // ─────────────────────────────────────────────────────────────────────────────
 const Navbar = () => {
   useUser();
@@ -418,8 +461,9 @@ const Navbar = () => {
   const profileRef = useRef(null);
   const notifRef = useRef(null);
 
-  const { bookings, seenIds, unread, connected, markAllSeen, refreshNow } =
-    useRealTimeBookings();
+  const userId = userData?.userDetails?._id;
+  const { notifs, unread, connected, markAllRead, refreshNow } =
+    useNotifications(userId);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
@@ -438,6 +482,14 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", fn);
   }, []);
 
+  const openNotifs = () => {
+    setShowNotifs((v) => {
+      if (!v) markAllRead();
+      return !v;
+    });
+    setShowProfile(false);
+  };
+
   const handleLogout = () => {
     setShowProfile(false);
     toast
@@ -453,20 +505,11 @@ const Navbar = () => {
       .then(() => setTimeout(() => window.location.reload(), 500));
   };
 
-  const openNotifs = () => {
-    setShowNotifs((v) => {
-      if (!v) markAllSeen();
-      return !v;
-    });
-    setShowProfile(false);
-  };
-
   const initial =
     userData?.userDetails?.username?.charAt(0)?.toUpperCase() || "U";
   const username = userData?.userDetails?.username || "User";
   const email = userData?.userDetails?.email || "";
 
-  // ── Always dark navbar ──────────────────────────────────────────────────────
   const navBg = scrolled
     ? "bg-[rgba(7,3,15,0.96)] backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.5)] border-b border-violet-500/20"
     : "bg-[rgba(7,3,15,0.75)] backdrop-blur-md border-b border-violet-500/12";
@@ -537,12 +580,11 @@ const Navbar = () => {
 
               {showNotifs && (
                 <NotifPanel
-                  bookings={bookings}
-                  seenIds={seenIds}
+                  notifs={notifs}
                   connected={connected}
                   onClose={() => setShowNotifs(false)}
                   onNavigate={() => {
-                    navigate("/tourList");
+                    navigate("/mybookings");
                     setShowNotifs(false);
                   }}
                   onRefresh={refreshNow}
@@ -598,10 +640,11 @@ const Navbar = () => {
                       </div>
                     </div>
                   </div>
+
                   <div className="p-2">
                     <button
                       onClick={() => {
-                        navigate("/tourList");
+                        navigate("/mybookings");
                         setShowProfile(false);
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2.5 rounded-[12px] text-sm font-semibold text-white/80 hover:bg-violet-500/15 hover:text-white transition-all text-left cursor-pointer border-none bg-transparent"
@@ -640,7 +683,6 @@ const Navbar = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t border-violet-500/15 bg-[#0c0420]">
             <div className="px-5 py-4 space-y-1">
-              {/* User card */}
               <div className="flex items-center gap-3 px-4 py-3 mb-3 rounded-[14px] bg-violet-500/10 border border-violet-500/18">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-black text-base">
                   {initial}

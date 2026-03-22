@@ -178,6 +178,7 @@ const BookingPage = () => {
           : null) ||
         paymentResponse.data?.paymentUrl?.payment_url ||
         paymentResponse.data?.payment_url;
+
       if (!khaltiPaymentUrl) {
         toast.dismiss(loadingToast);
         throw new Error("Khalti URL not returned.");

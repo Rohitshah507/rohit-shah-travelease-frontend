@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import {
   MapPin,
-  Calendar,
   Clock,
-  Star,
   CreditCard,
   CheckCircle,
   XCircle,
@@ -17,7 +15,6 @@ import {
   Ban,
   Package,
   ChevronRight,
-  Filter,
   Search,
   Sparkles,
 } from "lucide-react";
@@ -33,18 +30,21 @@ const bookingStatusConfig = {
     icon: CheckCircle,
     classes: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
     dot: "bg-emerald-400",
+    cardBorder: "border-l-emerald-500/60",
   },
   pending: {
     label: "Pending",
     icon: AlertCircle,
     classes: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
     dot: "bg-amber-400",
+    cardBorder: "border-l-amber-500/60",
   },
   cancelled: {
     label: "Cancelled",
     icon: XCircle,
     classes: "bg-red-500/15 text-red-400 border border-red-500/30",
     dot: "bg-red-400",
+    cardBorder: "border-l-red-500/40",
   },
 };
 
@@ -75,41 +75,47 @@ const paymentStatusConfig = {
   },
 };
 
-const getBookingStatus = (status = "") => {
-  const key = status.toLowerCase();
+const getBookingStatus = (status = "") =>
+  bookingStatusConfig[status.toLowerCase()] || {
+    label: status,
+    icon: AlertCircle,
+    classes: "bg-violet-500/15 text-violet-300 border border-violet-500/25",
+    dot: "bg-violet-400",
+    cardBorder: "border-l-violet-500/40",
+  };
+
+// ── FIXED: if bookingStatus is confirmed, always show "Paid" badge
+// regardless of what paymentStatus field says (it may be null/undefined)
+const getPaymentStatus = (paymentStatus = "", bookingStatus = "") => {
+  const bs = bookingStatus?.toLowerCase();
+  if (bs === "confirmed") {
+    return {
+      label: "Paid",
+      classes:
+        "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25",
+    };
+  }
   return (
-    bookingStatusConfig[key] || {
-      label: status,
-      icon: AlertCircle,
+    paymentStatusConfig[paymentStatus?.toLowerCase()] || {
+      label: paymentStatus || "Unknown",
       classes: "bg-violet-500/15 text-violet-300 border border-violet-500/25",
-      dot: "bg-violet-400",
     }
   );
 };
 
-const getPaymentStatus = (status = "") => {
-  const key = status.toLowerCase();
-  return (
-    paymentStatusConfig[key] || {
-      label: status || "Unknown",
-      classes: "bg-violet-500/15 text-violet-300 border border-violet-500/25",
-    }
-  );
-};
+const formatDate = (d) =>
+  d
+    ? new Date(d).toLocaleDateString("en-US", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : "—";
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-};
-
-// ── Cancel Confirm Modal ──────────────────────────────────────────────────────
+// ── Cancel Modal ──────────────────────────────────────────────────────────────
 const CancelModal = ({ booking, onConfirm, onClose, loading }) => (
   <div className="fixed inset-0 bg-black/75 backdrop-blur-[10px] z-50 flex items-center justify-center p-4">
-    <div className="w-full max-w-[400px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#0f0524] border border-violet-500/40 shadow-[0_0_80px_rgba(139,92,246,0.3)] animate-[fadeInUp_0.3s_ease]">
+    <div className="w-full max-w-[400px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#0f0524] border border-violet-500/40 shadow-[0_0_80px_rgba(139,92,246,0.3)]">
       <div className="p-7">
         <div className="flex items-center gap-4 mb-5">
           <div className="w-14 h-14 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
@@ -127,7 +133,6 @@ const CancelModal = ({ booking, onConfirm, onClose, loading }) => (
             </p>
           </div>
         </div>
-
         <div className="bg-violet-500/8 border border-violet-500/20 rounded-[14px] px-4 py-3 mb-5">
           <p className="text-[0.7rem] font-bold text-violet-400 tracking-widest uppercase mb-1">
             Tour Package
@@ -136,12 +141,10 @@ const CancelModal = ({ booking, onConfirm, onClose, loading }) => (
             {booking?.tourPackageId?.title || "This tour"}
           </p>
         </div>
-
         <p className="text-[#9e9ab5] text-sm leading-[1.7] mb-6">
-          Are you sure you want to cancel this booking? Your reservation will be
-          permanently removed and cannot be recovered.
+          Are you sure? Your reservation will be permanently removed and cannot
+          be recovered.
         </p>
-
         <div className="flex gap-3">
           <button
             onClick={onClose}
@@ -156,12 +159,13 @@ const CancelModal = ({ booking, onConfirm, onClose, loading }) => (
           >
             {loading ? (
               <>
-                <div className="w-4 h-4 border-2 border-white/25 border-t-white rounded-full animate-spin" />{" "}
+                <div className="w-4 h-4 border-2 border-white/25 border-t-white rounded-full animate-spin" />
                 Cancelling...
               </>
             ) : (
               <>
-                <XCircle size={15} /> Yes, Cancel
+                <XCircle size={15} />
+                Yes, Cancel
               </>
             )}
           </button>
@@ -176,19 +180,29 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
   const navigate = useNavigate();
   const pkg = booking.tourPackageId;
   const bStatus = getBookingStatus(booking.bookingStatus);
-  const pStatus = getPaymentStatus(booking.paymentStatus);
-  const StatusIcon = bStatus.icon;
-  const isCancelled = booking.bookingStatus?.toLowerCase() === "cancelled";
-  const isPending = booking.bookingStatus?.toLowerCase() === "pending";
-  const isConfirmed = booking.bookingStatus?.toLowerCase() === "confirmed";
-  const isPaid = ["success", "completed", "paid"].includes(
-    booking.paymentStatus?.toLowerCase(),
+
+  // ── FIXED: pass bookingStatus as second arg so confirmed → always "Paid"
+  const pStatus = getPaymentStatus(
+    booking.paymentStatus,
+    booking.bookingStatus,
   );
+
+  const isCancelled = booking.bookingStatus?.toLowerCase() === "cancelled";
+
+  // ── FIXED: isPaid is true when EITHER:
+  //   1. paymentStatus field is success/completed/paid, OR
+  //   2. bookingStatus is "confirmed" (backend sets this after payment success)
+  // This prevents "Pay Now" from appearing on already-paid confirmed bookings
+  // where paymentStatus is null/undefined in the API response.
+  const isPaid =
+    ["success", "completed", "paid"].includes(
+      booking.paymentStatus?.toLowerCase(),
+    ) || booking.bookingStatus?.toLowerCase() === "confirmed";
 
   return (
     <div
-      className="rounded-[24px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/20 hover:border-violet-500/50 hover:shadow-[0_20px_60px_rgba(139,92,246,0.2)] transition-all duration-[400ms] group"
-      style={{ animationDelay: `${index * 80}ms` }}
+      className={`rounded-[24px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/20 border-l-4 ${bStatus.cardBorder} hover:border-violet-500/50 hover:shadow-[0_20px_60px_rgba(139,92,246,0.2)] transition-all duration-[400ms] group ${isCancelled ? "opacity-75" : ""}`}
+      style={{ animationDelay: `${index * 70}ms` }}
     >
       <div className="flex flex-col md:flex-row">
         {/* Image */}
@@ -199,12 +213,10 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
               "https://images.unsplash.com/photo-1605640840605-14ac1855827b?w=600"
             }
             alt={pkg?.title}
-            className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-700"
+            className={`w-full h-full object-cover transition-transform duration-700 ${!isCancelled ? "group-hover:scale-[1.05]" : "grayscale-[20%]"}`}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#1a0a3e]/60 md:block hidden" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#1a0a3e]/60 hidden md:block" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#07030f]/70 to-transparent md:hidden" />
-
-          {/* Booking status ribbon */}
           <div
             className={`absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[0.68rem] font-bold ${bStatus.classes}`}
           >
@@ -218,7 +230,7 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
         {/* Content */}
         <div className="flex-1 p-5 md:p-6 flex flex-col justify-between">
           <div>
-            {/* Title row */}
+            {/* Title + Price */}
             <div className="flex items-start justify-between gap-3 mb-3">
               <div>
                 <h3
@@ -227,7 +239,7 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
                 >
                   {pkg?.title || "Tour Package"}
                 </h3>
-                <div className="flex items-center gap-1.5 text-[#6b5a8e] text-xs">
+                <div className="flex items-center gap-1.5 text-[#6b5a8e] text-xs flex-wrap">
                   <MapPin size={11} className="text-violet-500" />
                   <span>{pkg?.destination || "—"}</span>
                   {pkg?.duration && (
@@ -253,56 +265,41 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
             </div>
 
             {/* Info grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-              {/* Booking Date */}
-              <div className="bg-violet-500/8 border border-violet-500/15 rounded-[12px] px-3 py-2.5">
-                <p className="text-[0.6rem] font-bold text-violet-400 tracking-[0.15em] uppercase mb-1">
-                  Booked On
-                </p>
-                <p className="text-white text-xs font-semibold">
-                  {formatDate(booking.createdAt || booking.bookingDate)}
-                </p>
-              </div>
-
-              {/* Travel Dates */}
-              <div className="bg-violet-500/8 border border-violet-500/15 rounded-[12px] px-3 py-2.5">
-                <p className="text-[0.6rem] font-bold text-violet-400 tracking-[0.15em] uppercase mb-1">
-                  Travel Date
-                </p>
-                <p className="text-white text-xs font-semibold">
-                  {formatDate(booking.startDate)}
-                </p>
-              </div>
-
-              {/* Guests */}
-              <div className="bg-violet-500/8 border border-violet-500/15 rounded-[12px] px-3 py-2.5">
-                <p className="text-[0.6rem] font-bold text-violet-400 tracking-[0.15em] uppercase mb-1">
-                  Guests
-                </p>
-                <p className="text-white text-xs font-semibold">
-                  {booking.numberOfAdults || 1} Adult
-                  {booking.numberOfAdults > 1 ? "s" : ""}
-                  {booking.numberOfChildren > 0
-                    ? `, ${booking.numberOfChildren} Child`
-                    : ""}
-                </p>
-              </div>
-
-              {/* Payment */}
-              <div className="bg-violet-500/8 border border-violet-500/15 rounded-[12px] px-3 py-2.5">
-                <p className="text-[0.6rem] font-bold text-violet-400 tracking-[0.15em] uppercase mb-1">
-                  Payment
-                </p>
-                <span
-                  className={`text-[0.68rem] font-bold px-2 py-0.5 rounded-full ${pStatus.classes}`}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
+              {[
+                {
+                  label: "Booked On",
+                  value: formatDate(booking.createdAt || booking.bookingDate),
+                },
+                { label: "Travel Date", value: formatDate(booking.startDate) },
+                {
+                  label: "Guests",
+                  value: `${booking.numberOfAdults || 1} Adult${(booking.numberOfAdults || 1) > 1 ? "s" : ""}${booking.numberOfChildren > 0 ? `, ${booking.numberOfChildren} Child` : ""}`,
+                },
+                { label: "Payment", value: null, badge: pStatus },
+              ].map(({ label, value, badge }) => (
+                <div
+                  key={label}
+                  className="bg-violet-500/8 border border-violet-500/15 rounded-[12px] px-3 py-2.5 hover:border-violet-500/30 transition-colors"
                 >
-                  {pStatus.label}
-                </span>
-              </div>
+                  <p className="text-[0.6rem] font-bold text-violet-400 tracking-[0.15em] uppercase mb-1">
+                    {label}
+                  </p>
+                  {badge ? (
+                    <span
+                      className={`text-[0.68rem] font-bold px-2 py-0.5 rounded-full ${badge.classes}`}
+                    >
+                      {badge.label}
+                    </span>
+                  ) : (
+                    <p className="text-white text-xs font-semibold">{value}</p>
+                  )}
+                </div>
+              ))}
             </div>
 
             {/* Booking ID */}
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-1">
               <span className="text-[0.6rem] font-bold text-[#6b5a8e] tracking-widest uppercase">
                 Booking ID:
               </span>
@@ -312,9 +309,8 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex flex-wrap items-center gap-2.5 pt-4 border-t border-violet-500/12">
-            {/* View Details */}
+          {/* ── Actions ── */}
+          <div className="flex flex-wrap items-center gap-2.5 pt-4 mt-3 border-t border-violet-500/12">
             <button
               onClick={() => pkg?._id && navigate(`/booking/${pkg._id}`)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-[10px] text-xs font-bold text-violet-300 bg-violet-500/10 border border-violet-500/25 hover:bg-violet-500/20 hover:border-violet-500/50 transition-all cursor-pointer"
@@ -322,7 +318,7 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
               <Eye size={13} /> View Details
             </button>
 
-            {/* Pay Now — only if pending payment */}
+            {/* Pay Now — ONLY when not paid AND not cancelled */}
             {!isPaid && !isCancelled && (
               <button
                 onClick={() => onPayClick(booking)}
@@ -332,14 +328,14 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
               </button>
             )}
 
-            {/* Paid badge */}
+            {/* Payment Complete badge — when paid and not cancelled */}
             {isPaid && !isCancelled && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25">
                 <CheckCircle size={13} /> Payment Complete
               </div>
             )}
 
-            {/* Cancel — only if not cancelled */}
+            {/* Cancel — only for non-cancelled bookings */}
             {!isCancelled && (
               <button
                 onClick={() => onCancelClick(booking)}
@@ -349,7 +345,6 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
               </button>
             )}
 
-            {/* Cancelled state */}
             {isCancelled && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-xs font-bold text-red-400/60 bg-red-500/8 border border-red-500/20 ml-auto">
                 <XCircle size={13} /> Booking Cancelled
@@ -362,14 +357,13 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
   );
 };
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// ── Main Page ─────────────────────────────────────────────────────────────────
 const MyBookings = () => {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelTarget, setCancelTarget] = useState(null);
   const [cancelling, setCancelling] = useState(false);
-  const [processingPayment, setProcessingPayment] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
@@ -378,12 +372,11 @@ const MyBookings = () => {
     try {
       isRefresh ? setRefreshing(true) : setLoading(true);
       const token = getToken();
-      const response = await axios.get(`${serverURL}/api/booking/tourist`, {
+      const res = await axios.get(`${serverURL}/api/booking/tourist`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setBookings(response.data.data || []);
-    } catch (error) {
-      console.error("Error fetching bookings:", error);
+      setBookings(res.data.data || []);
+    } catch {
       toast.error("Failed to load your bookings.");
     } finally {
       setLoading(false);
@@ -408,61 +401,57 @@ const MyBookings = () => {
       toast.success("Booking cancelled successfully!");
       setCancelTarget(null);
       fetchBookings(true);
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Cancellation failed.");
+    } catch (e) {
+      toast.error(e.response?.data?.message || "Cancellation failed.");
     } finally {
       setCancelling(false);
     }
   };
 
   const handlePayment = async (booking) => {
-    const loadingToast = toast.loading("Redirecting to Khalti...");
+    const tid = toast.loading("Redirecting to Khalti...");
     try {
-      setProcessingPayment(true);
       const token = getToken();
-      const paymentResponse = await axios.post(
-        `${serverURL}/api/payment/${booking._id}/khalti/initiate`,
+      const res = await axios.post(
+        `${serverURL}/api/payment/${booking._id}/epayment/initiate`,
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      const khaltiUrl =
-        (typeof paymentResponse.data?.paymentUrl === "string"
-          ? paymentResponse.data.paymentUrl
+      const url =
+        (typeof res.data?.paymentUrl === "string"
+          ? res.data.paymentUrl
           : null) ||
-        paymentResponse.data?.paymentUrl?.payment_url ||
-        paymentResponse.data?.payment_url;
+        res.data?.paymentUrl?.payment_url ||
+        res.data?.payment_url;
 
-      if (!khaltiUrl) {
-        toast.dismiss(loadingToast);
-        throw new Error("Payment URL not returned.");
+      if (!url) {
+        toast.dismiss(tid);
+        toast.error("Payment URL not returned from server.");
+        return;
       }
-      toast.dismiss(loadingToast);
+      toast.dismiss(tid);
       toast.success("Redirecting to Khalti...", { duration: 2000 });
       setTimeout(() => {
-        window.location.href = khaltiUrl;
+        window.location.href = url;
       }, 500);
-    } catch (error) {
-      toast.dismiss(loadingToast);
-      toast.error(error.response?.data?.message || "Payment failed.");
-      setProcessingPayment(false);
+    } catch (e) {
+      toast.dismiss(tid);
+      toast.error(e.response?.data?.message || "Payment initiation failed.");
     }
   };
 
-  // Filter bookings
-  const filtered = bookings.filter((b) => {
-    const matchSearch =
-      b.tourPackageId?.title
+  const filtered = bookings.filter(
+    (b) =>
+      (b.tourPackageId?.title
         ?.toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
-      b.tourPackageId?.destination
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase());
-    const matchStatus =
-      statusFilter === "all" || b.bookingStatus?.toLowerCase() === statusFilter;
-    return matchSearch && matchStatus;
-  });
+        b.tourPackageId?.destination
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase())) &&
+      (statusFilter === "all" ||
+        b.bookingStatus?.toLowerCase() === statusFilter),
+  );
 
-  // Stats
   const stats = {
     total: bookings.length,
     confirmed: bookings.filter(
@@ -492,31 +481,6 @@ const MyBookings = () => {
         <div className="absolute bottom-0 left-0 w-[340px] h-[340px] rounded-full bg-[radial-gradient(circle,rgba(76,29,149,0.14)_0%,transparent_70%)] blur-[80px]" />
       </div>
 
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: "#1a0a3e",
-            color: "#e2d9f3",
-            border: "1px solid rgba(139,92,246,0.35)",
-            borderRadius: 14,
-            fontWeight: 600,
-            fontSize: 14,
-            boxShadow: "0 8px 32px rgba(139,92,246,0.25)",
-          },
-          success: { iconTheme: { primary: "#10b981", secondary: "#1a0a3e" } },
-          error: {
-            style: {
-              background: "#2d0a1e",
-              color: "#fca5a5",
-              border: "1px solid rgba(239,68,68,0.35)",
-            },
-            iconTheme: { primary: "#ef4444", secondary: "#2d0a1e" },
-          },
-        }}
-      />
-
       {cancelTarget && (
         <CancelModal
           booking={cancelTarget}
@@ -527,7 +491,8 @@ const MyBookings = () => {
       )}
 
       <div className="relative z-10">
-        <Navbar/>
+        <Navbar />
+
         {/* ── HERO ── */}
         <div className="relative pt-28 pb-14 px-6 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none [background-image:radial-gradient(circle,rgba(139,92,246,0.08)_1px,transparent_1px)] [background-size:28px_28px]" />
@@ -560,7 +525,6 @@ const MyBookings = () => {
                 </p>
               </div>
 
-              {/* Refresh + Explore buttons */}
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => fetchBookings(true)}
@@ -582,7 +546,7 @@ const MyBookings = () => {
               </div>
             </div>
 
-            {/* ── STATS ROW ── */}
+            {/* Stats */}
             {!loading && bookings.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
                 {[
@@ -590,27 +554,23 @@ const MyBookings = () => {
                     label: "Total Bookings",
                     value: stats.total,
                     color: "from-violet-500 to-violet-700",
-                    glow: "rgba(139,92,246,0.3)",
                   },
                   {
                     label: "Confirmed",
                     value: stats.confirmed,
                     color: "from-emerald-500 to-emerald-700",
-                    glow: "rgba(16,185,129,0.3)",
                   },
                   {
                     label: "Pending",
                     value: stats.pending,
                     color: "from-amber-500 to-amber-600",
-                    glow: "rgba(245,158,11,0.3)",
                   },
                   {
                     label: "Cancelled",
                     value: stats.cancelled,
                     color: "from-red-500 to-red-700",
-                    glow: "rgba(239,68,68,0.3)",
                   },
-                ].map(({ label, value, color, glow }) => (
+                ].map(({ label, value, color }) => (
                   <div
                     key={label}
                     className="rounded-[18px] bg-violet-500/8 border border-violet-500/18 px-5 py-4 hover:bg-violet-500/14 transition-all"
@@ -634,7 +594,6 @@ const MyBookings = () => {
         {/* ── CONTROLS ── */}
         <div className="max-w-7xl mx-auto px-6 pb-8">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4 justify-between">
-            {/* Filter tabs */}
             <div className="flex flex-wrap gap-2">
               {filterButtons.map(({ id, label, count }) => (
                 <button
@@ -656,7 +615,6 @@ const MyBookings = () => {
               ))}
             </div>
 
-            {/* Search */}
             <div className="flex items-center gap-2.5 bg-violet-500/8 border border-violet-500/25 rounded-[14px] px-4 py-2 focus-within:border-violet-500/60 transition-all w-full md:w-auto md:min-w-[260px]">
               <Search size={15} className="text-violet-500 shrink-0" />
               <input
@@ -670,7 +628,7 @@ const MyBookings = () => {
           </div>
         </div>
 
-        {/* ── BOOKINGS LIST ── */}
+        {/* ── LIST ── */}
         <div className="max-w-7xl mx-auto px-6 pb-20">
           {loading ? (
             <div className="flex flex-col items-center py-24 gap-4">
@@ -680,7 +638,6 @@ const MyBookings = () => {
               </p>
             </div>
           ) : bookings.length === 0 ? (
-            // Empty state
             <div className="text-center py-24">
               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
                 <Package size={40} className="text-violet-500/50" />
@@ -703,7 +660,6 @@ const MyBookings = () => {
               </button>
             </div>
           ) : filtered.length === 0 ? (
-            // No search results
             <div className="text-center py-20">
               <Search
                 size={48}
@@ -736,8 +692,6 @@ const MyBookings = () => {
                   onPayClick={handlePayment}
                 />
               ))}
-
-              {/* Footer count */}
               <div className="text-center pt-4">
                 <p className="text-[#6b5a8e] text-sm">
                   Showing{" "}
