@@ -1,9 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { getToken } from "../Login.jsx";
 import {
-  Search, MapPin, Calendar, CreditCard, Compass, ArrowRight,
-  Star, Users, Clock, Heart, Plane, Building2, UtensilsCrossed,
-  Sparkles, ChevronRight,
+  Search,
+  MapPin,
+  Calendar,
+  CreditCard,
+  Compass,
+  ArrowRight,
+  Star,
+  Users,
+  Clock,
+  Heart,
+  Plane,
+  Building2,
+  UtensilsCrossed,
+  Sparkles,
+  ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -12,25 +24,31 @@ import Navbar from "../../Components/Navbar.jsx";
 
 const getBadgeInfo = (destination, index) => {
   const status = destination.status?.toLowerCase();
-  if (status === "bestseller" || index % 3 === 0) return { label: "🔥 BESTSELLER", cls: "bestseller" };
-  if (status === "popular" || index % 3 === 1) return { label: "⭐ POPULAR", cls: "popular" };
+  if (status === "bestseller" || index % 3 === 0)
+    return { label: "🔥 BESTSELLER", cls: "bestseller" };
+  if (status === "popular" || index % 3 === 1)
+    return { label: "⭐ POPULAR", cls: "popular" };
   return { label: "✦ LUXURY", cls: "luxury" };
 };
 
 const getAmenities = (destination) => {
   const pills = [];
-  if (destination.flights !== false) pills.push({ icon: Plane, label: "Flights" });
+  if (destination.flights !== false)
+    pills.push({ icon: Plane, label: "Flights" });
   pills.push({ icon: Building2, label: destination.hotel || "Hotel" });
-  if (destination.meals) pills.push({ icon: UtensilsCrossed, label: destination.meals });
-  else if (destination.activities) pills.push({ icon: Sparkles, label: "Activities" });
-  else if (destination.tours) pills.push({ icon: Compass, label: destination.tours });
+  if (destination.meals)
+    pills.push({ icon: UtensilsCrossed, label: destination.meals });
+  else if (destination.activities)
+    pills.push({ icon: Sparkles, label: "Activities" });
+  else if (destination.tours)
+    pills.push({ icon: Compass, label: destination.tours });
   return pills;
 };
 
 const badgeClass = {
   bestseller: "bg-red-500/20 text-red-300 border border-red-500/30",
-  popular:    "bg-amber-500/20 text-amber-300 border border-amber-500/30",
-  luxury:     "bg-violet-500/25 text-violet-300 border border-violet-500/30",
+  popular: "bg-amber-500/20 text-amber-300 border border-amber-500/30",
+  luxury: "bg-violet-500/25 text-violet-300 border border-violet-500/30",
 };
 
 const Destinations = () => {
@@ -76,12 +94,13 @@ const Destinations = () => {
     { id: "beach", label: "Beach" },
   ];
 
-  const filteredDestinations = destinations.filter((d) =>
-    d.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.destination?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredDestinations = destinations.filter(
+    (d) =>
+      d.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.destination?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const handleCardClick = (id) => navigate(`/booking/${id}`);
+  const handleCardClick = (id) => navigate(`/package/${id}`);
 
   return (
     <div className="min-h-screen bg-[#07030f] text-white font-sans">
@@ -98,36 +117,72 @@ const Destinations = () => {
         {/* ── HERO ── */}
         <div className="pt-24 pb-16 px-6">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-
             {/* LEFT */}
             <div>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-7 bg-violet-500/10 border border-violet-500/20">
                 <span className="w-2 h-2 rounded-full bg-violet-300 animate-pulse" />
-                <span className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400">How it works</span>
+                <span className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400">
+                  How it works
+                </span>
               </div>
 
-              <h1 className="font-black leading-tight mb-6 text-white" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "clamp(3rem,5vw,4.5rem)" }}>
-                One click<br /><span className="bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent">for you</span>
+              <h1
+                className="font-black leading-tight mb-6 text-white"
+                style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: "clamp(3rem,5vw,4.5rem)",
+                }}
+              >
+                One click
+                <br />
+                <span className="bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent">
+                  for you
+                </span>
               </h1>
 
               <p className="text-[#9e9ab5] text-base leading-[1.8] max-w-[460px] mb-10">
-                Our tourist destinations offer an unrivaled blend of natural beauty and cultural richness, where you can explore breathtaking landscapes.
+                Our tourist destinations offer an unrivaled blend of natural
+                beauty and cultural richness, where you can explore breathtaking
+                landscapes.
               </p>
 
               {/* Feature cards */}
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { icon: Search, title: "Find your destination", desc: "Search from hundreds of curated destinations where adventure meets serenity" },
-                  { icon: Calendar, title: "Book a ticket", desc: "Simple booking process with flexible dates and instant confirmation" },
-                  { icon: CreditCard, title: "Make payment", desc: "Secure payment with hassle-free transactions and instant receipts" },
-                  { icon: Compass, title: "Explore destination", desc: "Begin your journey with expert guides and unforgettable experiences" },
+                  {
+                    icon: Search,
+                    title: "Find your destination",
+                    desc: "Search from hundreds of curated destinations where adventure meets serenity",
+                  },
+                  {
+                    icon: Calendar,
+                    title: "Book a ticket",
+                    desc: "Simple booking process with flexible dates and instant confirmation",
+                  },
+                  {
+                    icon: CreditCard,
+                    title: "Make payment",
+                    desc: "Secure payment with hassle-free transactions and instant receipts",
+                  },
+                  {
+                    icon: Compass,
+                    title: "Explore destination",
+                    desc: "Begin your journey with expert guides and unforgettable experiences",
+                  },
                 ].map((feature, index) => (
-                  <div key={index} className="bg-violet-500/7 border border-violet-500/18 rounded-[20px] p-6 cursor-pointer hover:bg-violet-500/14 hover:border-violet-500/45 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(139,92,246,0.2)] transition-all duration-[400ms]">
+                  <div
+                    key={index}
+                    className="bg-violet-500/7 border border-violet-500/18 rounded-[20px] p-6 cursor-pointer hover:bg-violet-500/14 hover:border-violet-500/45 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(139,92,246,0.2)] transition-all duration-[400ms]"
+                  >
                     <div className="w-[52px] h-[52px] rounded-[14px] bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center mb-4 shadow-[0_4px_15px_rgba(139,92,246,0.4)] transition-transform duration-300 hover:scale-110 hover:rotate-6">
                       <feature.icon size={22} className="text-white" />
                     </div>
-                    <h3 className="font-extrabold text-white text-sm mb-1.5">{feature.title}</h3>
-                    <p className="text-[#6b5a8e] text-xs leading-[1.65]">{feature.desc}</p>
+                    <h3 className="font-extrabold text-white text-sm mb-1.5">
+                      {feature.title}
+                    </h3>
+                    <p className="text-[#6b5a8e] text-xs leading-[1.65]">
+                      {feature.desc}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -136,10 +191,21 @@ const Destinations = () => {
             {/* RIGHT — hero image */}
             <div className="relative overflow-hidden rounded-[28px] border border-violet-500/30 shadow-[0_0_60px_rgba(139,92,246,0.2)] group">
               <div className="absolute inset-0 bg-gradient-to-tr from-violet-500/15 to-violet-700/10 z-10 pointer-events-none group-hover:opacity-0 transition-opacity duration-500" />
-              <img src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&auto=format&fit=crop" alt="Travel" className="w-full h-[520px] object-cover group-hover:scale-[1.05] transition-transform duration-700" />
+              <img
+                src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&auto=format&fit=crop"
+                alt="Travel"
+                className="w-full h-[520px] object-cover group-hover:scale-[1.05] transition-transform duration-700"
+              />
               <div className="absolute bottom-0 left-0 right-0 px-8 py-7 bg-gradient-to-t from-[#07030f]/92 to-transparent z-20">
-                <h3 className="text-[1.6rem] font-black text-white mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>Escape to paradise where dreams meet reality</h3>
-                <p className="text-violet-400 text-sm leading-[1.6]">Discover the adventure that lies beyond the ordinary.</p>
+                <h3
+                  className="text-[1.6rem] font-black text-white mb-2"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  Escape to paradise where dreams meet reality
+                </h3>
+                <p className="text-violet-400 text-sm leading-[1.6]">
+                  Discover the adventure that lies beyond the ordinary.
+                </p>
               </div>
             </div>
           </div>
@@ -168,12 +234,15 @@ const Destinations = () => {
         <div className="max-w-7xl mx-auto px-6 mb-12">
           <div className="flex gap-2.5 flex-wrap justify-center">
             {filters.map((filter) => (
-              <button key={filter.id} onClick={() => setActiveFilter(filter.id)}
+              <button
+                key={filter.id}
+                onClick={() => setActiveFilter(filter.id)}
                 className={`rounded-full font-semibold text-sm px-6 py-2.5 cursor-pointer transition-all hover:scale-105 ${
                   activeFilter === filter.id
                     ? "bg-gradient-to-r from-violet-500 to-violet-700 text-white border-none shadow-[0_4px_15px_rgba(139,92,246,0.4)]"
                     : "bg-violet-500/8 text-violet-300 border border-violet-500/20 hover:bg-violet-500/18 hover:border-violet-500/50"
-                }`}>
+                }`}
+              >
                 {filter.label}
               </button>
             ))}
@@ -183,43 +252,93 @@ const Destinations = () => {
         {/* ── CARDS ── */}
         <div className="max-w-7xl mx-auto px-6 pb-20">
           <div className="text-center mb-12">
-            <div className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400 mb-3">Tour packages</div>
-            <h2 className="font-black text-white mb-4" style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(2.2rem,4vw,3.2rem)" }}>
-              Our tourist <span className="bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent">destination</span>
+            <div className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400 mb-3">
+              Tour packages
+            </div>
+            <h2
+              className="font-black text-white mb-4"
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: "clamp(2.2rem,4vw,3.2rem)",
+              }}
+            >
+              Our tourist{" "}
+              <span className="bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent">
+                destination
+              </span>
             </h2>
-            <p className="text-[#6b5a8e] max-w-[560px] mx-auto leading-[1.75]">Our tourist destinations offer an unrivaled blend of natural beauty and cultural richness.</p>
+            <p className="text-[#6b5a8e] max-w-[560px] mx-auto leading-[1.75]">
+              Our tourist destinations offer an unrivaled blend of natural
+              beauty and cultural richness.
+            </p>
           </div>
 
           {loading ? (
             <div className="flex flex-col items-center py-20 gap-4">
               <div className="w-14 h-14 rounded-full border-[3px] border-violet-500/20 border-t-violet-500 animate-spin" />
-              <p className="text-[#6b5a8e] font-semibold">Loading amazing destinations...</p>
+              <p className="text-[#6b5a8e] font-semibold">
+                Loading amazing destinations...
+              </p>
             </div>
           ) : filteredDestinations.length === 0 ? (
             <div className="text-center py-20">
-              <MapPin size={56} className="text-violet-900 mx-auto mb-4 block" />
-              <p className="text-xl font-bold text-white mb-2">No destinations found</p>
-              <p className="text-[#6b5a8e]">Try adjusting your filters or search query</p>
+              <MapPin
+                size={56}
+                className="text-violet-900 mx-auto mb-4 block"
+              />
+              <p className="text-xl font-bold text-white mb-2">
+                No destinations found
+              </p>
+              <p className="text-[#6b5a8e]">
+                Try adjusting your filters or search query
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredDestinations.map((destination, index) => {
                 const badge = getBadgeInfo(destination, index);
                 const amenities = getAmenities(destination);
-                const nights = destination.duration || (destination.nights ? `${destination.nights} Nights` : "—");
+                const nights =
+                  destination.duration ||
+                  (destination.nights ? `${destination.nights} Nights` : "—");
 
                 return (
-                  <div key={destination._id}
-                    className="rounded-[24px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/20 hover:border-violet-500/55 hover:shadow-[0_20px_60px_rgba(139,92,246,0.25)] hover:-translate-y-1.5 transition-all duration-[400ms] cursor-pointer">
+                  <div
+                    key={destination._id}
+                    className="rounded-[24px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/20 hover:border-violet-500/55 hover:shadow-[0_20px_60px_rgba(139,92,246,0.25)] hover:-translate-y-1.5 transition-all duration-[400ms] cursor-pointer"
+                  >
                     {/* Image */}
                     <div className="relative overflow-hidden h-[220px]">
-                      <img src={destination.imageUrls?.[0]} alt={destination.title} className="w-full h-full object-cover hover:scale-[1.08] transition-transform duration-700" />
+                      <img
+                        src={destination.imageUrls?.[0]}
+                        alt={destination.title}
+                        className="w-full h-full object-cover hover:scale-[1.08] transition-transform duration-700"
+                      />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#07030f]/50 to-transparent" />
-                      <span className={`absolute top-3.5 left-3.5 text-[0.68rem] font-bold px-3 py-1.5 rounded-full ${badgeClass[badge.cls]}`}>{badge.label}</span>
-                      <div className="absolute top-3.5 right-3.5 bg-[#07030f]/70 backdrop-blur-sm text-violet-300 text-[0.7rem] font-bold px-3 py-1.5 rounded-full border border-violet-500/30">{nights}</div>
-                      <button onClick={(e) => { e.stopPropagation(); toggleFavorite(destination._id); }}
-                        className={`absolute bottom-3 right-3 w-9 h-9 rounded-full flex items-center justify-center border-none cursor-pointer transition-all ${favoriteCards.has(destination._id) ? "bg-violet-500 shadow-[0_4px_15px_rgba(139,92,246,0.5)]" : "bg-[#07030f]/70 backdrop-blur-sm"}`}>
-                        <Heart size={15} className="text-white" fill={favoriteCards.has(destination._id) ? "white" : "none"} />
+                      <span
+                        className={`absolute top-3.5 left-3.5 text-[0.68rem] font-bold px-3 py-1.5 rounded-full ${badgeClass[badge.cls]}`}
+                      >
+                        {badge.label}
+                      </span>
+                      <div className="absolute top-3.5 right-3.5 bg-[#07030f]/70 backdrop-blur-sm text-violet-300 text-[0.7rem] font-bold px-3 py-1.5 rounded-full border border-violet-500/30">
+                        {nights}
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(destination._id);
+                        }}
+                        className={`absolute bottom-3 right-3 w-9 h-9 rounded-full flex items-center justify-center border-none cursor-pointer transition-all ${favoriteCards.has(destination._id) ? "bg-violet-500 shadow-[0_4px_15px_rgba(139,92,246,0.5)]" : "bg-[#07030f]/70 backdrop-blur-sm"}`}
+                      >
+                        <Heart
+                          size={15}
+                          className="text-white"
+                          fill={
+                            favoriteCards.has(destination._id)
+                              ? "white"
+                              : "none"
+                          }
+                        />
                       </button>
                     </div>
 
@@ -227,23 +346,42 @@ const Destinations = () => {
                     <div className="p-5">
                       <div className="flex justify-between items-start gap-3 mb-1.5">
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-xl font-black text-white leading-tight mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>{destination.title}</h3>
+                          <h3
+                            className="text-xl font-black text-white leading-tight mb-1"
+                            style={{ fontFamily: "'Playfair Display', serif" }}
+                          >
+                            {destination.title}
+                          </h3>
                           <p className="flex items-center gap-1 text-[#6b5a8e] text-xs">
                             <MapPin size={11} className="text-violet-500" />
-                            <span className="truncate">{destination.destination}{destination.type ? ` · ${destination.type}` : ""}</span>
+                            <span className="truncate">
+                              {destination.destination}
+                              {destination.type ? ` · ${destination.type}` : ""}
+                            </span>
                           </p>
                         </div>
                         <div className="text-right shrink-0">
-                          <div className="text-[1.55rem] font-black leading-none bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent" style={{ fontFamily: "'Playfair Display', serif" }}>${destination.price}</div>
-                          <div className="text-[#6b5a8e] text-xs">per person</div>
+                          <div
+                            className="text-[1.55rem] font-black leading-none bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
+                            style={{ fontFamily: "'Playfair Display', serif" }}
+                          >
+                            ${destination.price}
+                          </div>
+                          <div className="text-[#6b5a8e] text-xs">
+                            per person
+                          </div>
                         </div>
                       </div>
 
                       {amenities.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 my-3">
                           {amenities.map((a, i) => (
-                            <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-500/12 text-violet-300 border border-violet-500/20">
-                              <a.icon size={10} />{a.label}
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-500/12 text-violet-300 border border-violet-500/20"
+                            >
+                              <a.icon size={10} />
+                              {a.label}
                             </span>
                           ))}
                         </div>
@@ -253,22 +391,47 @@ const Destinations = () => {
 
                       <div className="flex justify-between items-center mb-2.5">
                         <div className="flex items-center gap-0.5">
-                          {[...Array(5)].map((_, i) => <Star key={i} size={12} className={i < Math.round(destination.rating || 4) ? "text-amber-400 fill-amber-400" : "text-white/15 fill-white/10"} />)}
-                          <span className="ml-1.5 text-sm font-bold text-white">{destination.rating}</span>
-                          <span className="text-[#6b5a8e] text-xs"> · {destination.reviews} reviews</span>
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              size={12}
+                              className={
+                                i < Math.round(destination.rating || 4)
+                                  ? "text-amber-400 fill-amber-400"
+                                  : "text-white/15 fill-white/10"
+                              }
+                            />
+                          ))}
+                          <span className="ml-1.5 text-sm font-bold text-white">
+                            {destination.rating}
+                          </span>
+                          <span className="text-[#6b5a8e] text-xs">
+                            {" "}
+                            · {destination.reviews} reviews
+                          </span>
                         </div>
                         <div className="flex items-center gap-1 text-[#6b5a8e] text-xs">
-                          <Users size={11} className="text-violet-500" />{destination.group}
+                          <Users size={11} className="text-violet-500" />
+                          {destination.group}
                         </div>
                       </div>
 
                       <div className="flex items-center gap-1.5 text-xs text-[#6b5a8e] mb-4">
                         <Calendar size={11} className="text-violet-500" />
-                        Starts: {new Date(destination.startDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                        Starts:{" "}
+                        {new Date(destination.startDate).toLocaleDateString(
+                          "en-US",
+                          { year: "numeric", month: "long", day: "numeric" },
+                        )}
                       </div>
 
-                      <button className="w-full py-3 rounded-[14px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_25px_rgba(139,92,246,0.6)] hover:scale-[1.02] transition-all border-none cursor-pointer"
-                        onClick={(e) => { e.stopPropagation(); handleCardClick(destination._id); }}>
+                      <button
+                        className="w-full py-3 rounded-[14px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_25px_rgba(139,92,246,0.6)] hover:scale-[1.02] transition-all border-none cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCardClick(destination._id);
+                        }}
+                      >
                         Book This Package
                       </button>
                     </div>

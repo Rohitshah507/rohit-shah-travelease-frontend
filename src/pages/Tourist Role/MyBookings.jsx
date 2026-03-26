@@ -181,7 +181,6 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
   const pkg = booking.tourPackageId;
   const bStatus = getBookingStatus(booking.bookingStatus);
 
-  // ── FIXED: pass bookingStatus as second arg so confirmed → always "Paid"
   const pStatus = getPaymentStatus(
     booking.paymentStatus,
     booking.bookingStatus,
@@ -189,11 +188,6 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
 
   const isCancelled = booking.bookingStatus?.toLowerCase() === "cancelled";
 
-  // ── FIXED: isPaid is true when EITHER:
-  //   1. paymentStatus field is success/completed/paid, OR
-  //   2. bookingStatus is "confirmed" (backend sets this after payment success)
-  // This prevents "Pay Now" from appearing on already-paid confirmed bookings
-  // where paymentStatus is null/undefined in the API response.
   const isPaid =
     ["success", "completed", "paid"].includes(
       booking.paymentStatus?.toLowerCase(),

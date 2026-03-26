@@ -69,7 +69,7 @@ const TouristDashboard = () => {
     });
   };
 
-  const handleCardClick = (id) => navigate(`/booking/${id}`);
+  const handleCardClick = (id) => navigate(`/package/${id}`);
 
   return (
     <div className="min-h-screen bg-[#07030f] text-white font-sans">

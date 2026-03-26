@@ -18,6 +18,7 @@ import PlacesToVisit from "./pages/Tourist Role/PlacesToVisit.jsx";
 import AdminDashboard from "./pages/Admin Role/AdminDashboard.jsx";
 import Packages from "./pages/Tourist Role/Packages.jsx";
 import MyBookings from "./pages/Tourist Role/MyBookings.jsx";
+import PackageDetail from "./pages/Tourist Role/PackageDetail.jsx";
 
 export const serverURL = "http://localhost:5000";
 
@@ -87,6 +88,11 @@ const App = () => {
         <Route
           path="/mybookings"
           element={token ? <MyBookings /> : <Navigate to="/login" />}
+        />
+
+        <Route
+          path="/package/:id"
+          element={token ? <PackageDetail /> : <Navigate to="/login" />}
         />
       </Routes>
     </div>
