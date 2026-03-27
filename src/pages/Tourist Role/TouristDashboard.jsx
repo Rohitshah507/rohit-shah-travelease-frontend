@@ -1,3 +1,5 @@
+// TouristDashboard.jsx - Updated with correct backend review integration
+
 import React, { useState, useEffect, useRef } from "react";
 import {
   Menu,
@@ -63,57 +65,10 @@ const getAmenities = (destination) => {
 const badgeClass = {
   bestseller: "bg-red-500/20 text-red-300 border border-red-500/30",
   popular: "bg-amber-500/20 text-amber-300 border border-amber-500/30",
-  luxury: "bg-violet-500/25 text-violet-300 border border-violet-500/30",
+  luxury: "bg-violet-500/25 text-violet-300 border border-violet-500/25",
 };
 
-// ─── REVIEW HELPERS (new) ─────────────────────────────────────────────────────
-
-const INITIAL_REVIEWS = [
-  {
-    id: 1,
-    name: "Sarah Mitchell",
-    avatar: "SM",
-    location: "New York, USA",
-    rating: 5,
-    comment:
-      "An absolutely magical trip! Every detail was perfectly arranged. Pokhara was beyond our dreams — the mountain views at dawn left me completely speechless.",
-    date: "March 2025",
-    package: "Annapurna Circuit Trek",
-  },
-  {
-    id: 2,
-    name: "Hiroshi Tanaka",
-    avatar: "HT",
-    location: "Tokyo, Japan",
-    rating: 5,
-    comment:
-      "The EBC trek was the hardest and most rewarding thing I've ever done. The team kept us safe and motivated all the way to 5,364m. Will absolutely book again!",
-    date: "February 2025",
-    package: "Everest Base Camp Trek",
-  },
-  {
-    id: 3,
-    name: "Emma Rousseau",
-    avatar: "ER",
-    location: "Paris, France",
-    rating: 4,
-    comment:
-      "Chitwan safari exceeded all expectations — saw rhinos, tigers, and elephants in one day! Highly recommend this platform for anyone visiting Nepal.",
-    date: "January 2025",
-    package: "Chitwan Jungle Safari",
-  },
-  {
-    id: 4,
-    name: "Rahul Sharma",
-    avatar: "RS",
-    location: "Mumbai, India",
-    rating: 5,
-    comment:
-      "Kathmandu's spiritual energy is unlike anything else. Our guide brought history alive at every temple. A perfect 5-day cultural immersion.",
-    date: "December 2024",
-    package: "Kathmandu Valley Tour",
-  },
-];
+// ─── REVIEW HELPERS ────────────────────────────────────────────────────────────
 
 const StarRating = ({ value, onChange, size = 22, readonly = false }) => (
   <div className="flex gap-1">
@@ -142,6 +97,42 @@ const StarRating = ({ value, onChange, size = 22, readonly = false }) => (
     ))}
   </div>
 );
+
+// Transform a raw backend review document into the UI shape
+const transformReview = (review) => ({
+  id: review._id,
+  name:
+    review.user?.name ||
+    review.userId?.name ||
+    review.name ||
+    "Anonymous",
+  avatar: (() => {
+    const n =
+      review.user?.name || review.userId?.name || review.name || "A";
+    return n
+      .split(" ")
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase();
+  })(),
+  location:
+    review.user?.location ||
+    review.userId?.location ||
+    review.location ||
+    "Traveler",
+  rating: review.rating,
+  comment: review.comment || "",
+  date: new Date(review.createdAt).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  }),
+  package:
+    review.tourPackage?.title ||
+    review.tourPackageId?.title ||
+    review.packageName ||
+    "General",
+});
 
 const ReviewCard = ({ review, isNew }) => (
   <div
@@ -189,13 +180,30 @@ const ReviewCard = ({ review, isNew }) => (
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
 const TouristDashboard = () => {
-  // ── ORIGINAL STATE (100% unchanged) ──
+  // ── ORIGINAL STATE (unchanged) ──
   const [packages, setPackages] = useState([]);
   const [pkgLoading, setPkgLoading] = useState(true);
   const [favoriteCards, setFavoriteCards] = useState(new Set());
   const navigate = useNavigate();
 
-  // ── ORIGINAL EFFECT: fetch tour packages from your real backend (100% unchanged) ──
+  // ── REVIEW STATE ──
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [newReviewIds, setNewReviewIds] = useState(new Set());
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [reviewForm, setReviewForm] = useState({
+    tourPackageId: "",
+    rating: 0,
+    comment: "",
+  });
+  const [reviewErrors, setReviewErrors] = useState({});
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const reviewSectionRef = useRef(null);
+
+  const reviewFilters = ["All", "5 Stars", "4 Stars", "3 Stars & below"];
+
+  // ── ORIGINAL EFFECT: fetch tour packages ──
   useEffect(() => {
     const fetchTourPackages = async () => {
       try {
@@ -215,7 +223,26 @@ const TouristDashboard = () => {
     fetchTourPackages();
   }, []);
 
-  // ── ORIGINAL HANDLERS (100% unchanged) ──
+  // ── FETCH ALL REVIEWS from GET /api/review/all ──
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        setReviewsLoading(true);
+        const response = await axios.get(`${serverURL}/api/review/all`);
+        const raw = response.data.reviews || [];
+        setReviews(raw.map(transformReview));
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+        setReviews([]);
+        toast.error("Failed to load reviews");
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+    fetchReviews();
+  }, []);
+
+  // ── ORIGINAL HANDLERS (unchanged) ──
   const toggleFavorite = (id) => {
     setFavoriteCards((prev) => {
       const s = new Set(prev);
@@ -226,24 +253,7 @@ const TouristDashboard = () => {
 
   const handleCardClick = (id) => navigate(`/package/${id}`);
 
-  // ── NEW: Review state ──
-  const [reviews, setReviews] = useState(INITIAL_REVIEWS);
-  const [newReviewIds, setNewReviewIds] = useState(new Set());
-  const [activeFilter, setActiveFilter] = useState("All");
-  const [reviewForm, setReviewForm] = useState({
-    name: "",
-    location: "",
-    pkg: "",
-    rating: 0,
-    comment: "",
-  });
-  const [reviewErrors, setReviewErrors] = useState({});
-  const [reviewSubmitting, setReviewSubmitting] = useState(false);
-  const [reviewSubmitted, setReviewSubmitted] = useState(false);
-  const reviewSectionRef = useRef(null);
-
-  const reviewFilters = ["All", "5 Stars", "4 Stars", "3 Stars & below"];
-
+  // ── FILTERED REVIEWS ──
   const filteredReviews = reviews.filter((r) => {
     if (activeFilter === "5 Stars") return r.rating === 5;
     if (activeFilter === "4 Stars") return r.rating === 4;
@@ -251,17 +261,21 @@ const TouristDashboard = () => {
     return true;
   });
 
-  const avgRating = (
-    reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
-  ).toFixed(1);
+  const avgRating =
+    reviews.length > 0
+      ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+      : "0.0";
+
   const ratingCounts = [5, 4, 3, 2, 1].map((n) => ({
     n,
     count: reviews.filter((r) => r.rating === n).length,
   }));
 
+  // ── VALIDATE REVIEW FORM ──
   const validateReviewForm = () => {
     const errs = {};
-    if (!reviewForm.name.trim()) errs.name = "Name is required";
+    if (!reviewForm.tourPackageId)
+      errs.tourPackageId = "Please select a package";
     if (!reviewForm.rating) errs.rating = "Please select a rating";
     if (!reviewForm.comment.trim() || reviewForm.comment.trim().length < 10)
       errs.comment = "Comment must be at least 10 characters";
@@ -269,67 +283,91 @@ const TouristDashboard = () => {
     return Object.keys(errs).length === 0;
   };
 
+  // ── SUBMIT REVIEW to POST /api/review ──
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!validateReviewForm()) return;
+
+    const token = getToken();
+    if (!token) {
+      toast.error("Please login to submit a review");
+      navigate("/login");
+      return;
+    }
+
     setReviewSubmitting(true);
+
     try {
-      // ── Connect your backend here when ready ──
-      // const token = getToken();
-      // await axios.post(`${serverURL}/api/user/review`, {
-      //   name: reviewForm.name, location: reviewForm.location,
-      //   package: reviewForm.pkg, rating: reviewForm.rating, comment: reviewForm.comment,
-      // }, { headers: { Authorization: `Bearer ${token}` } });
+      const response = await axios.post(
+        `${serverURL}/api/review`,
+        {
+          tourPackageId: reviewForm.tourPackageId,
+          rating: reviewForm.rating,
+          comment: reviewForm.comment.trim(),
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      await new Promise((res) => setTimeout(res, 800)); // remove once real API is wired up
+      if (response.data?.success && response.data?.review) {
+        const saved = response.data.review;
 
-      const newReview = {
-        id: Date.now(),
-        name: reviewForm.name.trim(),
-        avatar: reviewForm.name
-          .trim()
-          .split(" ")
-          .slice(0, 2)
-          .map((w) => w[0])
-          .join("")
-          .toUpperCase(),
-        location: reviewForm.location.trim() || "Nepal",
-        rating: reviewForm.rating,
-        comment: reviewForm.comment.trim(),
-        date: new Date().toLocaleDateString("en-US", {
-          month: "long",
-          year: "numeric",
-        }),
-        package: reviewForm.pkg.trim() || "General",
-      };
+        // Find the package name for display
+        const pkg = packages.find((p) => p._id === reviewForm.tourPackageId);
 
-      setReviews((prev) => [newReview, ...prev]);
-      setNewReviewIds((prev) => new Set([...prev, newReview.id]));
-      setTimeout(() => {
-        setNewReviewIds((prev) => {
-          const s = new Set(prev);
-          s.delete(newReview.id);
-          return s;
+        const uiReview = {
+          id: saved._id,
+          name: saved.user?.name || saved.userId?.name || "You",
+          avatar: (() => {
+            const n = saved.user?.name || saved.userId?.name || "Y";
+            return n
+              .split(" ")
+              .slice(0, 2)
+              .map((w) => w[0])
+              .join("")
+              .toUpperCase();
+          })(),
+          location:
+            saved.user?.location || saved.userId?.location || "Traveler",
+          rating: saved.rating,
+          comment: saved.comment,
+          date: new Date(saved.createdAt || Date.now()).toLocaleDateString(
+            "en-US",
+            { month: "long", year: "numeric" }
+          ),
+          package: pkg?.title || "General",
+        };
+
+        setReviews((prev) => [uiReview, ...prev]);
+        setNewReviewIds((prev) => new Set([...prev, uiReview.id]));
+
+        // Remove "NEW" badge after 5s
+        setTimeout(() => {
+          setNewReviewIds((prev) => {
+            const s = new Set(prev);
+            s.delete(uiReview.id);
+            return s;
+          });
+        }, 5000);
+
+        // Reset form
+        setReviewForm({ tourPackageId: "", rating: 0, comment: "" });
+        setReviewSubmitted(true);
+        setTimeout(() => setReviewSubmitted(false), 3500);
+        toast.success("Your review has been published! 🎉");
+
+        reviewSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
         });
-      }, 5000);
-
-      setReviewForm({
-        name: "",
-        location: "",
-        pkg: "",
-        rating: 0,
-        comment: "",
-      });
-      setReviewSubmitted(true);
-      setTimeout(() => setReviewSubmitted(false), 3500);
-      toast.success("Your review has been published! 🎉");
-      reviewSectionRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+      } else {
+        throw new Error(response.data?.message || "Unexpected response");
+      }
     } catch (error) {
       console.error("Error submitting review:", error);
-      toast.error("Failed to submit review. Please try again.");
+      const msg =
+        error.response?.data?.message ||
+        "Failed to submit review. Please try again.";
+      toast.error(msg);
     } finally {
       setReviewSubmitting(false);
     }
@@ -352,13 +390,9 @@ const TouristDashboard = () => {
       </div>
 
       <div className="relative z-10">
-        {/* ════════════════════════════════════════════════════════════════
-            YOUR ORIGINAL <Navbar /> — notifications + profile dropdown
-            are all inside your Navbar component, untouched.
-        ════════════════════════════════════════════════════════════════ */}
         <Navbar />
 
-        {/* ── HERO (original, unchanged) ── */}
+        {/* ── HERO (unchanged) ── */}
         <div id="home" className="relative pt-24 pb-20 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none [background-image:radial-gradient(circle,rgba(139,92,246,0.1)_1px,transparent_1px)] [background-size:28px_28px]" />
           <div className="absolute right-[-80px] top-[20%] w-[480px] h-[480px] rounded-full border border-violet-500/15 animate-spin [animation-duration:22s] pointer-events-none" />
@@ -507,7 +541,7 @@ const TouristDashboard = () => {
           </div>
         </div>
 
-        {/* ── ABOUT (original, unchanged) ── */}
+        {/* ── ABOUT (unchanged) ── */}
         <div id="about" className="py-20 px-6">
           <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div className="rounded-[24px] overflow-hidden shadow-[0_0_60px_rgba(139,92,246,0.2)] border border-violet-500/20">
@@ -546,7 +580,7 @@ const TouristDashboard = () => {
           </div>
         </div>
 
-        {/* ── STATS (original, unchanged) ── */}
+        {/* ── STATS (unchanged) ── */}
         <div className="px-6 pb-16">
           <div className="max-w-[1100px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-5">
             {[
@@ -573,7 +607,7 @@ const TouristDashboard = () => {
           </div>
         </div>
 
-        {/* ── DESTINATIONS (original, unchanged) ── */}
+        {/* ── DESTINATIONS (unchanged) ── */}
         <div id="destinations" className="py-20 px-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-between items-end mb-12 flex-wrap gap-5">
@@ -710,7 +744,7 @@ const TouristDashboard = () => {
           </div>
         </div>
 
-        {/* ── PACKAGES — YOUR REAL BACKEND DATA (original, unchanged) ── */}
+        {/* ── PACKAGES (unchanged) ── */}
         <div id="packages" className="py-20 px-6">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-14">
@@ -866,7 +900,7 @@ const TouristDashboard = () => {
                                   year: "numeric",
                                   month: "long",
                                   day: "numeric",
-                                },
+                                }
                               )}
                             </div>
                           )}
@@ -894,7 +928,7 @@ const TouristDashboard = () => {
           </div>
         </div>
 
-        {/* ── PLACES TO VISIT (original, unchanged) ── */}
+        {/* ── PLACES TO VISIT (unchanged) ── */}
         <div id="places" className="py-20 px-6">
           <div className="max-w-[1100px] mx-auto">
             <div className="text-center mb-12">
@@ -994,7 +1028,7 @@ const TouristDashboard = () => {
           </div>
         </div>
 
-        {/* ── WHY US (original, unchanged) ── */}
+        {/* ── WHY US (unchanged) ── */}
         <div id="why-us" className="py-20 px-6">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div>
@@ -1077,8 +1111,7 @@ const TouristDashboard = () => {
         </div>
 
         {/* ════════════════════════════════════════════════════════════════════
-            NEW ── REVIEWS SECTION
-            Added below Why Us, above your original <Footer /> component
+            REVIEWS SECTION — wired to real backend
         ════════════════════════════════════════════════════════════════════ */}
         <div id="reviews" className="py-20 px-6" ref={reviewSectionRef}>
           <div className="max-w-7xl mx-auto">
@@ -1167,28 +1200,37 @@ const TouristDashboard = () => {
             </div>
 
             {/* Review cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-16">
-              {filteredReviews.map((review) => (
-                <ReviewCard
-                  key={review.id}
-                  review={review}
-                  isNew={newReviewIds.has(review.id)}
-                />
-              ))}
-              {filteredReviews.length === 0 && (
-                <div className="col-span-full text-center py-12">
-                  <MessageSquare
-                    size={40}
-                    className="mx-auto mb-3 text-violet-900"
+            {reviewsLoading ? (
+              <div className="flex flex-col items-center py-16 gap-4">
+                <div className="w-14 h-14 rounded-full border-[3px] border-violet-500/20 border-t-violet-500 animate-spin" />
+                <p className="text-[#6b5a8e] font-semibold">
+                  Loading reviews...
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-16">
+                {filteredReviews.map((review) => (
+                  <ReviewCard
+                    key={review.id}
+                    review={review}
+                    isNew={newReviewIds.has(review.id)}
                   />
-                  <p className="text-[#6b5a8e] font-semibold">
-                    No reviews for this filter yet. Be the first!
-                  </p>
-                </div>
-              )}
-            </div>
+                ))}
+                {filteredReviews.length === 0 && (
+                  <div className="col-span-full text-center py-12">
+                    <MessageSquare
+                      size={40}
+                      className="mx-auto mb-3 text-violet-900"
+                    />
+                    <p className="text-[#6b5a8e] font-semibold">
+                      No reviews for this filter yet. Be the first!
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
-            {/* Write a review form */}
+            {/* ── Write a review form ── */}
             <div className="rounded-[32px] overflow-hidden border border-violet-500/30 shadow-[0_0_80px_rgba(139,92,246,0.15)] bg-gradient-to-br from-[#1a0a3e]/90 to-[#0f0524]/90 backdrop-blur-md">
               {/* Form header */}
               <div className="relative px-8 pt-8 pb-6 border-b border-violet-500/20 overflow-hidden">
@@ -1214,10 +1256,7 @@ const TouristDashboard = () => {
               {/* Success banner */}
               {reviewSubmitted && (
                 <div className="mx-8 mt-6 p-4 rounded-[14px] bg-emerald-500/15 border border-emerald-500/35 flex items-center gap-3 animate-[fadeSlideIn_0.4s_ease_both]">
-                  <CheckCircle
-                    size={20}
-                    className="text-emerald-400 shrink-0"
-                  />
+                  <CheckCircle size={20} className="text-emerald-400 shrink-0" />
                   <p className="text-emerald-300 font-semibold text-sm">
                     Your review has been published! Thank you 🎉
                   </p>
@@ -1226,85 +1265,45 @@ const TouristDashboard = () => {
 
               <div className="p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Left: personal info + rating */}
+                  {/* Left: package selector + rating */}
                   <div className="flex flex-col gap-5">
+
+                    {/* Package selector — REQUIRED by backend */}
                     <div>
                       <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
-                        Your Name <span className="text-red-400">*</span>
+                        Tour Package <span className="text-red-400">*</span>
                       </label>
                       <div
                         className={`flex items-center gap-3 rounded-[14px] px-4 py-3 border transition-colors
-                        ${reviewErrors.name ? "border-red-500/50 bg-red-500/5" : "border-violet-500/25 bg-violet-500/8 focus-within:border-violet-400/60 focus-within:bg-violet-500/12"}`}
+                        ${reviewErrors.tourPackageId ? "border-red-500/50 bg-red-500/5" : "border-violet-500/25 bg-violet-500/8 focus-within:border-violet-400/60"}`}
                       >
-                        <User size={15} className="text-violet-500 shrink-0" />
-                        <input
-                          value={reviewForm.name}
+                        <Plane size={15} className="text-violet-500 shrink-0" />
+                        <select
+                          value={reviewForm.tourPackageId}
                           onChange={(e) =>
                             setReviewForm((p) => ({
                               ...p,
-                              name: e.target.value,
+                              tourPackageId: e.target.value,
                             }))
                           }
-                          className="flex-1 bg-transparent outline-none text-white text-sm placeholder:text-violet-400/40"
-                          placeholder="John Doe"
-                        />
+                          className="flex-1 bg-transparent outline-none text-white text-sm [&>option]:bg-[#1a0a3e]"
+                        >
+                          <option value="">Select the package you booked</option>
+                          {packages.map((pkg) => (
+                            <option key={pkg._id} value={pkg._id}>
+                              {pkg.title}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                      {reviewErrors.name && (
+                      {reviewErrors.tourPackageId && (
                         <p className="text-red-400 text-xs mt-1.5">
-                          {reviewErrors.name}
+                          {reviewErrors.tourPackageId}
                         </p>
                       )}
                     </div>
 
-                    <div>
-                      <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
-                        Your Location{" "}
-                        <span className="text-[#6b5a8e] font-normal normal-case tracking-normal">
-                          (optional)
-                        </span>
-                      </label>
-                      <div className="flex items-center gap-3 rounded-[14px] px-4 py-3 border border-violet-500/25 bg-violet-500/8 focus-within:border-violet-400/60 transition-colors">
-                        <MapPin
-                          size={15}
-                          className="text-violet-500 shrink-0"
-                        />
-                        <input
-                          value={reviewForm.location}
-                          onChange={(e) =>
-                            setReviewForm((p) => ({
-                              ...p,
-                              location: e.target.value,
-                            }))
-                          }
-                          className="flex-1 bg-transparent outline-none text-white text-sm placeholder:text-violet-400/40"
-                          placeholder="e.g. London, UK"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
-                        Package / Destination{" "}
-                        <span className="text-[#6b5a8e] font-normal normal-case tracking-normal">
-                          (optional)
-                        </span>
-                      </label>
-                      <div className="flex items-center gap-3 rounded-[14px] px-4 py-3 border border-violet-500/25 bg-violet-500/8 focus-within:border-violet-400/60 transition-colors">
-                        <Plane size={15} className="text-violet-500 shrink-0" />
-                        <input
-                          value={reviewForm.pkg}
-                          onChange={(e) =>
-                            setReviewForm((p) => ({
-                              ...p,
-                              pkg: e.target.value,
-                            }))
-                          }
-                          className="flex-1 bg-transparent outline-none text-white text-sm placeholder:text-violet-400/40"
-                          placeholder="e.g. Annapurna Circuit Trek"
-                        />
-                      </div>
-                    </div>
-
+                    {/* Star rating */}
                     <div>
                       <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-3">
                         Your Rating <span className="text-red-400">*</span>
@@ -1339,6 +1338,14 @@ const TouristDashboard = () => {
                         </p>
                       )}
                     </div>
+
+                    {/* Privacy note */}
+                    <div className="flex items-start gap-2.5 p-4 rounded-[14px] bg-violet-500/8 border border-violet-500/15">
+                      <Shield size={14} className="text-violet-400 shrink-0 mt-0.5" />
+                      <p className="text-[#6b5a8e] text-[0.7rem] leading-[1.65]">
+                        Your review will be publicly visible under your account name. We never share your personal details with third parties.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Right: comment + submit */}
@@ -1359,7 +1366,7 @@ const TouristDashboard = () => {
                               comment: e.target.value,
                             }))
                           }
-                          className="w-full min-h-[200px] bg-transparent outline-none text-white text-sm placeholder:text-violet-400/40 resize-none p-4 leading-[1.85]"
+                          className="w-full min-h-[220px] bg-transparent outline-none text-white text-sm placeholder:text-violet-400/40 resize-none p-4 leading-[1.85]"
                           placeholder="Tell us about your experience — the highlights, what surprised you, and whether you'd recommend it to others..."
                         />
                       </div>
@@ -1397,18 +1404,6 @@ const TouristDashboard = () => {
                         </>
                       )}
                     </button>
-
-                    <div className="flex items-start gap-2.5 p-4 rounded-[14px] bg-violet-500/8 border border-violet-500/15">
-                      <Shield
-                        size={14}
-                        className="text-violet-400 shrink-0 mt-0.5"
-                      />
-                      <p className="text-[#6b5a8e] text-[0.7rem] leading-[1.65]">
-                        Your review will be publicly visible. We never share
-                        your personal details with third parties. Honest reviews
-                        help fellow travelers make better decisions.
-                      </p>
-                    </div>
                   </div>
                 </div>
               </div>

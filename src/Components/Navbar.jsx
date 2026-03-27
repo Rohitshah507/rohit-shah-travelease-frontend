@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import useUser from "../hooks/useUser";
 import { serverURL } from "../App";
-import { getToken } from "../Pages/Login";
+import { getToken } from "../pages/Login";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Notification type config

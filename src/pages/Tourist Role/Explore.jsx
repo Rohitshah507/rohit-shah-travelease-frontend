@@ -18,6 +18,8 @@ import {
   Users,
   Calendar,
   DollarSign,
+  Bot,
+  Sparkles,
 } from "lucide-react";
 import axios from "axios";
 import { serverURL } from "../../App";
@@ -25,315 +27,82 @@ import Navbar from "../../Components/Navbar";
 import Footer from "../../Components/Footer";
 import { getToken } from "../Login";
 
-// ─── Styles injected once ────────────────────────────────────────────────────
-const GLOBAL_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap');
-
-  :root {
-    --bg: #04080f;
-    --surface: rgba(255,255,255,0.03);
-    --surface-2: rgba(255,255,255,0.06);
-    --border: rgba(255,255,255,0.08);
-    --border-hover: rgba(255,255,255,0.18);
-    --gold: #c9a84c;
-    --gold-light: #e8c97a;
-    --gold-dim: rgba(201,168,76,0.15);
-    --text: #f0ece4;
-    --muted: rgba(240,236,228,0.45);
-    --muted-2: rgba(240,236,228,0.25);
-  }
-
-  .explore-root { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; }
-
-  .serif { font-family: 'Cormorant Garamond', Georgia, serif; }
-
-  /* ── Noise overlay ── */
-  .noise::before {
-    content: '';
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-    opacity: 0.03;
-  }
-
-  /* ── Ambient light ── */
-  .ambient-top {
-    position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
-    width: 900px; height: 500px; border-radius: 50%;
-    background: radial-gradient(ellipse at center, rgba(201,168,76,0.08) 0%, transparent 70%);
-    pointer-events: none; z-index: 0;
-  }
-  .ambient-br {
-    position: fixed; bottom: -100px; right: -100px;
-    width: 500px; height: 500px; border-radius: 50%;
-    background: radial-gradient(ellipse at center, rgba(100,160,255,0.04) 0%, transparent 70%);
-    pointer-events: none; z-index: 0;
-  }
-
-  /* ── Search ── */
-  .search-wrap {
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px 22px; border-radius: 100px;
-    background: var(--surface); border: 1px solid var(--border);
-    transition: border-color 0.3s, box-shadow 0.3s;
-  }
-  .search-wrap:focus-within {
-    border-color: rgba(201,168,76,0.4);
-    box-shadow: 0 0 0 4px rgba(201,168,76,0.06), 0 8px 32px rgba(0,0,0,0.4);
-  }
-  .search-wrap input { background: transparent; border: none; outline: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; flex: 1; }
-  .search-wrap input::placeholder { color: var(--muted-2); }
-
-  /* ── Card ── */
-  .pkg-card {
-    border-radius: 20px; overflow: hidden; cursor: pointer;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    transition: border-color 0.4s, transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s;
-    position: relative;
-  }
-  .pkg-card:hover {
-    border-color: rgba(201,168,76,0.35);
-    transform: translateY(-6px);
-    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.12);
-  }
-  .card-img { width: 100%; height: 220px; object-fit: cover; display: block; transition: transform 0.8s cubic-bezier(0.22,1,0.36,1); }
-  .pkg-card:hover .card-img { transform: scale(1.06); }
-  .card-img-wrap { position: relative; overflow: hidden; height: 220px; }
-  .card-img-overlay {
-    position: absolute; inset: 0;
-    background: linear-gradient(to top, rgba(4,8,15,0.9) 0%, rgba(4,8,15,0.2) 50%, transparent 100%);
-  }
-
-  .badge-pill {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 600;
-  }
-  .badge-gold {
-    background: rgba(201,168,76,0.18); color: var(--gold-light);
-    border: 1px solid rgba(201,168,76,0.25); letter-spacing: 0.04em;
-  }
-  .badge-dark {
-    background: rgba(4,8,15,0.75); color: var(--text);
-    backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1);
-  }
-  .badge-rating {
-    background: rgba(4,8,15,0.8); color: #fbbf24;
-    backdrop-filter: blur(8px); border: 1px solid rgba(251,191,36,0.2);
-  }
-
-  .card-body { padding: 20px; }
-  .card-dest { font-size: 11px; font-weight: 600; color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase; display: flex; align-items: center; gap: 5px; margin-bottom: 6px; }
-  .card-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; color: var(--text); line-height: 1.2; margin-bottom: 8px; }
-  .card-desc { font-size: 13px; line-height: 1.65; color: var(--muted); margin-bottom: 16px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .card-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
-  .card-price { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; color: var(--gold-light); }
-  .card-price span { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 400; color: var(--muted); margin-left: 3px; }
-
-  .card-cta {
-    display: flex; align-items: center; gap: 6px;
-    padding: 9px 16px; border-radius: 100px; font-size: 12px; font-weight: 600;
-    background: transparent; border: 1px solid var(--border-hover);
-    color: var(--muted); cursor: pointer; transition: all 0.3s; letter-spacing: 0.02em;
-  }
-  .pkg-card:hover .card-cta {
-    background: var(--gold); border-color: var(--gold); color: #04080f;
-  }
-
-  /* ── Divider line ── */
-  .card-divider { height: 1px; background: var(--border); margin: 14px 0; }
-
-  /* ── Detail view ── */
-  .detail-hero { border-radius: 24px; overflow: hidden; position: relative; }
-  .detail-back {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 9px 18px; border-radius: 100px; font-size: 13px; font-weight: 500;
-    background: var(--surface); border: 1px solid var(--border);
-    color: var(--muted); cursor: pointer; transition: all 0.3s; margin-bottom: 28px;
-  }
-  .detail-back:hover { border-color: var(--border-hover); color: var(--text); }
-
-  .info-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 18px; padding: 24px;
-  }
-  .info-row { display: flex; align-items: flex-start; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-  .info-row:last-child { border-bottom: none; }
-  .info-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--gold-dim); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .info-label { font-size: 10px; font-weight: 600; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 2px; }
-  .info-value { font-size: 14px; font-weight: 500; color: var(--text); }
-
-  .place-chip {
-    display: flex; align-items: flex-start; gap: 14px; padding: 16px;
-    border-radius: 14px; background: var(--surface); border: 1px solid var(--border);
-    transition: border-color 0.3s, transform 0.3s;
-  }
-  .place-chip:hover { border-color: rgba(201,168,76,0.25); transform: translateY(-2px); }
-  .place-emoji { width: 42px; height: 42px; border-radius: 12px; background: var(--gold-dim); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
-
-  .cta-btn {
-    width: 100%; padding: 15px; border-radius: 14px; font-size: 15px; font-weight: 600;
-    background: var(--gold); color: #04080f; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    transition: all 0.3s; letter-spacing: 0.02em;
-  }
-  .cta-btn:hover { background: var(--gold-light); box-shadow: 0 8px 30px rgba(201,168,76,0.35); transform: translateY(-1px); }
-
-  /* ── Skeleton ── */
-  .skel { border-radius: 20px; background: var(--surface); border: 1px solid var(--border); overflow: hidden; }
-  .skel-img { height: 220px; background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.03) 75%); background-size: 200% 100%; animation: shimmer 1.6s infinite; }
-  .skel-line { height: 12px; border-radius: 6px; background: var(--surface-2); animation: shimmer 1.6s infinite; }
-  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-  /* ── Gallery thumbnails ── */
-  .thumb { border-radius: 10px; overflow: hidden; cursor: pointer; transition: all 0.3s; opacity: 0.5; }
-  .thumb.active { opacity: 1; box-shadow: 0 0 0 2px var(--gold); }
-  .thumb:hover { opacity: 0.85; }
-
-  /* ── Header decorative line ── */
-  .header-line { display: flex; align-items: center; gap: 16px; justify-content: center; margin-bottom: 20px; }
-  .header-line::before, .header-line::after { content: ''; flex: 1; max-width: 80px; height: 1px; background: linear-gradient(to right, transparent, rgba(201,168,76,0.4)); }
-  .header-line::after { background: linear-gradient(to left, transparent, rgba(201,168,76,0.4)); }
-  .header-diamond { width: 6px; height: 6px; background: var(--gold); transform: rotate(45deg); }
-
-  /* ── Section heading ── */
-  .section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
-
-  /* ── Responsive grid ── */
-  .pkg-grid { display: grid; gap: 20px; grid-template-columns: repeat(4, 1fr); }
-  @media (max-width: 1280px) { .pkg-grid { grid-template-columns: repeat(3, 1fr); } }
-  @media (max-width: 900px) { .pkg-grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 560px) { .pkg-grid { grid-template-columns: 1fr; } }
-
-  .detail-grid { display: grid; gap: 36px; grid-template-columns: 3fr 2fr; align-items: start; }
-  @media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
-
-  .gallery-thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
-  @media (max-width: 480px) { .gallery-thumbs { grid-template-columns: repeat(3, 1fr); } }
-
-  .places-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  @media (max-width: 480px) { .places-grid { grid-template-columns: 1fr; } }
-
-  /* ── Count tag ── */
-  .count-tag { font-size: 12px; color: var(--muted-2); margin-top: 36px; text-align: center; letter-spacing: 0.04em; }
-
-  /* ── Scrollbar ── */
-  * { scrollbar-width: thin; scrollbar-color: rgba(201,168,76,0.2) transparent; }
-`;
-
 // ─── Image Gallery ────────────────────────────────────────────────────────────
 const ImageGallery = ({ images = [], title = "" }) => {
   const [active, setActive] = useState(0);
-  const valid = images.filter(Boolean);
-  if (!valid.length) return null;
+  const validImages = images.filter(Boolean);
+  if (validImages.length === 0) return null;
 
   return (
-    <div>
-      <div className="detail-hero" style={{ height: 340, marginBottom: 10 }}>
+    <div className="space-y-3">
+      <div className="relative rounded-2xl overflow-hidden h-72 md:h-80 group">
         <img
-          src={valid[active]}
+          src={validImages[active]}
           alt={title}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            display: "block",
-            transition: "all 0.5s",
-          }}
+          className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105"
         />
         <div
+          className="absolute inset-0 pointer-events-none"
           style={{
-            position: "absolute",
-            inset: 0,
             background:
-              "linear-gradient(to top, rgba(4,8,15,0.5) 0%, transparent 60%)",
+              "linear-gradient(to top, rgba(7,3,15,0.5) 0%, transparent 60%)",
           }}
         />
-        {/* counter */}
         <div
+          className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md text-xs font-bold text-white"
           style={{
-            position: "absolute",
-            top: 16,
-            right: 16,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "5px 12px",
-            borderRadius: 100,
-            background: "rgba(4,8,15,0.7)",
-            backdropFilter: "blur(8px)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            fontSize: 12,
-            color: "var(--muted)",
+            background: "rgba(7,3,15,0.6)",
+            border: "1px solid rgba(139,92,246,0.3)",
           }}
         >
-          <Camera size={11} /> {active + 1}/{valid.length}
+          <Camera size={12} />
+          {active + 1} / {validImages.length}
         </div>
-        {valid.length > 1 && (
+        {validImages.length > 1 && (
           <>
             <button
               onClick={() =>
-                setActive((a) => (a - 1 + valid.length) % valid.length)
+                setActive(
+                  (a) => (a - 1 + validImages.length) % validImages.length,
+                )
               }
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110"
               style={{
-                position: "absolute",
-                left: 14,
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                background: "rgba(4,8,15,0.75)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                color: "var(--text)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backdropFilter: "blur(8px)",
+                background: "rgba(7,3,15,0.7)",
+                border: "1px solid rgba(139,92,246,0.3)",
               }}
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={18} className="text-white" />
             </button>
             <button
-              onClick={() => setActive((a) => (a + 1) % valid.length)}
+              onClick={() => setActive((a) => (a + 1) % validImages.length)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110"
               style={{
-                position: "absolute",
-                right: 14,
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                background: "rgba(4,8,15,0.75)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                color: "var(--text)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backdropFilter: "blur(8px)",
+                background: "rgba(7,3,15,0.7)",
+                border: "1px solid rgba(139,92,246,0.3)",
               }}
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={18} className="text-white" />
             </button>
           </>
         )}
       </div>
-      {valid.length > 1 && (
-        <div className="gallery-thumbs">
-          {valid.map((img, i) => (
-            <div
+      {validImages.length > 1 && (
+        <div className="grid grid-cols-4 gap-2">
+          {validImages.map((img, i) => (
+            <button
               key={i}
-              className={`thumb${i === active ? " active" : ""}`}
-              style={{ height: 64 }}
               onClick={() => setActive(i)}
+              className="relative rounded-xl overflow-hidden h-16 md:h-20 transition-all duration-300"
+              style={{
+                border:
+                  i === active ? "2px solid #8b5cf6" : "2px solid transparent",
+                opacity: i === active ? 1 : 0.5,
+                transform: i === active ? "scale(1)" : "scale(0.97)",
+              }}
             >
-              <img
-                src={img}
-                alt=""
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            </div>
+              <img src={img} alt="" className="w-full h-full object-cover" />
+            </button>
           ))}
         </div>
       )}
@@ -341,12 +110,13 @@ const ImageGallery = ({ images = [], title = "" }) => {
   );
 };
 
-// ─── Package Detail ───────────────────────────────────────────────────────────
+// ─── Package Detail View ──────────────────────────────────────────────────────
 const PackageDetail = ({ pkg, onBack }) => {
   const navigate = useNavigate();
   const [aiText, setAiText] = useState("");
   const [aiPlaces, setAiPlaces] = useState([]);
   const [aiLoading, setAiLoading] = useState(true);
+
   const duration = pkg.duration || (pkg.nights ? `${pkg.nights} Nights` : "—");
 
   useEffect(() => {
@@ -394,7 +164,8 @@ Return ONLY this JSON structure:
       const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
       setAiText(parsed.description || pkg.description || "");
       setAiPlaces(parsed.places || []);
-    } catch {
+    } catch (err) {
+      console.error("AI generation error:", err);
       setAiText(pkg.description || "");
       setAiPlaces([]);
     } finally {
@@ -403,14 +174,18 @@ Return ONLY this JSON structure:
   };
 
   const infoItems = [
-    { icon: MapPin, label: "Destination", value: pkg.destination },
+    {
+      icon: Sun,
+      label: "Best Time to Visit",
+      value: pkg.bestTime || "October – March",
+    },
     { icon: Thermometer, label: "Duration", value: duration },
     {
       icon: DollarSign,
       label: "Starting Price",
       value: `$${pkg.price} per person`,
     },
-    { icon: Sun, label: "Best Time", value: pkg.bestTime || "October – March" },
+    { icon: MapPin, label: "Destination", value: pkg.destination },
     {
       icon: Calendar,
       label: "Start Date",
@@ -431,76 +206,60 @@ Return ONLY this JSON structure:
 
   return (
     <div>
-      <button className="detail-back" onClick={onBack}>
-        <ArrowLeft size={15} /> Back to Destinations
+      {/* Back */}
+      <button
+        onClick={onBack}
+        className="flex items-center gap-2 mb-8 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105"
+        style={{
+          background: "rgba(139,92,246,0.12)",
+          color: "#c4b5fd",
+          border: "1px solid rgba(139,92,246,0.25)",
+        }}
+      >
+        <ArrowLeft size={16} />
+        Back to Explore
       </button>
 
-      {/* Hero */}
+      {/* Hero Banner */}
       <div
-        className="detail-hero"
+        className="relative rounded-3xl overflow-hidden h-48 md:h-64 mb-10"
         style={{
-          height: 300,
-          marginBottom: 40,
-          border: "1px solid var(--border)",
+          border: "1px solid rgba(139,92,246,0.3)",
+          boxShadow: "0 0 60px rgba(139,92,246,0.2)",
         }}
       >
         <img
           src={pkg.imageUrls?.[0]}
           alt={pkg.title}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          className="w-full h-full object-cover"
         />
         <div
+          className="absolute inset-0"
           style={{
-            position: "absolute",
-            inset: 0,
             background:
-              "linear-gradient(to right, rgba(4,8,15,0.96) 0%, rgba(4,8,15,0.55) 55%, rgba(4,8,15,0.1) 100%)",
+              "linear-gradient(to right, rgba(7,3,15,0.92) 0%, rgba(7,3,15,0.5) 55%, transparent 100%)",
           }}
         />
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "flex-end",
-            padding: "36px 40px",
-          }}
-        >
+        <div className="absolute inset-0 flex items-end p-8 md:p-10">
           <div>
             <div
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold mb-3"
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                marginBottom: 10,
+                background: "rgba(139,92,246,0.8)",
+                color: "white",
+                letterSpacing: "0.1em",
               }}
             >
-              <MapPin size={12} color="var(--gold)" />
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "var(--gold)",
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                }}
-              >
-                {pkg.destination}
-              </span>
+              <MapPin size={11} />
+              {pkg.destination}
             </div>
             <h1
-              className="serif"
-              style={{
-                fontSize: "clamp(28px,5vw,50px)",
-                fontWeight: 700,
-                color: "var(--text)",
-                lineHeight: 1.1,
-                margin: "0 0 8px",
-              }}
+              className="text-3xl md:text-5xl font-black text-white mb-2 leading-none"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
             >
               {pkg.title}
             </h1>
-            <p style={{ fontSize: 14, color: "var(--muted)", margin: 0 }}>
+            <p className="text-base font-medium" style={{ color: "#c4b5fd" }}>
               {pkg.type ? `${pkg.type} · ` : ""}
               {duration}
             </p>
@@ -508,59 +267,57 @@ Return ONLY this JSON structure:
         </div>
       </div>
 
-      <div className="detail-grid">
-        {/* Left */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
+        {/* LEFT col */}
+        <div className="lg:col-span-3 space-y-10">
+          {/* Gallery */}
           {pkg.imageUrls?.length > 0 && (
             <section>
-              <p className="section-label">Gallery</p>
               <h2
-                className="serif"
-                style={{
-                  fontSize: 26,
-                  fontWeight: 700,
-                  color: "var(--text)",
-                  margin: "0 0 16px",
-                }}
+                className="text-xl font-black text-white mb-5 flex items-center gap-2"
+                style={{ fontFamily: "'Playfair Display', serif" }}
               >
-                Visual Journey
+                <Camera size={18} style={{ color: "#8b5cf6" }} />
+                Gallery
               </h2>
               <ImageGallery images={pkg.imageUrls} title={pkg.title} />
             </section>
           )}
 
+          {/* About — AI */}
           <section>
-            <p className="section-label">About</p>
             <h2
-              className="serif"
-              style={{
-                fontSize: 26,
-                fontWeight: 700,
-                color: "var(--text)",
-                margin: "0 0 14px",
-              }}
+              className="text-xl font-black text-white mb-4 flex items-center gap-2"
+              style={{ fontFamily: "'Playfair Display', serif" }}
             >
-              {pkg.title}
+              <Compass size={18} style={{ color: "#8b5cf6" }} />
+              About {pkg.title}
             </h2>
             {aiLoading ? (
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 10 }}
-              >
-                {[100, 85, 70].map((w, i) => (
-                  <div
-                    key={i}
-                    className="skel-line"
-                    style={{ width: `${w}%` }}
-                  />
-                ))}
+              <div className="flex items-center gap-3 py-4">
+                <div className="flex gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="w-2 h-2 rounded-full animate-bounce"
+                      style={{
+                        background: "#8b5cf6",
+                        animationDelay: `${i * 0.15}s`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <span className="text-sm" style={{ color: "#a78bfa" }}>
+                  Crafting your travel guide...
+                </span>
               </div>
             ) : (
               <p
+                className="leading-[1.9] text-base"
                 style={{
-                  fontSize: 15,
-                  lineHeight: 1.85,
-                  color: "var(--muted)",
-                  fontFamily: "'DM Sans', sans-serif",
+                  color: "#c4b5fd",
+                  fontFamily: "'Georgia', serif",
+                  opacity: 0.85,
                 }}
               >
                 {aiText || pkg.description}
@@ -568,225 +325,195 @@ Return ONLY this JSON structure:
             )}
           </section>
 
+          {/* Top Places — AI */}
           <section>
-            <p className="section-label">Highlights</p>
             <h2
-              className="serif"
-              style={{
-                fontSize: 26,
-                fontWeight: 700,
-                color: "var(--text)",
-                margin: "0 0 16px",
-              }}
+              className="text-xl font-black text-white mb-5 flex items-center gap-2"
+              style={{ fontFamily: "'Playfair Display', serif" }}
             >
+              <Star size={18} style={{ color: "#8b5cf6" }} />
               Top Places to Visit
             </h2>
             {aiLoading ? (
-              <div className="places-grid">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[...Array(6)].map((_, i) => (
                   <div
                     key={i}
-                    style={{
-                      height: 80,
-                      borderRadius: 14,
-                      background: "var(--surface)",
-                      border: "1px solid var(--border)",
-                      animation: "shimmer 1.6s infinite",
-                    }}
+                    className="h-20 rounded-2xl animate-pulse"
+                    style={{ background: "rgba(139,92,246,0.08)" }}
                   />
                 ))}
               </div>
-            ) : (
-              aiPlaces.length > 0 && (
-                <div className="places-grid">
-                  {aiPlaces.map((place, i) => (
-                    <div key={i} className="place-chip">
-                      <div className="place-emoji">{place.icon || "📍"}</div>
-                      <div>
-                        <h3
-                          style={{
-                            fontSize: 14,
-                            fontWeight: 600,
-                            color: "var(--text)",
-                            margin: "0 0 4px",
-                          }}
-                        >
-                          {place.name}
-                        </h3>
-                        <p
-                          style={{
-                            fontSize: 12,
-                            color: "var(--muted)",
-                            lineHeight: 1.55,
-                            margin: 0,
-                          }}
-                        >
-                          {place.desc}
-                        </p>
-                      </div>
+            ) : aiPlaces.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {aiPlaces.map((place, i) => (
+                  <div
+                    key={i}
+                    className="flex gap-4 p-4 rounded-2xl transition-all duration-300 hover:-translate-y-0.5"
+                    style={{
+                      background: "rgba(139,92,246,0.07)",
+                      border: "1px solid rgba(139,92,246,0.18)",
+                    }}
+                  >
+                    <div
+                      className="text-2xl w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ background: "rgba(139,92,246,0.15)" }}
+                    >
+                      {place.icon || "📍"}
                     </div>
-                  ))}
-                </div>
-              )
-            )}
+                    <div>
+                      <h3 className="font-bold text-white text-sm mb-1">
+                        {place.name}
+                      </h3>
+                      <p
+                        className="text-xs leading-relaxed"
+                        style={{ color: "#9e9ab5" }}
+                      >
+                        {place.desc}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </section>
         </div>
 
-        {/* Right */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 20,
-            position: "sticky",
-            top: 24,
-          }}
-        >
+        {/* RIGHT col */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Rating */}
           {pkg.rating && (
             <div
+              className="rounded-2xl p-4 flex items-center gap-3"
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "14px 18px",
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: 14,
+                background: "rgba(139,92,246,0.08)",
+                border: "1px solid rgba(139,92,246,0.2)",
               }}
             >
-              <div style={{ display: "flex", gap: 2 }}>
+              <div className="flex gap-0.5">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    size={15}
-                    style={{
-                      color:
-                        i < Math.round(pkg.rating || 4)
-                          ? "#fbbf24"
-                          : "rgba(255,255,255,0.1)",
-                      fill:
-                        i < Math.round(pkg.rating || 4)
-                          ? "#fbbf24"
-                          : "rgba(255,255,255,0.1)",
-                    }}
+                    size={16}
+                    className={
+                      i < Math.round(pkg.rating || 4)
+                        ? "text-amber-400 fill-amber-400"
+                        : "text-white/15 fill-white/10"
+                    }
                   />
                 ))}
               </div>
-              <span
-                style={{ fontWeight: 700, fontSize: 14, color: "var(--text)" }}
-              >
-                {pkg.rating}
-              </span>
+              <span className="font-bold text-white text-sm">{pkg.rating}</span>
               {pkg.reviews && (
-                <span style={{ fontSize: 12, color: "var(--muted-2)" }}>
-                  ({pkg.reviews} reviews)
+                <span className="text-xs" style={{ color: "#6b5a8e" }}>
+                  · {pkg.reviews} reviews
                 </span>
               )}
             </div>
           )}
 
-          <div className="info-card">
-            <p className="section-label" style={{ marginBottom: 12 }}>
+          {/* Travel Info */}
+          <div
+            className="rounded-2xl p-6 space-y-5"
+            style={{
+              background: "rgba(139,92,246,0.08)",
+              border: "1px solid rgba(139,92,246,0.2)",
+            }}
+          >
+            <h3
+              className="font-black text-white text-base"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
               Travel Info
-            </p>
-            {infoItems.map((item, i) => (
-              <div key={i} className="info-row">
-                <div className="info-icon">
-                  <item.icon size={15} color="var(--gold)" />
+            </h3>
+            {infoItems.map((info, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: "rgba(139,92,246,0.2)" }}
+                >
+                  <info.icon size={16} style={{ color: "#a78bfa" }} />
                 </div>
                 <div>
-                  <p className="info-label">{item.label}</p>
-                  <p className="info-value">{item.value}</p>
+                  <p
+                    className="text-[0.68rem] font-bold uppercase tracking-widest mb-0.5"
+                    style={{ color: "#6b5a8e" }}
+                  >
+                    {info.label}
+                  </p>
+                  <p className="text-sm font-semibold text-white">
+                    {info.value}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
 
+          {/* AI Badge */}
           <div
+            className="rounded-2xl p-5 text-center"
             style={{
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
-              borderRadius: 14,
-              padding: "20px 22px",
+              background:
+                "linear-gradient(135deg, rgba(139,92,246,0.2) 0%, rgba(109,40,217,0.1) 100%)",
+              border: "1px solid rgba(139,92,246,0.3)",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "baseline",
-                gap: 6,
-                marginBottom: 6,
-              }}
-            >
+            <div className="text-3xl mb-2">✦</div>
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <Bot size={14} style={{ color: "#a78bfa" }} />
               <span
-                className="serif"
-                style={{
-                  fontSize: 34,
-                  fontWeight: 700,
-                  color: "var(--gold-light)",
-                }}
+                className="text-xs font-bold uppercase tracking-widest"
+                style={{ color: "#a78bfa" }}
               >
-                ${pkg.price}
-              </span>
-              <span style={{ fontSize: 13, color: "var(--muted)" }}>
-                / person
+                AI-Powered Guide
               </span>
             </div>
-            <p
-              style={{
-                fontSize: 12,
-                color: "var(--muted-2)",
-                marginBottom: 16,
-              }}
-            >
-              Includes accommodation & guided tours
+            <p className="text-xs" style={{ color: "#9e9ab5" }}>
+              Description & top places generated by Claude AI
             </p>
-            <button
-              className="cta-btn"
-              onClick={() => navigate(`/package/${pkg._id}`)}
-            >
-              Book This Package <ArrowRight size={17} />
-            </button>
           </div>
+
+          {/* View Package CTA — navigates to /package/:id */}
+          <button
+            onClick={() => navigate(`/package/${pkg._id}`)}
+            className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-white transition-all hover:scale-[1.02]"
+            style={{
+              background: "linear-gradient(135deg, #8b5cf6, #6d28d9)",
+              boxShadow: "0 4px 20px rgba(139,92,246,0.45)",
+              fontSize: "0.95rem",
+            }}
+          >
+            View Package in {pkg.destination}
+            <ArrowRight size={18} />
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-// ─── Skeleton Card ────────────────────────────────────────────────────────────
-const SkeletonCard = () => (
-  <div className="skel">
-    <div className="skel-img" />
-    <div
-      style={{ padding: 20, display: "flex", flexDirection: "column", gap: 10 }}
-    >
-      <div className="skel-line" style={{ width: "40%" }} />
-      <div className="skel-line" style={{ width: "70%" }} />
-      <div className="skel-line" style={{ width: "55%" }} />
-    </div>
-  </div>
-);
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Main Explore Page ────────────────────────────────────────────────────────
 const Explore = () => {
   const navigate = useNavigate();
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPkg, setSelectedPkg] = useState(null);
+  const [hoveredCard, setHoveredCard] = useState(null);
   const topRef = useRef(null);
 
+  // Fetch real packages from backend
   useEffect(() => {
     const fetchPackages = async () => {
       try {
         setLoading(true);
         const token = getToken();
-        const res = await axios.get(`${serverURL}/api/user/package`, {
+        const response = await axios.get(`${serverURL}/api/user/package`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setPackages(res.data.getPackages || []);
-      } catch {
+        setPackages(response.data.getPackages || []);
+      } catch (error) {
+        console.error("Error fetching packages:", error);
         setPackages([]);
       } finally {
         setLoading(false);
@@ -808,6 +535,7 @@ const Explore = () => {
       50,
     );
   };
+
   const handleBack = () => {
     setSelectedPkg(null);
     setTimeout(
@@ -816,255 +544,348 @@ const Explore = () => {
     );
   };
 
-  const getDuration = (pkg) =>
+  const getNights = (pkg) =>
     pkg.duration || (pkg.nights ? `${pkg.nights} Nights` : "—");
 
   return (
-    <>
-      <style>{GLOBAL_STYLES}</style>
-      <div className="explore-root noise">
-        <div className="ambient-top" />
-        <div className="ambient-br" />
+    <div
+      className="min-h-screen text-white"
+      style={{ background: "#07030f", fontFamily: "'Segoe UI', sans-serif" }}
+    >
+      {/* Ambient blobs */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div
+          className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full opacity-20"
+          style={{
+            background: "radial-gradient(circle, #8b5cf6 0%, transparent 70%)",
+            filter: "blur(70px)",
+          }}
+        />
+        <div
+          className="absolute top-1/2 right-0 w-80 h-80 rounded-full opacity-15"
+          style={{
+            background: "radial-gradient(circle, #6d28d9 0%, transparent 70%)",
+            filter: "blur(80px)",
+          }}
+        />
+        <div
+          className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10"
+          style={{
+            background: "radial-gradient(circle, #4c1d95 0%, transparent 70%)",
+            filter: "blur(80px)",
+          }}
+        />
+      </div>
 
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <Navbar />
+      <div className="relative z-10">
+        <Navbar />
 
-          <div
-            ref={topRef}
-            style={{
-              maxWidth: 1320,
-              margin: "0 auto",
-              padding: "clamp(90px,10vw,120px) clamp(16px,4vw,40px) 80px",
-            }}
-          >
-            {selectedPkg ? (
-              <PackageDetail pkg={selectedPkg} onBack={handleBack} />
-            ) : (
-              <>
-                {/* ── Header ── */}
-                <div style={{ textAlign: "center", marginBottom: 60 }}>
-                  <div className="header-line">
-                    <div className="header-diamond" />
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        letterSpacing: "0.22em",
-                        textTransform: "uppercase",
-                        color: "var(--gold)",
-                      }}
-                    >
-                      Curated Destinations
-                    </span>
-                    <div className="header-diamond" />
-                  </div>
-
-                  <h1
-                    className="serif"
-                    style={{
-                      fontSize: "clamp(40px,7vw,76px)",
-                      fontWeight: 700,
-                      color: "var(--text)",
-                      lineHeight: 1.05,
-                      margin: "0 0 20px",
-                      letterSpacing: "-0.01em",
-                    }}
+        <div ref={topRef} className="max-w-7xl mx-auto px-6 pt-28 pb-24">
+          {selectedPkg ? (
+            <PackageDetail pkg={selectedPkg} onBack={handleBack} />
+          ) : (
+            <>
+              {/* ── HEADER ── */}
+              <div className="text-center mb-14">
+                <div
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6"
+                  style={{
+                    background: "rgba(139,92,246,0.12)",
+                    border: "1px solid rgba(139,92,246,0.28)",
+                  }}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full animate-pulse"
+                    style={{ background: "#a78bfa" }}
+                  />
+                  <span
+                    className="text-[0.68rem] font-bold tracking-[0.2em] uppercase"
+                    style={{ color: "#a78bfa" }}
                   >
-                    Explore the World,
-                    <br />
-                    <em
-                      style={{
-                        fontStyle: "italic",
-                        color: "var(--gold-light)",
-                      }}
-                    >
-                      Your Way
-                    </em>
-                  </h1>
-
-                  <p
-                    style={{
-                      fontSize: "clamp(14px,2vw,16px)",
-                      color: "var(--muted)",
-                      maxWidth: 460,
-                      margin: "0 auto 36px",
-                      lineHeight: 1.7,
-                    }}
-                  >
-                    Handpicked journeys to extraordinary places. Discover
-                    packages crafted for every kind of traveller.
-                  </p>
-
-                  <div style={{ maxWidth: 480, margin: "0 auto" }}>
-                    <div className="search-wrap">
-                      <Search size={17} color="var(--gold)" />
-                      <input
-                        type="text"
-                        placeholder="Search destinations or packages…"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
-                      {searchQuery && (
-                        <button
-                          onClick={() => setSearchQuery("")}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            padding: 0,
-                            display: "flex",
-                            alignItems: "center",
-                          }}
-                        >
-                          <X size={15} color="var(--muted)" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                    AI-Powered Travel Guide
+                  </span>
                 </div>
 
-                {/* ── Grid ── */}
-                {loading ? (
-                  <div className="pkg-grid">
-                    {[...Array(8)].map((_, i) => (
-                      <SkeletonCard key={i} />
-                    ))}
-                  </div>
-                ) : filtered.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "80px 0" }}>
-                    <MapPin
-                      size={44}
-                      color="var(--muted-2)"
-                      style={{ margin: "0 auto 16px" }}
-                    />
-                    <h3
-                      className="serif"
-                      style={{
-                        fontSize: 28,
-                        fontWeight: 700,
-                        color: "var(--text)",
-                        marginBottom: 8,
-                      }}
-                    >
-                      No destinations found
-                    </h3>
-                    <p style={{ color: "var(--muted)", fontSize: 14 }}>
-                      Try searching for something else
-                    </p>
-                  </div>
-                ) : (
-                  <div className="pkg-grid">
-                    {filtered.map((pkg) => {
-                      const duration = getDuration(pkg);
-                      return (
-                        <div
-                          key={pkg._id}
-                          className="pkg-card"
-                          onClick={() => handleCardClick(pkg)}
-                        >
-                          <div className="card-img-wrap">
-                            <img
-                              src={pkg.imageUrls?.[0]}
-                              alt={pkg.title}
-                              className="card-img"
-                            />
-                            <div className="card-img-overlay" />
+                <h1
+                  className="text-5xl md:text-6xl font-black leading-tight text-white mb-5"
+                  style={{
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    textShadow: "0 0 80px rgba(139,92,246,0.4)",
+                  }}
+                >
+                  Explore{" "}
+                  <span
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #c4b5fd, #8b5cf6, #a78bfa)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                    }}
+                  >
+                    Destinations
+                  </span>
+                </h1>
+                <p
+                  className="text-lg max-w-xl mx-auto leading-relaxed mb-8"
+                  style={{ color: "#9e9ab5" }}
+                >
+                  Discover curated tour packages with AI-powered travel guides.
+                  Click any destination to explore.
+                </p>
 
-                            {/* Duration top-left */}
-                            <div
+                {/* Search */}
+                <div
+                  className="max-w-lg mx-auto flex items-center gap-3 px-5 py-3 rounded-2xl"
+                  style={{
+                    background: "rgba(139,92,246,0.1)",
+                    border: "1px solid rgba(139,92,246,0.25)",
+                  }}
+                >
+                  <Search size={18} style={{ color: "#8b5cf6" }} />
+                  <input
+                    type="text"
+                    placeholder="Search destinations or packages..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1 bg-transparent outline-none text-sm font-medium text-white placeholder-gray-600"
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery("")}>
+                      <X size={16} style={{ color: "#6b5a8e" }} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* ── GRID ── */}
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {[...Array(8)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="rounded-3xl overflow-hidden animate-pulse h-96"
+                      style={{
+                        background: "rgba(139,92,246,0.08)",
+                        border: "1px solid rgba(139,92,246,0.12)",
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="text-center py-24">
+                  <MapPin
+                    size={52}
+                    style={{ color: "#4c1d95", margin: "0 auto 14px" }}
+                  />
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    No packages found
+                  </h3>
+                  <p style={{ color: "#6b5a8e" }}>
+                    Try a different search term
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {filtered.map((pkg) => {
+                    const isHovered = hoveredCard === pkg._id;
+                    const duration = getNights(pkg);
+
+                    return (
+                      <div
+                        key={pkg._id}
+                        className="rounded-3xl overflow-hidden cursor-pointer"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, #1a0a3e, #120630)",
+                          border: isHovered
+                            ? "1px solid rgba(139,92,246,0.6)"
+                            : "1px solid rgba(139,92,246,0.18)",
+                          boxShadow: isHovered
+                            ? "0 24px 64px rgba(139,92,246,0.28)"
+                            : "0 4px 24px rgba(0,0,0,0.4)",
+                          transform: isHovered
+                            ? "translateY(-8px)"
+                            : "translateY(0)",
+                          transition: "all 0.4s cubic-bezier(0.4,0,0.2,1)",
+                        }}
+                        onMouseEnter={() => setHoveredCard(pkg._id)}
+                        onMouseLeave={() => setHoveredCard(null)}
+                        onClick={() => handleCardClick(pkg)}
+                      >
+                        {/* Image */}
+                        <div className="relative h-52 overflow-hidden">
+                          <img
+                            src={pkg.imageUrls?.[0]}
+                            alt={pkg.title}
+                            className="w-full h-full object-cover transition-transform duration-700"
+                            style={{
+                              transform: isHovered ? "scale(1.1)" : "scale(1)",
+                            }}
+                          />
+                          <div
+                            className="absolute inset-0"
+                            style={{
+                              background:
+                                "linear-gradient(to top, rgba(7,3,15,0.92) 0%, rgba(7,3,15,0.2) 55%, transparent 100%)",
+                            }}
+                          />
+                          {/* Duration badge */}
+                          <div className="absolute top-4 left-4">
+                            <span
+                              className="px-3 py-1 rounded-full text-xs font-bold"
                               style={{
-                                position: "absolute",
-                                top: 14,
-                                left: 14,
+                                background: "rgba(139,92,246,0.85)",
+                                color: "white",
+                                letterSpacing: "0.05em",
                               }}
                             >
-                              <span className="badge-pill badge-gold">
-                                {duration}
+                              {duration}
+                            </span>
+                          </div>
+                          {/* Rating */}
+                          {pkg.rating && (
+                            <div
+                              className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1 rounded-full backdrop-blur-md"
+                              style={{
+                                background: "rgba(7,3,15,0.7)",
+                                border: "1px solid rgba(255,220,50,0.3)",
+                              }}
+                            >
+                              <Star
+                                size={11}
+                                className="fill-yellow-400 text-yellow-400"
+                              />
+                              <span className="text-xs font-bold text-yellow-300">
+                                {pkg.rating}
                               </span>
                             </div>
-
-                            {/* Rating top-right */}
-                            {pkg.rating && (
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  top: 14,
-                                  right: 14,
-                                }}
-                              >
-                                <span
-                                  className="badge-pill badge-rating"
-                                  style={{ gap: 5 }}
-                                >
-                                  <Star size={10} style={{ fill: "#fbbf24" }} />{" "}
-                                  {pkg.rating}
-                                </span>
-                              </div>
-                            )}
-
-                            {/* Multi-image count bottom-right */}
-                            {pkg.imageUrls?.length > 1 && (
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  bottom: 12,
-                                  right: 14,
-                                }}
-                              >
-                                <span
-                                  className="badge-pill badge-dark"
-                                  style={{ fontSize: 11, gap: 4 }}
-                                >
-                                  <Camera size={10} /> {pkg.imageUrls.length}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="card-body">
-                            <div className="card-dest">
-                              <MapPin size={11} /> {pkg.destination}
+                          )}
+                          {/* Multiple images indicator */}
+                          {pkg.imageUrls?.length > 1 && (
+                            <div
+                              className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs"
+                              style={{
+                                background: "rgba(7,3,15,0.7)",
+                                color: "#a78bfa",
+                              }}
+                            >
+                              <Camera size={10} />
+                              {pkg.imageUrls.length}
                             </div>
-                            <h3 className="card-title">{pkg.title}</h3>
-                            <p className="card-desc">
-                              {pkg.description ||
-                                `Discover the wonders of ${pkg.destination}.`}
-                            </p>
-
-                            <div className="card-divider" />
-
-                            <div className="card-meta">
-                              <div>
-                                <div className="card-price">
-                                  ${pkg.price}
-                                  <span>/ person</span>
-                                </div>
-                              </div>
-                              <button className="card-cta">
-                                Explore <ChevronRight size={14} />
-                              </button>
-                            </div>
-                          </div>
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
 
-                {!loading && filtered.length > 0 && (
-                  <p className="count-tag">
-                    {filtered.length} destination
-                    {filtered.length !== 1 ? "s" : ""} available
-                  </p>
-                )}
-              </>
-            )}
-          </div>
+                        {/* Body */}
+                        <div className="p-5">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <MapPin size={12} style={{ color: "#8b5cf6" }} />
+                            <span
+                              className="text-xs font-medium truncate"
+                              style={{ color: "#a78bfa" }}
+                            >
+                              {pkg.destination}
+                            </span>
+                          </div>
+                          <h3
+                            className="text-xl font-black leading-tight mb-2"
+                            style={{
+                              fontFamily: "'Playfair Display', serif",
+                              color: isHovered ? "#c4b5fd" : "white",
+                              transition: "color 0.3s",
+                            }}
+                          >
+                            {pkg.title}
+                          </h3>
 
-          <Footer />
+                          <p
+                            className="text-xs leading-relaxed mb-4 line-clamp-2"
+                            style={{ color: "#9e9ab5" }}
+                          >
+                            {pkg.description ||
+                              `Discover the wonders of ${pkg.destination}.`}
+                          </p>
+
+                          {/* Pills */}
+                          <div className="flex flex-wrap gap-1.5 mb-5">
+                            <div
+                              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[0.68rem] font-semibold"
+                              style={{
+                                background: "rgba(139,92,246,0.13)",
+                                color: "#c4b5fd",
+                                border: "1px solid rgba(139,92,246,0.2)",
+                              }}
+                            >
+                              <DollarSign size={9} />${pkg.price}
+                            </div>
+                            {pkg.group && (
+                              <div
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[0.68rem] font-semibold"
+                                style={{
+                                  background: "rgba(139,92,246,0.13)",
+                                  color: "#c4b5fd",
+                                  border: "1px solid rgba(139,92,246,0.2)",
+                                }}
+                              >
+                                <Users size={9} />
+                                {pkg.group}
+                              </div>
+                            )}
+                            <div
+                              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[0.68rem] font-semibold"
+                              style={{
+                                background: "rgba(139,92,246,0.13)",
+                                color: "#c4b5fd",
+                                border: "1px solid rgba(139,92,246,0.2)",
+                              }}
+                            >
+                              <Sparkles size={9} />
+                              AI Guide
+                            </div>
+                          </div>
+
+                          {/* Explore More */}
+                          <button
+                            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all"
+                            style={{
+                              background: isHovered
+                                ? "linear-gradient(135deg, #8b5cf6, #6d28d9)"
+                                : "rgba(139,92,246,0.15)",
+                              border: isHovered
+                                ? "none"
+                                : "1px solid rgba(139,92,246,0.28)",
+                              boxShadow: isHovered
+                                ? "0 4px 15px rgba(139,92,246,0.4)"
+                                : "none",
+                              color: isHovered ? "white" : "#c4b5fd",
+                              transition: "all 0.3s",
+                            }}
+                          >
+                            Explore More
+                            <ChevronRight size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {!loading && filtered.length > 0 && (
+                <p
+                  className="text-center text-xs mt-12"
+                  style={{ color: "#4c3670" }}
+                >
+                  {filtered.length} package{filtered.length !== 1 ? "s" : ""}{" "}
+                  available · Click any card to explore with AI travel guide
+                </p>
+              )}
+            </>
+          )}
         </div>
+
+        <Footer />
       </div>
-    </>
+    </div>
   );
 };
 
