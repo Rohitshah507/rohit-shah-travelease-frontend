@@ -14,11 +14,12 @@ import BookingPage from "./pages/Tourist Role/Booking.jsx";
 import KhaltiSuccess from "./Components/KhaltiSuccess.jsx";
 
 import useUser from "./hooks/useUser.jsx";
-import PlacesToVisit from "./pages/Tourist Role/PlacesToVisit.jsx";
+import PlacesToVisit from "./pages/Tourist Role/Explore.jsx";
 import AdminDashboard from "./pages/Admin Role/AdminDashboard.jsx";
 import Packages from "./pages/Tourist Role/Packages.jsx";
 import MyBookings from "./pages/Tourist Role/MyBookings.jsx";
 import PackageDetail from "./pages/Tourist Role/PackageDetail.jsx";
+import Explore from "./pages/Tourist Role/Explore.jsx";
 
 export const serverURL = "http://localhost:5000";
 
@@ -62,13 +63,13 @@ const App = () => {
         <Route path="/forget-password" element={<ForgetPassword />} />
 
         <Route
-          path="/destinations"
-          element={token ? <Destinations /> : <Navigate to="/login" />}
+          path="/package"
+          element={token ? <Packages /> : <Navigate to="/login" />}
         />
 
         <Route
           path="/places-to-visit"
-          element={token ? <PlacesToVisit /> : <Navigate to="/login" />}
+          element={token ? <Explore /> : <Navigate to="/login" />}
         />
 
         <Route
@@ -81,8 +82,8 @@ const App = () => {
         <Route path="/admin/*" element={<AdminDashboard />} />
 
         <Route
-          path="/packages"
-          element={token ? <Packages /> : <Navigate to="/login" />}
+          path="/explore"
+          element={token ? <Explore /> : <Navigate to="/login" />}
         />
 
         <Route

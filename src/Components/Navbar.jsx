@@ -516,9 +516,8 @@ const Navbar = () => {
 
   const NAV_LINKS = [
     { to: "/home", label: "Home" },
-    { to: "/destinations", label: "Destinations" },
-    { to: "/places-to-visit", label: "Places to Visit" },
-    { to: "/packages", label: "Packages" },
+    { to: "/explore", label: "Explore" },
+    { to: "/package", label: "Packages" },
     { to: "/mybookings", label: "My Bookings" },
   ];
 

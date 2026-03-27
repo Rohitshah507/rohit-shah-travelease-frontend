@@ -33,10 +33,11 @@ const renderDescription = (raw) => {
           </strong>
         ) : (
           part
-        )
+        ),
       );
       // Treat lines starting with "  **" as a feature bullet
-      const isBullet = line.trim().startsWith("**") || line.trim().startsWith("*");
+      const isBullet =
+        line.trim().startsWith("**") || line.trim().startsWith("*");
       return isBullet ? (
         <li
           key={i}
@@ -46,7 +47,10 @@ const renderDescription = (raw) => {
           <span>{rendered}</span>
         </li>
       ) : (
-        <p key={i} className="text-[#b8afd4] text-[0.97rem] leading-[1.85] mb-3">
+        <p
+          key={i}
+          className="text-[#b8afd4] text-[0.97rem] leading-[1.85] mb-3"
+        >
           {rendered}
         </p>
       );
@@ -71,7 +75,7 @@ const PackageDetail = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         // adjust the key below to match your actual API response shape
-        const data = res.data?.packageId
+        const data = res.data?.packageId;
         setPkg(data);
       } catch (err) {
         console.error("Failed to fetch package:", err);
@@ -110,7 +114,9 @@ const PackageDetail = () => {
   }
 
   const images = pkg.imageUrls?.length ? pkg.imageUrls : [];
-  const descriptionLines = pkg.description ? renderDescription(pkg.description) : null;
+  const descriptionLines = pkg.description
+    ? renderDescription(pkg.description)
+    : null;
 
   return (
     <div className="min-h-screen bg-[#07030f] text-white font-sans">
@@ -124,7 +130,6 @@ const PackageDetail = () => {
         <Navbar />
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-28 pb-20">
-
           {/* ── Back button ── */}
           <button
             onClick={() => navigate(-1)}
@@ -136,7 +141,6 @@ const PackageDetail = () => {
 
           {/* ── MAIN GRID ── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-
             {/* LEFT — Image gallery */}
             <div className="flex flex-col gap-4">
               {/* Main image */}
@@ -145,13 +149,17 @@ const PackageDetail = () => {
                   <img
                     src={images[activeImg]}
                     alt={pkg.title}
-                    onError={() => setImgError((p) => ({ ...p, [activeImg]: true }))}
+                    onError={() =>
+                      setImgError((p) => ({ ...p, [activeImg]: true }))
+                    }
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center bg-violet-500/8 gap-3">
                     <ImageOff size={40} className="text-violet-800" />
-                    <span className="text-[#6b5a8e] text-sm">No image available</span>
+                    <span className="text-[#6b5a8e] text-sm">
+                      No image available
+                    </span>
                   </div>
                 )}
                 {/* gradient overlay */}
@@ -180,7 +188,9 @@ const PackageDetail = () => {
                         <img
                           src={url}
                           alt={`view-${i}`}
-                          onError={() => setImgError((p) => ({ ...p, [i]: true }))}
+                          onError={() =>
+                            setImgError((p) => ({ ...p, [i]: true }))
+                          }
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -196,9 +206,21 @@ const PackageDetail = () => {
               {/* Quick stats pills */}
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { icon: Clock, label: "Duration", value: pkg.duration || "—" },
-                  { icon: DollarSign, label: "Price", value: pkg.price ? `$${pkg.price} / person` : "—" },
-                  { icon: MapPin, label: "Destination", value: pkg.destination || "—" },
+                  {
+                    icon: Clock,
+                    label: "Duration",
+                    value: pkg.duration || "—",
+                  },
+                  {
+                    icon: DollarSign,
+                    label: "Price",
+                    value: pkg.price ? `$${pkg.price} / person` : "—",
+                  },
+                  {
+                    icon: MapPin,
+                    label: "Destination",
+                    value: pkg.destination || "—",
+                  },
                   {
                     icon: Calendar,
                     label: "Start Date",
@@ -277,9 +299,13 @@ const PackageDetail = () => {
                         }
                       />
                     ))}
-                    <span className="ml-1 text-sm font-bold text-white">{pkg.rating}</span>
+                    <span className="ml-1 text-sm font-bold text-white">
+                      {pkg.rating}
+                    </span>
                     {pkg.reviews && (
-                      <span className="text-[#6b5a8e] text-xs">· {pkg.reviews} reviews</span>
+                      <span className="text-[#6b5a8e] text-xs">
+                        · {pkg.reviews} reviews
+                      </span>
                     )}
                   </div>
                 )}
@@ -296,7 +322,9 @@ const PackageDetail = () => {
                 {descriptionLines ? (
                   <ul className="list-none p-0 m-0">{descriptionLines}</ul>
                 ) : (
-                  <p className="text-[#6b5a8e] italic text-sm">No description available.</p>
+                  <p className="text-[#6b5a8e] italic text-sm">
+                    No description available.
+                  </p>
                 )}
               </div>
 
@@ -312,7 +340,9 @@ const PackageDetail = () => {
                   >
                     ${pkg.price}
                   </div>
-                  <p className="text-[#6b5a8e] text-xs mt-0.5">per person · all inclusive</p>
+                  <p className="text-[#6b5a8e] text-xs mt-0.5">
+                    per person · all inclusive
+                  </p>
                 </div>
 
                 <button
