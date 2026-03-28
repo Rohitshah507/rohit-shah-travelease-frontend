@@ -24,6 +24,7 @@ import {
   Package,
   RefreshCw,
 } from "lucide-react";
+
 import axios from "axios";
 import { serverURL } from "../../App";
 
@@ -39,7 +40,7 @@ import { Profile } from "./Profile";
 import { getToken } from "../Login";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Notification helpers  (same palette as Navbar for consistency)
+// Notification helpers
 // ─────────────────────────────────────────────────────────────────────────────
 const getNotifStyle = (type = "", message = "") => {
   const t = type.toUpperCase();
@@ -87,7 +88,6 @@ const timeAgo = (dateStr) => {
   return `${Math.floor(s / 86400)}d ago`;
 };
 
-// Toast for guide — light theme to match the dashboard's white/violet aesthetic
 const showGuideToast = (notif) => {
   const style = getNotifStyle(notif.type, notif.message);
   toast.custom(
@@ -159,15 +159,12 @@ const socketEventToNotif = (event, payload) => {
 
 const POLL_MS = 10000;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// useGuideNotifications — polling + Socket.io
-// ─────────────────────────────────────────────────────────────────────────────
-const useGuideNotifications = (userId) => {
+const useGuideNotifications = (userId, role) => {
   const [notifs, setNotifs] = useState([]);
   const [unread, setUnread] = useState(0);
   const [connected, setConnected] = useState(false);
 
-  const knownIds = useRef(null); // null = first fetch not done yet
+  const knownIds = useRef(null);
   const mounted = useRef(true);
   const timerRef = useRef(null);
 
@@ -189,7 +186,6 @@ const useGuideNotifications = (userId) => {
       setUnread(raw.filter((n) => !n.isRead).length);
 
       if (knownIds.current === null) {
-        // First fetch — silently seed, no toasts
         knownIds.current = new Set(raw.map((n) => n._id));
       } else {
         const newOnes = raw.filter((n) => !knownIds.current.has(n._id));
@@ -203,12 +199,14 @@ const useGuideNotifications = (userId) => {
     }
   }, []);
 
-  // ── Socket.io ────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !role) return;
 
     const socket = socketIO(serverURL, {
-      query: { userId },
+      query: {
+        userId: userId,
+        role: role,
+      },
       transports: ["websocket"],
       reconnectionAttempts: 5,
       reconnectionDelay: 2000,
@@ -239,7 +237,6 @@ const useGuideNotifications = (userId) => {
 
         if (knownIds.current) knownIds.current.add(pseudoNotif._id);
 
-        // Re-fetch after short delay to sync real DB record
         setTimeout(() => {
           if (mounted.current) doFetch();
         }, 1500);
@@ -247,7 +244,7 @@ const useGuideNotifications = (userId) => {
     });
 
     return () => socket.disconnect();
-  }, [userId, doFetch]);
+  }, [userId, role, doFetch]);
 
   // ── Polling ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -289,9 +286,6 @@ const useGuideNotifications = (userId) => {
   return { notifs, unread, connected, markAllRead, refreshNow };
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Notification Dropdown Panel  (light theme for guide dashboard)
-// ─────────────────────────────────────────────────────────────────────────────
 const GuideNotifPanel = ({
   notifs,
   connected,
@@ -300,14 +294,12 @@ const GuideNotifPanel = ({
   onMarkRead,
 }) => (
   <div className="absolute right-0 top-12 w-[340px] rounded-2xl overflow-hidden z-50 bg-white border border-violet-100 shadow-2xl shadow-violet-200/60">
-    {/* Header */}
     <div className="flex items-center justify-between px-4 py-3 border-b border-violet-50 bg-violet-50/50">
       <div className="flex items-center gap-2">
         <Bell size={14} className="text-violet-600" />
         <span className="font-black text-violet-900 text-sm">
           Notifications
         </span>
-        {/* Live indicator */}
         <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white border border-emerald-200">
           <span
             className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-emerald-500 animate-pulse" : "bg-gray-400"}`}
@@ -331,7 +323,6 @@ const GuideNotifPanel = ({
         <button
           onClick={onRefresh}
           className="w-7 h-7 rounded-lg flex items-center justify-center text-violet-400 hover:text-violet-600 hover:bg-violet-50 transition-all border-none bg-transparent cursor-pointer"
-          title="Refresh"
         >
           <RefreshCw size={12} />
         </button>
@@ -344,7 +335,6 @@ const GuideNotifPanel = ({
       </div>
     </div>
 
-    {/* List */}
     <div
       className="max-h-[380px] overflow-y-auto"
       style={{ scrollbarWidth: "thin", scrollbarColor: "#ddd6fe transparent" }}
@@ -409,6 +399,7 @@ const GuideNotifPanel = ({
 export default function GuideDashboard() {
   const { userData } = useSelector((state) => state.user);
   const GUIDE_ID = userData?.userDetails?._id;
+  const role = userData?.userDetails?.role?.[0];
 
   const [activePage, setActivePage] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -418,11 +409,9 @@ export default function GuideDashboard() {
 
   const notifPanelRef = useRef(null);
 
-  // ── Notifications (polling + socket) ─────────────────────────────────────
   const { notifs, unread, connected, markAllRead, refreshNow } =
-    useGuideNotifications(GUIDE_ID);
+    useGuideNotifications(GUIDE_ID, role);
 
-  // Close notif panel on outside click
   useEffect(() => {
     const fn = (e) => {
       if (notifPanelRef.current && !notifPanelRef.current.contains(e.target))
@@ -432,12 +421,9 @@ export default function GuideDashboard() {
     return () => document.removeEventListener("mousedown", fn);
   }, []);
 
-  // ── Tracking state ────────────────────────────────────────────────────────
   const [isTracking, setIsTracking] = useState(false);
   const [trackingTime, setTrackingTime] = useState(0);
-  const [sessionId, setSessionId] = useState(null);
   const timerRef = useRef(null);
-  const intervalRef = useRef(null);
 
   useEffect(() => {
     if (isTracking) {
@@ -456,58 +442,9 @@ export default function GuideDashboard() {
     return `${h}:${m}:${sec}`;
   };
 
-  const handleStartTracking = async () => {
-    try {
-      const token = getToken();
-      navigator.geolocation?.getCurrentPosition(
-        async (pos) => {
-          const { latitude: lat, longitude: lng } = pos.coords;
-          const res = await axios.post(
-            `${serverURL}/api/guide/tracking/start`,
-            { guideId: GUIDE_ID, lat, lng },
-            { headers: { Authorization: `Bearer ${token}` } },
-          );
-          setSessionId(res.data.sessionId);
-          setIsTracking(true);
-          intervalRef.current = setInterval(async () => {
-            navigator.geolocation?.getCurrentPosition((p) => {
-              axios.patch(
-                `${serverURL}/api/guide/tracking/update`,
-                {
-                  sessionId: res.data.sessionId,
-                  lat: p.coords.latitude,
-                  lng: p.coords.longitude,
-                },
-                { headers: { Authorization: `Bearer ${token}` } },
-              );
-            });
-          }, 10000);
-        },
-        () => setIsTracking(true),
-      );
-    } catch (err) {
-      console.error("Start tracking error:", err);
-    }
-  };
-
-  const handleStopTracking = async () => {
-    try {
-      clearInterval(intervalRef.current);
-      if (sessionId) {
-        const token = getToken();
-        await axios.post(
-          `${serverURL}/api/guide/tracking/stop`,
-          { sessionId },
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
-      }
-    } catch (err) {
-      console.error("Stop tracking error:", err);
-    } finally {
-      setIsTracking(false);
-      setSessionId(null);
-    }
-  };
+  // ✅ Simple toggle — no API calls needed, socket in Tracking.jsx does the work
+  const handleStartTracking = () => setIsTracking(true);
+  const handleStopTracking = () => setIsTracking(false);
 
   // ── Profile + pending bookings ────────────────────────────────────────────
   useEffect(() => {
@@ -515,12 +452,9 @@ export default function GuideDashboard() {
     const fetchProfile = async () => {
       try {
         const token = getToken();
-        const res = await axios.get(
-          `${serverURL}/api/guide/${GUIDE_ID}/profile`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        const res = await axios.get(`${serverURL}/api/auth/user`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setProfile(res.data.guide || res.data);
       } catch (err) {
         console.error("Profile fetch error:", err);
@@ -529,12 +463,9 @@ export default function GuideDashboard() {
     const fetchPending = async () => {
       try {
         const token = getToken();
-        const res = await axios.get(
-          `${serverURL}/api/guide/${GUIDE_ID}/bookings`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        const res = await axios.get(`${serverURL}/api/booking/guide`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const bookings = res.data.bookings || [];
         setPendingCount(bookings.filter((b) => b.status === "pending").length);
       } catch (err) {
@@ -581,7 +512,6 @@ export default function GuideDashboard() {
 
   return (
     <div className="flex h-screen bg-violet-50 font-sans overflow-hidden">
-      {/* Toaster — light theme */}
       <Toaster position="top-right" containerStyle={{ top: 72 }} />
 
       {/* ══════════════ SIDEBAR ══════════════ */}
@@ -592,7 +522,6 @@ export default function GuideDashboard() {
             "linear-gradient(160deg, #4c1d95 0%, #5b21b6 35%, #6d28d9 65%, #7c3aed 100%)",
         }}
       >
-        {/* Decorative top glow */}
         <div className="absolute top-0 left-0 w-full h-48 pointer-events-none overflow-hidden">
           <div className="absolute -top-16 -left-10 w-48 h-48 bg-fuchsia-400/20 rounded-full blur-3xl" />
           <div className="absolute top-4 right-0 w-32 h-32 bg-violet-300/10 rounded-full blur-2xl" />
@@ -754,7 +683,6 @@ export default function GuideDashboard() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            {/* Live tracking badge */}
             {isTracking && (
               <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
@@ -764,19 +692,18 @@ export default function GuideDashboard() {
               </div>
             )}
 
-            {/* ── Notification Bell ── */}
+            {/* Notification Bell */}
             <div className="relative" ref={notifPanelRef}>
               <button
                 onClick={() => {
                   setNotifOpen((v) => {
-                    if (!v) markAllRead(); // mark read when opening
+                    if (!v) markAllRead();
                     return !v;
                   });
                 }}
                 className="relative w-9 h-9 bg-violet-50 hover:bg-violet-100 rounded-xl flex items-center justify-center transition-all active:scale-95"
               >
                 <Bell size={17} className="text-violet-600" />
-                {/* Unread badge */}
                 {unread > 0 && (
                   <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-red-500 text-white text-[0.5rem] font-black rounded-full flex items-center justify-center px-0.5 shadow animate-bounce">
                     {unread > 9 ? "9+" : unread}
@@ -827,6 +754,7 @@ export default function GuideDashboard() {
               fmtTime={fmtTime}
               onStart={handleStartTracking}
               onStop={handleStopTracking}
+              userDetails={userData?.userDetails}
             />
           )}
           {activePage === "reviews" && <Reviews guideId={GUIDE_ID} />}

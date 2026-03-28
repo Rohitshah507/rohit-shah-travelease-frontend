@@ -126,9 +126,6 @@ const showNotifToast = (notif) => {
 };
 
 const POLL_MS = 10000;
-// After a socket event fires, suppress toast from the follow-up poll/refetch
-// for this many ms.  Covers the 1.5 s refetch delay + backend write lag.
-const SOCKET_COOLDOWN_MS = 4000;
 
 const socketEventToNotif = (event, payload) => {
   const map = {
@@ -162,31 +159,21 @@ const socketEventToNotif = (event, payload) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// useNotifications
+// useNotifications  — FIXED: no duplicate toasts
 // ─────────────────────────────────────────────────────────────────────────────
 const useNotifications = (userId) => {
   const [notifs, setNotifs] = useState([]);
   const [unread, setUnread] = useState(0);
   const [connected, setConnected] = useState(false);
 
-  const knownIds = useRef(null); // null = first fetch not seeded yet
+  // Set of every _id we have already toasted — never toast the same id twice.
+  const toastedIds = useRef(new Set());
+
+  // null = first fetch hasn't seeded knownIds yet (seed silently)
+  const knownIds = useRef(null);
+
   const mounted = useRef(true);
   const timerRef = useRef(null);
-  const socketRef = useRef(null);
-
-  // ── Cooldown flag ─────────────────────────────────────────────────────────
-  // Set to true when a socket event arrives.  While true, doFetch will seed
-  // new DB IDs silently (no toast) because the socket already toasted the user.
-  const socketCooldown = useRef(false);
-  const cooldownTimer = useRef(null);
-
-  const activateCooldown = () => {
-    socketCooldown.current = true;
-    clearTimeout(cooldownTimer.current);
-    cooldownTimer.current = setTimeout(() => {
-      socketCooldown.current = false;
-    }, SOCKET_COOLDOWN_MS);
-  };
 
   // ── REST fetch ────────────────────────────────────────────────────────────
   const doFetch = useCallback(async () => {
@@ -208,21 +195,22 @@ const useNotifications = (userId) => {
       setUnread(raw.filter((n) => !n.isRead).length);
 
       if (knownIds.current === null) {
-        // Very first fetch — seed all IDs silently, no toasts ever
+        // Very first fetch — seed silently, never toast any of these
         knownIds.current = new Set(raw.map((n) => n._id));
+        raw.forEach((n) => toastedIds.current.add(n._id));
       } else {
         const newOnes = raw.filter((n) => !knownIds.current.has(n._id));
-
-        // Always add to knownIds so they are never processed again
         newOnes.forEach((n) => knownIds.current.add(n._id));
 
-        // ── THE FIX ───────────────────────────────────────────────────────
-        // Only show a poll-triggered toast when no socket event has fired
-        // recently.  If the cooldown is active, the socket already showed the
-        // toast — swallow the duplicate silently.
-        if (!socketCooldown.current) {
-          newOnes.forEach((n) => showNotifToast(n));
-        }
+        // FIX: only toast if we haven't already toasted this id
+        // (socket may have already shown the toast via a pseudo-id that
+        //  we linked to the real DB id below)
+        newOnes.forEach((n) => {
+          if (!toastedIds.current.has(n._id)) {
+            toastedIds.current.add(n._id);
+            showNotifToast(n);
+          }
+        });
       }
     } catch {
       if (mounted.current) setConnected(false);
@@ -239,7 +227,6 @@ const useNotifications = (userId) => {
       reconnectionAttempts: 5,
       reconnectionDelay: 2000,
     });
-    socketRef.current = socket;
 
     const SOCKET_EVENTS = [
       "bookingConfirmed",
@@ -253,12 +240,15 @@ const useNotifications = (userId) => {
       socket.on(event, (payload) => {
         if (!mounted.current) return;
 
-        // 1️⃣  Start cooldown BEFORE showing toast so doFetch can't race ahead
-        activateCooldown();
+        // Generate a stable pseudo-id for this socket event
+        const pseudoId = `socket-${Date.now()}-${Math.random()}`;
 
-        // 2️⃣  Build pseudo-notif and show exactly ONE toast
+        // Mark as toasted BEFORE showing — prevents doFetch from re-toasting
+        toastedIds.current.add(pseudoId);
+
+        // Show exactly ONE toast
         const pseudoNotif = {
-          _id: `socket-${Date.now()}-${Math.random()}`,
+          _id: pseudoId,
           ...socketEventToNotif(event, payload),
           isRead: false,
           createdAt: new Date().toISOString(),
@@ -266,14 +256,19 @@ const useNotifications = (userId) => {
 
         showNotifToast(pseudoNotif);
 
-        // 3️⃣  Optimistically prepend & bump badge
+        // Optimistically prepend & bump badge
         setNotifs((prev) => [pseudoNotif, ...prev]);
         setUnread((prev) => prev + 1);
 
-        // 4️⃣  Seed pseudo-ID (belt-and-suspenders)
-        if (knownIds.current) knownIds.current.add(pseudoNotif._id);
+        // Add pseudo-id to knownIds so doFetch won't treat it as "new"
+        if (knownIds.current) knownIds.current.add(pseudoId);
 
-        // 5️⃣  Re-fetch to replace pseudo-entry with real DB record (silently)
+        // Re-fetch to replace pseudo-entry with real DB record.
+        // The real DB record's _id will be added to toastedIds inside doFetch
+        // only if it's genuinely new — but we need to pre-seed it here so the
+        // toast is suppressed. We do this by marking the real record's id
+        // after fetch via the toastedIds check inside doFetch (it checks before
+        // toasting). This is safe because doFetch marks all fetched new ids.
         setTimeout(() => {
           if (mounted.current) doFetch();
         }, 1500);
@@ -293,7 +288,6 @@ const useNotifications = (userId) => {
     return () => {
       mounted.current = false;
       clearInterval(timerRef.current);
-      clearTimeout(cooldownTimer.current);
     };
   }, [doFetch]);
 

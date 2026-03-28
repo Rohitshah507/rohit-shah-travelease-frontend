@@ -30,7 +30,7 @@ import {
   User,
 } from "lucide-react";
 import Footer from "../../Components/Footer";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import Navbar from "../../Components/Navbar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -917,7 +917,7 @@ const TouristDashboard = () => {
                 </div>
                 <div className="text-center mt-12">
                   <button
-                    onClick={() => navigate("/packages")}
+                    onClick={() => navigate("/explore")}
                     className="inline-flex items-center gap-2 px-9 py-3.5 rounded-full font-bold text-sm text-violet-300 bg-transparent border-2 border-violet-500/50 hover:bg-violet-500/15 hover:border-violet-500/80 transition-all cursor-pointer"
                   >
                     View All Packages <ChevronRight size={16} />
@@ -1412,7 +1412,6 @@ const TouristDashboard = () => {
         </div>
 
         <Footer />
-        <Toaster />
       </div>
     </div>
   );
