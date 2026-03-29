@@ -145,6 +145,7 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const dispatch = useDispatch();
 
+  console.log("API URL:", serverURL); // Debug: Check API URL being used
   // Toast state
   const [toasts, setToasts] = useState([]);
 
@@ -153,6 +154,7 @@ const SignIn = () => {
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => removeToast(id), 4000); // auto-dismiss after 4s
   };
+
 
   const removeToast = (id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));

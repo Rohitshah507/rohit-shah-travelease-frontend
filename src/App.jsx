@@ -21,7 +21,7 @@ import MyBookings from "./pages/Tourist Role/MyBookings.jsx";
 import PackageDetail from "./pages/Tourist Role/PackageDetail.jsx";
 import Explore from "./pages/Tourist Role/Explore.jsx";
 
-export const serverURL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+export const serverURL = import.meta.env.VITE_API_URL;;
 
 const App = () => {
   useUser();
