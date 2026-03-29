@@ -14,7 +14,6 @@ import {
   Clock,
   Calendar,
   AlertTriangle,
-  User,
 } from "lucide-react";
 import { serverURL } from "../../App";
 import { getToken } from "../Login";
@@ -184,25 +183,27 @@ const GuideApprovals = ({ onUpdate }) => {
   ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-black text-gray-900">Guide Approvals</h1>
-          <p className="text-gray-500 mt-0.5 text-sm">
+          <h1 className="text-2xl sm:text-3xl font-black text-gray-900">
+            Guide Approvals
+          </h1>
+          <p className="text-gray-500 mt-0.5 text-xs sm:text-sm">
             Review and manage guide registrations
           </p>
         </div>
         <button
           onClick={fetchAllGuides}
-          className="px-4 py-2 bg-violet-100 hover:bg-violet-200 text-violet-700 font-bold rounded-xl text-sm transition-all"
+          className="px-4 py-2 bg-violet-100 hover:bg-violet-200 text-violet-700 font-bold rounded-xl text-sm transition-all w-full sm:w-auto"
         >
           ↻ Refresh
         </button>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-2xl shadow-sm p-1.5 flex gap-1.5 border border-gray-200 w-fit">
+      <div className="bg-white rounded-2xl shadow-sm p-1.5 flex gap-1.5 border border-gray-200 w-full sm:w-fit overflow-x-auto">
         {tabs.map(({ key, label }) => {
           const count = allGuides.filter(
             (g) => normalizeStatus(g.guideStatus) === key,
@@ -211,7 +212,7 @@ const GuideApprovals = ({ onUpdate }) => {
             <button
               key={key}
               onClick={() => setFilter(key)}
-              className={`py-2 px-5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${
+              className={`py-2 px-3 sm:px-5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center gap-2 whitespace-nowrap flex-1 sm:flex-none justify-center ${
                 filter === key
                   ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow"
                   : "text-gray-500 hover:bg-gray-100"
@@ -220,11 +221,7 @@ const GuideApprovals = ({ onUpdate }) => {
               {label}
               {count > 0 && (
                 <span
-                  className={`px-1.5 py-0.5 rounded-full text-xs font-black ${
-                    filter === key
-                      ? "bg-white text-violet-600"
-                      : "bg-gray-200 text-gray-600"
-                  }`}
+                  className={`px-1.5 py-0.5 rounded-full text-xs font-black ${filter === key ? "bg-white text-violet-600" : "bg-gray-200 text-gray-600"}`}
                 >
                   {count}
                 </span>
@@ -234,69 +231,58 @@ const GuideApprovals = ({ onUpdate }) => {
         })}
       </div>
 
-      {/* ── Cards ─────────────────────────────────────────────────────────── */}
+      {/* Cards */}
       {loading ? (
         <div className="flex items-center justify-center py-24">
           <div className="w-12 h-12 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin" />
         </div>
       ) : guides.length === 0 ? (
-        <div className="bg-white rounded-2xl p-14 text-center border-2 border-dashed border-violet-200">
-          <UserCheck size={48} className="text-gray-300 mx-auto mb-3" />
+        <div className="bg-white rounded-2xl p-10 sm:p-14 text-center border-2 border-dashed border-violet-200">
+          <UserCheck size={40} className="text-gray-300 mx-auto mb-3" />
           <p className="text-gray-400 font-bold">
             No {filter.toLowerCase()} guides
           </p>
         </div>
       ) : (
-        /* Same flex-wrap pattern — each card exactly 310px like demo */
-        <div className="flex flex-wrap gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
           {guides.map((guide) => (
             <div
               key={guide._id}
-              style={{ width: "310px" }}
-              className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 shrink-0"
+              className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100"
             >
-              {/* ── Card "image" area — colored header with avatar ── */}
-              {/* Same height as demo image area: 172px */}
+              {/* Header area */}
               <div
                 className="relative bg-gradient-to-br from-violet-500 to-purple-600"
                 style={{ height: "172px" }}
               >
-                {/* Big avatar centered */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
-                    <span className="text-violet-600 font-black text-2xl">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
+                    <span className="text-violet-600 font-black text-xl sm:text-2xl">
                       {guide.username?.charAt(0).toUpperCase() || "G"}
                     </span>
                   </div>
-                  <p className="text-white font-black text-base">
+                  <p className="text-white font-black text-sm sm:text-base">
                     {guide.username}
                   </p>
                   <p className="text-violet-200 text-xs">
                     ID: {guide._id?.slice(-6).toUpperCase()}
                   </p>
                 </div>
-
-                {/* Status badge — bottom-left like demo */}
                 <div className="absolute bottom-3 left-3">
                   {statusBadge(guide.guideStatus)}
                 </div>
-
-                {/* Document indicator — top-right like demo's duration badge */}
                 <span className="absolute top-3 right-3 px-2.5 py-1 bg-white/90 text-gray-700 rounded-full text-[11px] font-bold shadow-sm">
                   {guide.guideDocument ? "📄 Has Doc" : "No Doc"}
                 </span>
               </div>
 
-              {/* ── Card body ── */}
+              {/* Card body */}
               <div className="px-4 pt-3 pb-4 space-y-2">
-                {/* Email */}
                 <div className="flex items-center gap-1.5 text-[12px] text-gray-500">
                   <Mail size={12} className="text-violet-400 shrink-0" />
                   <span className="truncate">{guide.email}</span>
                 </div>
-
-                {/* Phone + Location */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <span className="flex items-center gap-1 text-[12px] text-gray-400">
                     <Phone size={11} className="text-violet-400" />
                     {guide.phoneNumber || "N/A"}
@@ -306,8 +292,6 @@ const GuideApprovals = ({ onUpdate }) => {
                     {guide.location || "N/A"}
                   </span>
                 </div>
-
-                {/* Applied date */}
                 <p className="flex items-center gap-1 text-[12px] text-gray-400">
                   <Calendar size={11} className="text-violet-400" />
                   Applied:{" "}
@@ -319,8 +303,6 @@ const GuideApprovals = ({ onUpdate }) => {
                       })
                     : "N/A"}
                 </p>
-
-                {/* Buttons — outlined like demo */}
                 <div className="flex gap-2 pt-1">
                   <button
                     onClick={() => {
@@ -346,25 +328,24 @@ const GuideApprovals = ({ onUpdate }) => {
         </div>
       )}
 
-      {/* ── Review Modal ─────────────────────────────────────────────────── */}
+      {/* Review Modal */}
       {showModal && selectedGuide && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowModal(false);
           }}
         >
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden max-h-[90vh] flex flex-col">
-            {/* Modal header */}
-            <div className="bg-gradient-to-r from-violet-600 to-purple-600 p-5">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-lg shrink-0">
-                  <span className="text-violet-600 font-black text-xl">
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="bg-gradient-to-r from-violet-600 to-purple-600 p-4 sm:p-5">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-full flex items-center justify-center shadow-lg shrink-0">
+                  <span className="text-violet-600 font-black text-lg sm:text-xl">
                     {selectedGuide.username?.charAt(0).toUpperCase() || "G"}
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white">
+                  <h3 className="text-base sm:text-lg font-black text-white">
                     {selectedGuide.username}
                   </h3>
                   <p className="text-violet-200 text-xs mt-0.5">
@@ -377,9 +358,8 @@ const GuideApprovals = ({ onUpdate }) => {
               </div>
             </div>
 
-            {/* Modal body */}
-            <div className="p-5 space-y-4 overflow-y-auto">
-              <div className="grid grid-cols-2 gap-3">
+            <div className="p-4 sm:p-5 space-y-3 sm:space-y-4 overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                 {[
                   { label: "EMAIL", value: selectedGuide.email },
                   { label: "PHONE", value: selectedGuide.phoneNumber || "N/A" },
@@ -398,20 +378,19 @@ const GuideApprovals = ({ onUpdate }) => {
                     <p className="text-[10px] font-black text-gray-400 mb-1">
                       {label}
                     </p>
-                    <p className="text-sm font-semibold text-gray-900 break-all">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-900 break-all">
                       {value}
                     </p>
                   </div>
                 ))}
               </div>
 
-              {/* Documents */}
               {selectedGuide.guideDocument ? (
                 <div>
                   <p className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">
                     Documents
                   </p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {(Array.isArray(selectedGuide.guideDocument)
                       ? selectedGuide.guideDocument
                       : [selectedGuide.guideDocument]
@@ -425,7 +404,7 @@ const GuideApprovals = ({ onUpdate }) => {
                       >
                         <div className="flex items-center gap-2">
                           <FileText
-                            size={20}
+                            size={18}
                             className="text-violet-600 shrink-0"
                           />
                           <div>
@@ -438,7 +417,7 @@ const GuideApprovals = ({ onUpdate }) => {
                           </div>
                         </div>
                         <Download
-                          size={16}
+                          size={15}
                           className="text-violet-600 group-hover:scale-110 transition-transform"
                         />
                       </a>
@@ -448,7 +427,7 @@ const GuideApprovals = ({ onUpdate }) => {
               ) : (
                 <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-xl border border-yellow-200">
                   <AlertTriangle
-                    size={16}
+                    size={15}
                     className="text-yellow-600 shrink-0"
                   />
                   <p className="text-sm text-yellow-700 font-semibold">
@@ -458,8 +437,7 @@ const GuideApprovals = ({ onUpdate }) => {
               )}
             </div>
 
-            {/* Modal footer */}
-            <div className="p-4 bg-gray-50 border-t border-gray-200 flex gap-3 shrink-0">
+            <div className="p-3 sm:p-4 bg-gray-50 border-t border-gray-200 flex gap-2 sm:gap-3 shrink-0">
               <button
                 onClick={() => {
                   setShowModal(false);
@@ -475,7 +453,7 @@ const GuideApprovals = ({ onUpdate }) => {
                   <button
                     onClick={() => handleReject(selectedGuide._id)}
                     disabled={processing}
-                    className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm disabled:opacity-60 flex items-center justify-center gap-2"
+                    className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm disabled:opacity-60 flex items-center justify-center gap-1.5"
                   >
                     {processing && processingAction === "reject" ? (
                       <>
@@ -484,7 +462,7 @@ const GuideApprovals = ({ onUpdate }) => {
                       </>
                     ) : (
                       <>
-                        <XCircle size={16} />
+                        <XCircle size={15} />
                         Reject
                       </>
                     )}
@@ -492,7 +470,7 @@ const GuideApprovals = ({ onUpdate }) => {
                   <button
                     onClick={() => handleApprove(selectedGuide._id)}
                     disabled={processing}
-                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold text-sm disabled:opacity-60 flex items-center justify-center gap-2"
+                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold text-sm disabled:opacity-60 flex items-center justify-center gap-1.5"
                   >
                     {processing && processingAction === "approve" ? (
                       <>
@@ -501,7 +479,7 @@ const GuideApprovals = ({ onUpdate }) => {
                       </>
                     ) : (
                       <>
-                        <CheckCircle size={16} />
+                        <CheckCircle size={15} />
                         Approve
                       </>
                     )}
@@ -510,12 +488,12 @@ const GuideApprovals = ({ onUpdate }) => {
               )}
               {getGuideStatus(selectedGuide) === "APPROVED" && (
                 <div className="flex-1 py-2.5 rounded-xl bg-green-100 text-green-700 font-bold text-sm flex items-center justify-center gap-2">
-                  <CheckCircle size={16} /> Already Approved
+                  <CheckCircle size={15} /> Already Approved
                 </div>
               )}
               {getGuideStatus(selectedGuide) === "REJECTED" && (
                 <div className="flex-1 py-2.5 rounded-xl bg-red-100 text-red-700 font-bold text-sm flex items-center justify-center gap-2">
-                  <XCircle size={16} /> Already Rejected
+                  <XCircle size={15} /> Already Rejected
                 </div>
               )}
             </div>

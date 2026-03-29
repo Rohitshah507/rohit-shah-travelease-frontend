@@ -14,14 +14,13 @@ import BookingPage from "./pages/Tourist Role/Booking.jsx";
 import KhaltiSuccess from "./Components/KhaltiSuccess.jsx";
 
 import useUser from "./hooks/useUser.jsx";
-import PlacesToVisit from "./pages/Tourist Role/Explore.jsx";
 import AdminDashboard from "./pages/Admin Role/AdminDashboard.jsx";
 import Packages from "./pages/Tourist Role/Packages.jsx";
 import MyBookings from "./pages/Tourist Role/MyBookings.jsx";
 import PackageDetail from "./pages/Tourist Role/PackageDetail.jsx";
 import Explore from "./pages/Tourist Role/Explore.jsx";
 
-export const serverURL = import.meta.env.VITE_API_URL;;
+export const serverURL = import.meta.env.VITE_API_URL;
 
 const App = () => {
   useUser();

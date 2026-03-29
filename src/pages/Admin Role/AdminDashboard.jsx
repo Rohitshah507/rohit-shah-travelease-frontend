@@ -32,9 +32,6 @@ import PaymentHistory from "./PaymentHistory";
 import GuideTracking from "./GuideTracking";
 import { getToken } from "../Login";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Notification helpers
-// ─────────────────────────────────────────────────────────────────────────────
 const getNotifStyle = (type = "", message = "") => {
   const t = type.toUpperCase();
   const m = message.toLowerCase();
@@ -104,7 +101,6 @@ const timeAgo = (dateStr) => {
   return `${Math.floor(s / 86400)}d ago`;
 };
 
-// Light-theme toast for admin dashboard
 const showAdminToast = (notif) => {
   const style = getNotifStyle(notif.type, notif.message);
   toast.custom(
@@ -119,8 +115,8 @@ const showAdminToast = (notif) => {
         style={{
           background: style.toastBg,
           borderColor: style.toastBorder,
-          minWidth: 280,
-          maxWidth: 340,
+          minWidth: 260,
+          maxWidth: 320,
         }}
       >
         <div
@@ -177,15 +173,12 @@ const socketEventToNotif = (event, payload) => {
 
 const POLL_MS = 10000;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// useAdminNotifications  (polling + Socket.io)
-// ─────────────────────────────────────────────────────────────────────────────
 const useAdminNotifications = (userId) => {
   const [notifs, setNotifs] = useState([]);
   const [unread, setUnread] = useState(0);
   const [connected, setConnected] = useState(false);
 
-  const knownIds = useRef(null); // null = first fetch not done yet
+  const knownIds = useRef(null);
   const mounted = useRef(true);
   const timerRef = useRef(null);
 
@@ -193,7 +186,6 @@ const useAdminNotifications = (userId) => {
     try {
       const token = getToken();
       if (!token) return;
-
       const res = await axios.get(`${serverURL}/api/notifications`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -208,7 +200,6 @@ const useAdminNotifications = (userId) => {
       setUnread(raw.filter((n) => !n.isRead).length);
 
       if (knownIds.current === null) {
-        // First fetch — seed silently, no toasts
         knownIds.current = new Set(raw.map((n) => n._id));
       } else {
         const newOnes = raw.filter((n) => !knownIds.current.has(n._id));
@@ -222,10 +213,8 @@ const useAdminNotifications = (userId) => {
     }
   }, []);
 
-  // ── Socket.io ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!userId) return;
-
     const socket = socketIO(serverURL, {
       query: { userId },
       transports: ["websocket"],
@@ -240,25 +229,19 @@ const useAdminNotifications = (userId) => {
       "paymentSuccess",
       "guideApproved",
     ];
-
     EVENTS.forEach((event) => {
       socket.on(event, (payload) => {
         if (!mounted.current) return;
-
         const pseudoNotif = {
           _id: `socket-${Date.now()}-${Math.random()}`,
           ...socketEventToNotif(event, payload),
           isRead: false,
           createdAt: new Date().toISOString(),
         };
-
         showAdminToast(pseudoNotif);
         setNotifs((prev) => [pseudoNotif, ...prev]);
         setUnread((prev) => prev + 1);
-
         if (knownIds.current) knownIds.current.add(pseudoNotif._id);
-
-        // Re-sync with DB after short delay
         setTimeout(() => {
           if (mounted.current) doFetch();
         }, 1500);
@@ -268,7 +251,6 @@ const useAdminNotifications = (userId) => {
     return () => socket.disconnect();
   }, [userId, doFetch]);
 
-  // ── Polling ────────────────────────────────────────────────────────────
   useEffect(() => {
     mounted.current = true;
     doFetch();
@@ -279,18 +261,13 @@ const useAdminNotifications = (userId) => {
     };
   }, [doFetch]);
 
-  // ── Mark all read ──────────────────────────────────────────────────────
   const markAllRead = useCallback(async () => {
     const unreadNotifs = notifs.filter((n) => !n.isRead);
     if (unreadNotifs.length === 0) return;
-
     setNotifs((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setUnread(0);
-
     const token = getToken();
     if (!token) return;
-
-    // Skip pseudo socket IDs — only hit real DB records
     const dbUnread = unreadNotifs.filter(
       (n) => !String(n._id).startsWith("socket-"),
     );
@@ -299,20 +276,18 @@ const useAdminNotifications = (userId) => {
         axios.patch(
           `${serverURL}/api/notifications/${n._id}/read`,
           {},
-          { headers: { Authorization: `Bearer ${token}` } },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
         ),
       ),
     );
   }, [notifs]);
 
   const refreshNow = useCallback(() => doFetch(), [doFetch]);
-
   return { notifs, unread, connected, markAllRead, refreshNow };
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Notification Panel  (admin light theme)
-// ─────────────────────────────────────────────────────────────────────────────
 const AdminNotifPanel = ({
   notifs,
   unread,
@@ -323,15 +298,14 @@ const AdminNotifPanel = ({
   onNavigate,
 }) => (
   <>
-    {/* Backdrop */}
     <div className="fixed inset-0 z-40" onClick={onClose} />
-
-    <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50">
-      {/* Header */}
-      <div className="px-5 py-4 bg-gradient-to-r from-violet-600 to-purple-600">
+    <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50">
+      <div className="px-4 sm:px-5 py-4 bg-gradient-to-r from-violet-600 to-purple-600">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-bold text-white text-base">Notifications</h3>
+            <h3 className="font-bold text-white text-sm sm:text-base">
+              Notifications
+            </h3>
             <div className="flex items-center gap-2 mt-0.5">
               <div className="flex items-center gap-1">
                 <span
@@ -359,7 +333,6 @@ const AdminNotifPanel = ({
             <button
               onClick={onRefresh}
               className="w-7 h-7 rounded-lg flex items-center justify-center text-violet-300 hover:text-white hover:bg-white/15 transition-all border-none bg-transparent cursor-pointer"
-              title="Refresh"
             >
               <RefreshCw size={13} />
             </button>
@@ -373,18 +346,17 @@ const AdminNotifPanel = ({
         </div>
       </div>
 
-      {/* List */}
       <div
-        className="max-h-[360px] overflow-y-auto"
+        className="max-h-[300px] sm:max-h-[360px] overflow-y-auto"
         style={{
           scrollbarWidth: "thin",
           scrollbarColor: "#ddd6fe transparent",
         }}
       >
         {notifs.length === 0 ? (
-          <div className="p-10 text-center">
-            <div className="w-14 h-14 rounded-full bg-violet-50 border border-violet-100 flex items-center justify-center mx-auto mb-3">
-              <Bell size={24} className="text-violet-300" />
+          <div className="p-8 sm:p-10 text-center">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-violet-50 border border-violet-100 flex items-center justify-center mx-auto mb-3">
+              <Bell size={22} className="text-violet-300" />
             </div>
             <p className="text-gray-500 font-semibold text-sm">
               No notifications yet
@@ -402,7 +374,6 @@ const AdminNotifPanel = ({
                 <div
                   key={n._id}
                   onClick={() => {
-                    // Route admin to relevant page based on type
                     if (
                       n.type === "USER" ||
                       n.message?.toLowerCase().includes("guide")
@@ -417,21 +388,16 @@ const AdminNotifPanel = ({
                   }}
                   className={`relative flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200 hover:shadow-sm hover:scale-[1.01] ${style.bg} ${style.border} ${isUnread ? "shadow-sm" : "opacity-75"}`}
                 >
-                  {/* Unread dot */}
                   {isUnread && (
                     <span
                       className={`absolute top-2.5 right-2.5 w-2 h-2 rounded-full ${style.dot} animate-pulse`}
                     />
                   )}
-
-                  {/* Icon */}
                   <div
-                    className={`w-9 h-9 rounded-xl border ${style.border} ${style.bg} flex items-center justify-center shrink-0`}
+                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl border ${style.border} ${style.bg} flex items-center justify-center shrink-0`}
                   >
-                    <style.Icon size={16} className={style.color} />
+                    <style.Icon size={15} className={style.color} />
                   </div>
-
-                  {/* Content */}
                   <div className="flex-1 min-w-0 pr-4">
                     <p className={`font-bold text-xs ${style.color}`}>
                       {style.label}
@@ -450,7 +416,6 @@ const AdminNotifPanel = ({
         )}
       </div>
 
-      {/* Footer */}
       {notifs.length > 0 && (
         <div className="p-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
           <span className="text-xs text-gray-400">
@@ -471,12 +436,9 @@ const AdminNotifPanel = ({
   </>
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AdminDashboard
-// ─────────────────────────────────────────────────────────────────────────────
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [pendingGuides, setPendingGuides] = useState([]);
@@ -487,7 +449,6 @@ const AdminDashboard = () => {
   const userData = useSelector((state) => state.user.userData);
   const userId = userData?.userDetails?._id;
 
-  // ── Notification hook ────────────────────────────────────────────────────
   const { notifs, unread, connected, markAllRead, refreshNow } =
     useAdminNotifications(userId);
 
@@ -499,7 +460,16 @@ const AdminDashboard = () => {
       : "AD",
   };
 
-  // Close notif panel on outside click
+  // Open sidebar by default on large screens
+  useEffect(() => {
+    const handleResize = () => {
+      setSidebarOpen(window.innerWidth >= 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   useEffect(() => {
     const fn = (e) => {
       if (notifBellRef.current && !notifBellRef.current.contains(e.target))
@@ -509,7 +479,6 @@ const AdminDashboard = () => {
     return () => document.removeEventListener("mousedown", fn);
   }, []);
 
-  // ── Fetch pending guides (for sidebar badge) ─────────────────────────────
   useEffect(() => {
     fetchPendingGuides();
   }, []);
@@ -576,62 +545,59 @@ const AdminDashboard = () => {
         }}
       />
 
-      {/* ── Top Navbar ─────────────────────────────────────────────────── */}
+      {/* Navbar */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div className="px-4 sm:px-6 py-4">
+        <div className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            {/* Left: toggle + logo */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="p-2 hover:bg-violet-50 rounded-lg transition-colors"
               >
                 {sidebarOpen ? (
-                  <X size={24} className="text-gray-700" />
+                  <X size={22} className="text-gray-700" />
                 ) : (
-                  <Menu size={24} className="text-gray-700" />
+                  <Menu size={22} className="text-gray-700" />
                 )}
               </button>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <LayoutDashboard size={24} className="text-white" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-violet-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <LayoutDashboard size={18} className="text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-black text-gray-900">
+                  <h1 className="text-base sm:text-xl font-black text-gray-900">
                     TravelEase
                   </h1>
-                  <p className="text-xs text-gray-500 font-semibold">
+                  <p className="text-[10px] sm:text-xs text-gray-500 font-semibold">
                     Admin Panel
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Right: notifications + profile */}
-            <div className="flex items-center gap-4">
-              {/* ── Bell ── */}
+            <div className="flex items-center gap-2 sm:gap-4">
+              {/* Bell */}
               <div className="relative" ref={notifBellRef}>
                 <button
                   onClick={() => {
                     setShowNotifications((v) => {
-                      if (!v) markAllRead(); // mark read when opening
+                      if (!v) markAllRead();
                       return !v;
                     });
                     setShowProfileMenu(false);
                   }}
-                  className="relative p-2.5 hover:bg-violet-50 rounded-xl transition-colors group"
+                  className="relative p-2 sm:p-2.5 hover:bg-violet-50 rounded-xl transition-colors group"
                 >
                   <Bell
-                    size={24}
+                    size={20}
                     className="text-gray-700 group-hover:text-violet-600 transition-colors"
                   />
                   {unread > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-red-500 text-white text-[0.55rem] font-black rounded-full flex items-center justify-center px-1 shadow-lg animate-bounce">
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] sm:min-w-[20px] sm:h-5 bg-red-500 text-white text-[0.5rem] font-black rounded-full flex items-center justify-center px-1 shadow-lg animate-bounce">
                       {unread > 9 ? "9+" : unread}
                     </span>
                   )}
                 </button>
-
                 {showNotifications && (
                   <AdminNotifPanel
                     notifs={notifs}
@@ -648,21 +614,21 @@ const AdminDashboard = () => {
                 )}
               </div>
 
-              {/* ── Profile ── */}
+              {/* Profile */}
               <div className="relative">
                 <button
                   onClick={() => {
                     setShowProfileMenu(!showProfileMenu);
                     setShowNotifications(false);
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-semibold hover:from-violet-700 hover:to-purple-700 transition-all shadow-md"
+                  className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-semibold hover:from-violet-700 hover:to-purple-700 transition-all shadow-md"
                 >
-                  <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-violet-600 font-bold text-sm">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-full flex items-center justify-center text-violet-600 font-bold text-xs sm:text-sm">
                     {admin.avatar}
                   </div>
                   <ChevronDown
-                    size={18}
-                    className={`transition-transform ${showProfileMenu ? "rotate-180" : ""}`}
+                    size={16}
+                    className={`transition-transform hidden sm:block ${showProfileMenu ? "rotate-180" : ""}`}
                   />
                 </button>
 
@@ -672,15 +638,17 @@ const AdminDashboard = () => {
                       className="fixed inset-0 z-40"
                       onClick={() => setShowProfileMenu(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50">
-                      <div className="p-5 bg-gradient-to-r from-violet-600 to-purple-600">
+                    <div className="absolute right-0 mt-2 w-56 sm:w-64 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50">
+                      <div className="p-4 sm:p-5 bg-gradient-to-r from-violet-600 to-purple-600">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-violet-600 font-black text-lg shadow-md">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center text-violet-600 font-black text-base sm:text-lg shadow-md">
                             {admin.avatar}
                           </div>
                           <div>
-                            <p className="font-bold text-white">{admin.name}</p>
-                            <p className="text-xs text-violet-100">
+                            <p className="font-bold text-white text-sm">
+                              {admin.name}
+                            </p>
+                            <p className="text-xs text-violet-100 truncate max-w-[120px]">
                               {admin.email}
                             </p>
                           </div>
@@ -694,8 +662,8 @@ const AdminDashboard = () => {
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 rounded-xl transition-colors text-left border-none bg-transparent cursor-pointer"
                         >
-                          <LogOut size={20} className="text-red-500" />
-                          <span className="font-semibold text-gray-700">
+                          <LogOut size={18} className="text-red-500" />
+                          <span className="font-semibold text-gray-700 text-sm">
                             Logout
                           </span>
                         </button>
@@ -710,18 +678,21 @@ const AdminDashboard = () => {
       </nav>
 
       <div className="flex">
-        {/* ── Sidebar ──────────────────────────────────────────────────── */}
+        {/* Sidebar */}
         <aside
-          className={`${sidebarOpen ? "w-64" : "w-0"} bg-white border-r border-gray-200 transition-all duration-300 overflow-hidden fixed left-0 top-[73px] h-[calc(100vh-73px)] z-40 shadow-lg`}
+          className={`${sidebarOpen ? "w-56 lg:w-64" : "w-0"} bg-white border-r border-gray-200 transition-all duration-300 overflow-hidden fixed left-0 top-[57px] sm:top-[73px] h-[calc(100vh-57px)] sm:h-[calc(100vh-73px)] z-40 shadow-lg`}
         >
-          <nav className="p-4 space-y-1">
+          <nav className="p-3 sm:p-4 space-y-1">
             {menuItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
                 end={item.exact}
+                onClick={() => {
+                  if (window.innerWidth < 1024) setSidebarOpen(false);
+                }}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-200 ${
+                  `flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-semibold transition-all duration-200 text-sm ${
                     isActive
                       ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-300/40"
                       : "text-gray-700 hover:bg-violet-50 hover:text-violet-700"
@@ -730,15 +701,11 @@ const AdminDashboard = () => {
               >
                 {({ isActive }) => (
                   <>
-                    <item.icon size={20} />
-                    <span className="flex-1">{item.label}</span>
+                    <item.icon size={18} />
+                    <span className="flex-1 truncate">{item.label}</span>
                     {item.badge > 0 && (
                       <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                          isActive
-                            ? "bg-white text-violet-600"
-                            : "bg-red-500 text-white"
-                        }`}
+                        className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${isActive ? "bg-white text-violet-600" : "bg-red-500 text-white"}`}
                       >
                         {item.badge}
                       </span>
@@ -750,9 +717,17 @@ const AdminDashboard = () => {
           </nav>
         </aside>
 
-        {/* ── Main Content ─────────────────────────────────────────────── */}
+        {/* Overlay for mobile sidebar */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/30 z-30 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Main Content */}
         <main
-          className={`flex-1 ${sidebarOpen ? "ml-64" : "ml-0"} transition-all duration-300 p-6`}
+          className={`flex-1 ${sidebarOpen ? "lg:ml-64" : "ml-0"} transition-all duration-300 p-3 sm:p-4 lg:p-6 min-w-0`}
         >
           <Routes>
             <Route path="/" element={<AdminOverview />} />

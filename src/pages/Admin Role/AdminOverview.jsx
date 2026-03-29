@@ -42,7 +42,6 @@ const AdminOverview = () => {
       const token = getToken();
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Fetch all sources in parallel from real existing endpoints
       const [guidesRes, packagesRes, bookingsRes, paymentsRes] =
         await Promise.allSettled([
           axios.get(`${serverURL}/api/auth/all-guides`, { headers }),
@@ -51,7 +50,6 @@ const AdminOverview = () => {
           axios.get(`${serverURL}/api/payment/all-payments`, { headers }),
         ]);
 
-      // ── Guides ──────────────────────────────────────────────────────────
       let allGuides = [];
       if (guidesRes.status === "fulfilled") {
         allGuides = guidesRes.value.data.data || guidesRes.value.data || [];
@@ -69,7 +67,6 @@ const AdminOverview = () => {
         (g) => normalizeStatus(g.guideStatus) === "APPROVED",
       ).length;
 
-      // ── Packages ─────────────────────────────────────────────────────────
       let allPackages = [];
       if (packagesRes.status === "fulfilled") {
         allPackages =
@@ -79,7 +76,6 @@ const AdminOverview = () => {
       }
       const totalPackages = allPackages.length;
 
-      // ── Bookings ──────────────────────────────────────────────────────────
       let allBookings = [];
       if (bookingsRes.status === "fulfilled") {
         allBookings =
@@ -93,7 +89,6 @@ const AdminOverview = () => {
         (b) => (b.bookingStatus || "").toLowerCase() === "confirmed",
       ).length;
 
-      // ── Payments ──────────────────────────────────────────────────────────
       let allPayments = [];
       if (paymentsRes.status === "fulfilled") {
         allPayments =
@@ -183,26 +178,26 @@ const AdminOverview = () => {
   ];
 
   const SkeletonCard = () => (
-    <div className="bg-white rounded-2xl p-5 shadow-md border border-gray-100 animate-pulse">
-      <div className="flex items-center justify-between mb-5">
-        <div className="w-12 h-12 bg-gray-200 rounded-xl" />
-        <div className="w-8 h-8 bg-gray-200 rounded-full" />
+    <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-md border border-gray-100 animate-pulse">
+      <div className="flex items-center justify-between mb-4 sm:mb-5">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-xl" />
+        <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-200 rounded-full" />
       </div>
-      <div className="h-3 bg-gray-200 rounded w-28 mb-3" />
-      <div className="h-8 bg-gray-200 rounded w-16 mb-2" />
-      <div className="h-2.5 bg-gray-100 rounded w-20" />
+      <div className="h-3 bg-gray-200 rounded w-24 sm:w-28 mb-3" />
+      <div className="h-7 sm:h-8 bg-gray-200 rounded w-14 sm:w-16 mb-2" />
+      <div className="h-2.5 bg-gray-100 rounded w-16 sm:w-20" />
     </div>
   );
 
   return (
-    <div className="space-y-6">
-      {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-black text-gray-900">
+          <h1 className="text-2xl sm:text-3xl font-black text-gray-900">
             Dashboard Overview
           </h1>
-          <p className="text-gray-500 mt-1 text-sm">
+          <p className="text-gray-500 mt-1 text-xs sm:text-sm">
             {lastUpdated
               ? `Last updated: ${lastUpdated.toLocaleTimeString()}`
               : "Welcome back! Here's what's happening today."}
@@ -211,38 +206,38 @@ const AdminOverview = () => {
         <button
           onClick={fetchStats}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-100 hover:bg-violet-200 text-violet-700 font-bold rounded-xl text-sm transition-all disabled:opacity-60"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-violet-100 hover:bg-violet-200 text-violet-700 font-bold rounded-xl text-sm transition-all disabled:opacity-60 w-full sm:w-auto"
         >
           <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
           Refresh
         </button>
       </div>
 
-      {/* ── Stats Grid ──────────────────────────────────────────────────── */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5">
         {loading
           ? [...Array(6)].map((_, i) => <SkeletonCard key={i} />)
           : statCards.map((card, idx) => (
               <div
                 key={idx}
-                className="bg-white rounded-2xl p-5 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 group"
+                className="bg-white rounded-2xl p-4 sm:p-5 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 group"
               >
-                <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center justify-between mb-4 sm:mb-5">
                   <div
-                    className={`w-12 h-12 ${card.iconBg} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}
+                    className={`w-10 h-10 sm:w-12 sm:h-12 ${card.iconBg} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}
                   >
-                    <card.icon size={22} className={card.iconColor} />
+                    <card.icon size={20} className={card.iconColor} />
                   </div>
                   <div
-                    className={`w-8 h-8 ${card.pillBg} rounded-full flex items-center justify-center`}
+                    className={`w-7 h-7 sm:w-8 sm:h-8 ${card.pillBg} rounded-full flex items-center justify-center`}
                   >
-                    <TrendingUp size={14} className="text-white" />
+                    <TrendingUp size={12} className="text-white" />
                   </div>
                 </div>
-                <p className="text-sm font-semibold text-gray-500 mb-1">
+                <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-1">
                   {card.title}
                 </p>
-                <p className="text-3xl font-black text-gray-900">
+                <p className="text-2xl sm:text-3xl font-black text-gray-900">
                   {card.value}
                 </p>
                 <p className="text-xs text-gray-400 mt-1">{card.sub}</p>
@@ -250,13 +245,13 @@ const AdminOverview = () => {
             ))}
       </div>
 
-      {/* ── Booking Summary Bar ─────────────────────────────────────────── */}
+      {/* Booking Summary Bar */}
       {!loading && (
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-5">
-          <h2 className="text-base font-black text-gray-900 mb-4">
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4 sm:p-5">
+          <h2 className="text-sm sm:text-base font-black text-gray-900 mb-3 sm:mb-4">
             Booking Summary
           </h2>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               {
                 label: "Pending Bookings",
@@ -280,7 +275,9 @@ const AdminOverview = () => {
               >
                 <div className={`w-3 h-3 rounded-full ${dot} shrink-0`} />
                 <div>
-                  <p className="text-xl font-black text-gray-900">{value}</p>
+                  <p className="text-lg sm:text-xl font-black text-gray-900">
+                    {value}
+                  </p>
                   <p className="text-xs text-gray-500">{label}</p>
                 </div>
               </div>
@@ -289,16 +286,15 @@ const AdminOverview = () => {
         </div>
       )}
 
-      {/* ── Quick Actions ────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl shadow-md p-5 border border-gray-100">
-        <h2 className="text-base font-black text-gray-900 mb-4">
+      {/* Quick Actions */}
+      <div className="bg-white rounded-2xl shadow-md p-4 sm:p-5 border border-gray-100">
+        <h2 className="text-sm sm:text-base font-black text-gray-900 mb-3 sm:mb-4">
           Quick Actions
         </h2>
-        <div className="grid md:grid-cols-3 gap-3">
-          {/* → /admin/guide-approvals */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <button
             onClick={() => navigate("/admin/guide-approvals")}
-            className="p-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-xl font-bold transition-all hover:scale-[1.02] text-sm flex items-center justify-center gap-2"
+            className="p-3 sm:p-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-xl font-bold transition-all hover:scale-[1.02] text-sm flex items-center justify-center gap-2"
           >
             <Clock size={16} />
             View Pending Guides
@@ -309,19 +305,17 @@ const AdminOverview = () => {
             )}
           </button>
 
-          {/* → /admin/packages */}
           <button
             onClick={() => navigate("/admin/packages")}
-            className="p-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-xl font-bold transition-all hover:scale-[1.02] text-sm flex items-center justify-center gap-2"
+            className="p-3 sm:p-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-xl font-bold transition-all hover:scale-[1.02] text-sm flex items-center justify-center gap-2"
           >
             <Package size={16} />
             Manage Packages
           </button>
 
-          {/* → /admin/payments */}
           <button
             onClick={() => navigate("/admin/payments")}
-            className="p-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold transition-all hover:scale-[1.02] text-sm flex items-center justify-center gap-2"
+            className="p-3 sm:p-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold transition-all hover:scale-[1.02] text-sm flex items-center justify-center gap-2"
           >
             <DollarSign size={16} />
             View Payments

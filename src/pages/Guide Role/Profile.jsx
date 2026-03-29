@@ -19,7 +19,6 @@ const Skeleton5 = ({ className = "" }) => (
   <div className={`animate-pulse bg-gray-200 rounded-xl ${className}`} />
 );
 
-// ─── Edit Modal ────────────────────────────────────────────────────────────────
 function EditModal({ profile, onClose, onSaved }) {
   const [form, setForm] = useState({
     name: profile?.username ?? "",
@@ -40,7 +39,6 @@ function EditModal({ profile, onClose, onSaved }) {
       setSaving(true);
       setError("");
       const token = getToken();
-
       const payload = {
         ...form,
         specializations: form.specializations
@@ -52,13 +50,11 @@ function EditModal({ profile, onClose, onSaved }) {
           .map((l) => l.trim())
           .filter(Boolean),
       };
-
       const { data } = await axios.put(
         `${serverURL}/api/auth/user/update/${profile._id}`,
         payload,
         { headers: { Authorization: `Bearer ${token}` } },
       );
-
       onSaved(data.user ?? data.userDetails ?? data);
       onClose();
     } catch (err) {
@@ -70,13 +66,15 @@ function EditModal({ profile, onClose, onSaved }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[95vh] flex flex-col">
         {/* header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-black text-gray-900">Edit Profile</h2>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100 flex-shrink-0">
+          <h2 className="text-base sm:text-lg font-black text-gray-900">
+            Edit Profile
+          </h2>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
@@ -86,12 +84,16 @@ function EditModal({ profile, onClose, onSaved }) {
         </div>
 
         {/* body */}
-        <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-3 sm:space-y-4 overflow-y-auto flex-1">
           {[
             { name: "username", label: "Full Name", type: "text" },
             { name: "phoneNumber", label: "Phone", type: "tel" },
             { name: "location", label: "Location", type: "text" },
-            { name: "experience", label: "Experience (e.g. 5 years)", type: "text" },
+            {
+              name: "experience",
+              label: "Experience (e.g. 5 years)",
+              type: "text",
+            },
           ].map((field) => (
             <div key={field.name}>
               <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
@@ -102,7 +104,7 @@ function EditModal({ profile, onClose, onSaved }) {
                 type={field.type}
                 value={form[field.name]}
                 onChange={handleChange}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+                className="w-full border border-gray-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
               />
             </div>
           ))}
@@ -110,28 +112,32 @@ function EditModal({ profile, onClose, onSaved }) {
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
               Specializations{" "}
-              <span className="normal-case font-normal text-gray-400">(comma-separated)</span>
+              <span className="normal-case font-normal text-gray-400">
+                (comma-separated)
+              </span>
             </label>
             <input
               name="specializations"
               value={form.specializations}
               onChange={handleChange}
               placeholder="History, Adventure, Food…"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              className="w-full border border-gray-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
             />
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
               Languages{" "}
-              <span className="normal-case font-normal text-gray-400">(comma-separated)</span>
+              <span className="normal-case font-normal text-gray-400">
+                (comma-separated)
+              </span>
             </label>
             <input
               name="languages"
               value={form.languages}
               onChange={handleChange}
               placeholder="English, Nepali, Hindi…"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              className="w-full border border-gray-200 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
             />
           </div>
 
@@ -143,20 +149,24 @@ function EditModal({ profile, onClose, onSaved }) {
         </div>
 
         {/* footer */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
+        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-100 bg-gray-50 flex-shrink-0">
           <button
             onClick={onClose}
             disabled={saving}
-            className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-200 transition"
+            className="px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-200 transition"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-60 text-gray-900 font-bold px-5 py-2 rounded-xl text-sm transition"
+            className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-60 text-gray-900 font-bold px-4 sm:px-5 py-2 rounded-xl text-sm transition"
           >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            {saving ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Save size={14} />
+            )}
             {saving ? "Saving…" : "Save Changes"}
           </button>
         </div>
@@ -165,7 +175,6 @@ function EditModal({ profile, onClose, onSaved }) {
   );
 }
 
-// ─── Main Profile Component ────────────────────────────────────────────────────
 export function Profile() {
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
@@ -178,11 +187,10 @@ export function Profile() {
         setLoading(true);
         const token = getToken();
         const headers = { Authorization: `Bearer ${token}` };
-
-        const { data } = await axios.get(`${serverURL}/api/auth/user`, { headers });
+        const { data } = await axios.get(`${serverURL}/api/auth/user`, {
+          headers,
+        });
         const userData = data.userDetails ?? data.user ?? data;
-
-        console.log("User Data:", userData);
         setProfile(userData);
       } catch (err) {
         console.error(err);
@@ -190,15 +198,14 @@ export function Profile() {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
   if (loading)
     return (
-      <div className="max-w-3xl space-y-5">
-        <Skeleton5 className="h-64" />
-        <Skeleton5 className="h-48" />
+      <div className="max-w-3xl space-y-4 sm:space-y-5">
+        <Skeleton5 className="h-52 sm:h-64" />
+        <Skeleton5 className="h-40 sm:h-48" />
       </div>
     );
 
@@ -215,72 +222,80 @@ export function Profile() {
 
   return (
     <>
-      <div className="max-w-3xl space-y-5">
+      <div className="max-w-3xl space-y-4 sm:space-y-5">
         {/* ── Header card ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="h-32 bg-gradient-to-r from-gray-800 to-gray-900 relative">
-            <div className="absolute -bottom-10 left-6 w-20 h-20 bg-yellow-500 rounded-2xl flex items-center justify-center text-gray-900 font-black text-2xl border-4 border-white shadow-lg">
+          <div className="h-24 sm:h-32 bg-gradient-to-r from-gray-800 to-gray-900 relative">
+            <div className="absolute -bottom-8 sm:-bottom-10 left-4 sm:left-6 w-16 sm:w-20 h-16 sm:h-20 bg-yellow-500 rounded-2xl flex items-center justify-center text-gray-900 font-black text-xl sm:text-2xl border-4 border-white shadow-lg">
               {initials}
             </div>
           </div>
-          <div className="pt-14 px-6 pb-6">
-            <div className="flex justify-between items-start">
+          <div className="pt-12 sm:pt-14 px-4 sm:px-6 pb-4 sm:pb-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
               <div>
-                <h2 className="text-xl font-black text-gray-900">
+                <h2 className="text-lg sm:text-xl font-black text-gray-900">
                   {profile?.username}
                 </h2>
-                <p className="text-yellow-600 font-medium">
+                <p className="text-yellow-600 font-medium text-sm">
                   {profile?.role ?? "Tour Guide"}
                 </p>
-                <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                <div className="flex flex-wrap items-center gap-3 mt-2 text-xs sm:text-sm text-gray-500">
                   {profile?.location && (
                     <span className="flex items-center gap-1">
-                      <MapPin size={14} />
+                      <MapPin size={13} />
                       {profile.location}
                     </span>
                   )}
                   {profile?.experience && (
                     <span className="flex items-center gap-1">
-                      <Award size={14} />
+                      <Award size={13} />
                       {profile.experience} exp.
                     </span>
                   )}
                   <span className="flex items-center gap-1">
-                    <Star size={14} className="text-yellow-500" />
+                    <Star size={13} className="text-yellow-500" />
                     {stats?.avgRating ?? 0} rating
                   </span>
                 </div>
               </div>
-
-              {/* Edit button — always visible on own profile */}
               <button
                 onClick={() => setEditOpen(true)}
-                className="flex items-center gap-2 bg-yellow-500 text-gray-900 font-bold px-4 py-2 rounded-xl text-sm hover:bg-yellow-400 transition"
+                className="flex items-center gap-2 bg-yellow-500 text-gray-900 font-bold px-3 sm:px-4 py-2 rounded-xl text-sm hover:bg-yellow-400 transition self-start"
               >
-                <Edit2 size={14} /> Edit Profile
+                <Edit2 size={13} /> Edit Profile
               </button>
             </div>
           </div>
         </div>
 
         {/* ── Detail cards ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           {/* Personal Info */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
-            <h3 className="font-bold text-gray-900">Personal Info</h3>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-3 sm:space-y-4">
+            <h3 className="font-bold text-gray-900 text-sm sm:text-base">
+              Personal Info
+            </h3>
             {[
               { icon: Mail, label: "Email", value: profile?.email },
               { icon: Phone, label: "Phone", value: profile?.phoneNumber },
-              { icon: MapPin, label: "Location", value: profile?.location ?? "Nepal" },
-              { icon: FileText, label: "Role", value: profile?.role ?? "Tour Guide" },
+              {
+                icon: MapPin,
+                label: "Location",
+                value: profile?.location ?? "Nepal",
+              },
+              {
+                icon: FileText,
+                label: "Role",
+                value: profile?.role ?? "Tour Guide",
+              },
             ].map((f, i) => (
               <div key={i} className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-yellow-50 rounded-xl flex items-center justify-center">
-                  <f.icon size={16} className="text-yellow-600" />
+                <div className="w-8 sm:w-9 h-8 sm:h-9 bg-yellow-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <f.icon size={15} className="text-yellow-600" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400">{f.label}</p>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
                     {f.value ?? "—"}
                   </p>
                 </div>
@@ -289,14 +304,16 @@ export function Profile() {
           </div>
 
           {/* Specializations & Languages */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
-            <h3 className="font-bold text-gray-900">Specializations</h3>
-            <div className="flex flex-wrap gap-2">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-3 sm:space-y-4">
+            <h3 className="font-bold text-gray-900 text-sm sm:text-base">
+              Specializations
+            </h3>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {(profile?.specializations ?? []).length ? (
                 profile.specializations.map((s, i) => (
                   <span
                     key={i}
-                    className="bg-yellow-50 text-yellow-700 border border-yellow-200 px-3 py-1 rounded-full text-sm font-medium"
+                    className="bg-yellow-50 text-yellow-700 border border-yellow-200 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium"
                   >
                     {s}
                   </span>
@@ -306,13 +323,15 @@ export function Profile() {
               )}
             </div>
 
-            <h3 className="font-bold text-gray-900 pt-2">Languages</h3>
-            <div className="flex flex-wrap gap-2">
+            <h3 className="font-bold text-gray-900 pt-1 text-sm sm:text-base">
+              Languages
+            </h3>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {(profile?.languages ?? []).length ? (
                 profile.languages.map((l, i) => (
                   <span
                     key={i}
-                    className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm font-medium"
+                    className="bg-gray-100 text-gray-700 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium"
                   >
                     {l}
                   </span>
@@ -322,10 +341,12 @@ export function Profile() {
               )}
             </div>
 
-            <div className="pt-4 border-t border-gray-100">
-              <div className="flex justify-between mb-3">
-                <span className="text-sm font-bold text-gray-900">Profile Completion</span>
-                <span className="text-sm font-bold text-yellow-600">
+            <div className="pt-3 sm:pt-4 border-t border-gray-100">
+              <div className="flex justify-between mb-2 sm:mb-3">
+                <span className="text-xs sm:text-sm font-bold text-gray-900">
+                  Profile Completion
+                </span>
+                <span className="text-xs sm:text-sm font-bold text-yellow-600">
                   {profile?.profileCompletion ?? 0}%
                 </span>
               </div>
@@ -340,7 +361,6 @@ export function Profile() {
         </div>
       </div>
 
-      {/* ── Edit Modal ── */}
       {editOpen && (
         <EditModal
           profile={profile}
