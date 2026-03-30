@@ -4,7 +4,7 @@ import { FaEye } from "react-icons/fa";
 import { FaEyeSlash } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 import { serverURL } from "../App.jsx";
 import { setUserData } from "../redux/userSlice.js";
@@ -36,7 +36,7 @@ const Toast = ({ toasts, removeToast }) => {
   };
 
   return (
-    <div className="fixed top-5 right-5 z-50 flex flex-col gap-3">
+    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 w-[calc(100vw-2rem)] max-w-[360px]">
       {toasts.map((toast) => {
         const s = styles[toast.type] || styles.info;
         return (
@@ -47,29 +47,27 @@ const Toast = ({ toasts, removeToast }) => {
               border: `1.5px solid ${s.border}`,
               borderLeft: `5px solid ${s.border}`,
               borderRadius: "10px",
-              padding: "14px 18px",
-              minWidth: "280px",
-              maxWidth: "360px",
+              padding: "12px 14px",
               boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
               display: "flex",
               alignItems: "flex-start",
-              gap: "12px",
+              gap: "10px",
               animation: "slideIn 0.35s cubic-bezier(0.34,1.56,0.64,1)",
               color: s.color,
             }}
           >
-            <span style={{ fontSize: "20px", flexShrink: 0 }}>{s.icon}</span>
+            <span style={{ fontSize: "18px", flexShrink: 0 }}>{s.icon}</span>
             <div style={{ flex: 1 }}>
               <p
                 style={{
                   fontWeight: "700",
-                  fontSize: "14px",
+                  fontSize: "13px",
                   margin: "0 0 2px",
                 }}
               >
                 {s.title}
               </p>
-              <p style={{ fontSize: "13px", margin: 0, opacity: 0.9 }}>
+              <p style={{ fontSize: "12px", margin: 0, opacity: 0.9 }}>
                 {toast.message}
               </p>
             </div>
@@ -79,7 +77,7 @@ const Toast = ({ toasts, removeToast }) => {
                 background: "none",
                 border: "none",
                 cursor: "pointer",
-                fontSize: "16px",
+                fontSize: "14px",
                 color: s.color,
                 opacity: 0.6,
                 lineHeight: 1,
@@ -104,10 +102,8 @@ const Toast = ({ toasts, removeToast }) => {
 };
 
 // ─── Token helpers (7-day expiry) ─────────────────────────────────────────────
-// ─── Token helpers (7-day expiry) ─────────────────────────────────────────────
-const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-// Save JWT with expiry
 export const saveTokenWithExpiry = (token) => {
   const payload = {
     value: token,
@@ -116,7 +112,6 @@ export const saveTokenWithExpiry = (token) => {
   localStorage.setItem("token", JSON.stringify(payload));
 };
 
-// Get JWT (returns raw token string or null if expired)
 export const getToken = () => {
   const raw = localStorage.getItem("token");
   if (!raw) return null;
@@ -124,9 +119,9 @@ export const getToken = () => {
     const { value, expiry } = JSON.parse(raw);
     if (Date.now() > expiry) {
       localStorage.removeItem("token");
-      return null; // expired
+      return null;
     }
-    return value; // ✅ raw JWT for Authorization header
+    return value;
   } catch (err) {
     localStorage.removeItem("token");
     return null;
@@ -135,26 +130,18 @@ export const getToken = () => {
 
 // ─── SignIn Page ──────────────────────────────────────────────────────────────
 const SignIn = () => {
-  const primaryColor = "#ff4d2d";
-  const bgColor = "#fff9f6";
-  const borderColor = "#ddd";
-
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const dispatch = useDispatch();
-
-  console.log("API URL:", serverURL); // Debug: Check API URL being used
-  // Toast state
   const [toasts, setToasts] = useState([]);
 
   const showToast = (message, type = "info") => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => removeToast(id), 4000); // auto-dismiss after 4s
+    setTimeout(() => removeToast(id), 4000);
   };
-
 
   const removeToast = (id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -168,7 +155,6 @@ const SignIn = () => {
         { withCredentials: true },
       );
 
-      // Save token with 7-day expiry
       saveTokenWithExpiry(res.data.user.token);
 
       dispatch(
@@ -180,8 +166,6 @@ const SignIn = () => {
       );
 
       showToast(res.data.message || "Logged in successfully!", "success");
-
-      // Brief delay so user sees the success toast before navigating
       setTimeout(() => navigate("/home"), 1200);
     } catch (error) {
       const msg =
@@ -192,93 +176,94 @@ const SignIn = () => {
 
   return (
     <>
-      {/* Toast Notifications */}
       <Toast toasts={toasts} removeToast={removeToast} />
 
-      <div
-        className="min-h-screen w-full flex items-center justify-center p-4"
-        style={{ backgroundColor: bgColor }}
-      >
-        <div
-          className="bg-white rounded-xl shadow-lg w-full max-w-sm p-6"
-          style={{ border: `1px solid ${borderColor}` }}
-        >
-          <div className="text-center">
-            <h1
-              className="text-2xl font-bold mb-3"
-              style={{ color: primaryColor }}
-            >
+      <div className="min-h-screen w-full flex items-center justify-center p-4 bg-[#fff9f6]">
+        <div className="bg-white rounded-xl shadow-lg w-full max-w-[380px] sm:max-w-sm p-5 sm:p-6 border border-gray-200">
+          {/* Header */}
+          <div className="text-center mb-5 sm:mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold mb-1 text-[#ff4d2d]">
               TravelEase
             </h1>
-            <p className="text-1xl font-bold text-blue-600">Log In</p>
+            <p className="text-base sm:text-lg font-bold text-blue-600">
+              Log In
+            </p>
           </div>
 
           {/* Email */}
-          <div className="m-4">
+          <div className="mb-4">
             <label
               htmlFor="email"
-              className="block text-gray-500 font-bold mb-2"
+              className="block text-gray-500 font-bold mb-1.5 text-sm"
             >
               Email
             </label>
             <input
-              type="text"
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:border-sky-500"
+              id="email"
+              type="email"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:border-sky-500 text-sm transition-colors"
               placeholder="Enter Your Email"
-              style={{ border: `1px solid ${borderColor}` }}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSignIn()}
             />
           </div>
 
           {/* Password */}
-          <div className="m-4">
+          <div className="mb-4">
             <label
               htmlFor="password"
-              className="block text-gray-500 font-bold mb-2"
+              className="block text-gray-500 font-bold mb-1.5 text-sm"
             >
               Password
             </label>
             <div className="relative">
               <input
+                id="password"
                 type={showPassword ? "text" : "password"}
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:border-orange-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 pr-10 focus:outline-none focus:border-orange-500 text-sm transition-colors"
                 placeholder="Enter Your Password"
-                style={{ border: `1px solid ${borderColor}` }}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSignIn()}
               />
               <button
                 type="button"
-                className="absolute right-3 top-3 cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
                 onClick={() => setShowPassword((prev) => !prev)}
               >
-                {!showPassword ? <FaEye /> : <FaEyeSlash />}
+                {!showPassword ? <FaEye size={16} /> : <FaEyeSlash size={16} />}
               </button>
             </div>
           </div>
 
-          <div
-            className="text-orange-600 ml-50 text-bold font-medium mb-2 cursor-pointer"
-            onClick={() => navigate("/forget-password")}
-          >
-            Forget Password
+          {/* Forgot Password */}
+          <div className="flex justify-end mb-4">
+            <button
+              className="text-orange-600 font-medium text-xs sm:text-sm cursor-pointer hover:text-orange-700 transition-colors"
+              onClick={() => navigate("/forget-password")}
+            >
+              Forgot Password?
+            </button>
           </div>
 
           {/* Sign In Button */}
           <button
-            className="ml-3 w-80 px-3 bg-orange-600 cursor-pointer text-white font-bold py-2 rounded-lg shadow-lg hover:bg-orange-500 hover:text-white transition-colors"
+            className="w-full bg-orange-600 cursor-pointer text-white font-bold py-2.5 sm:py-3 rounded-lg shadow-lg hover:bg-orange-500 transition-colors text-sm sm:text-base active:scale-95"
             onClick={handleSignIn}
           >
             Sign In
           </button>
 
+          {/* Sign Up Link */}
           <p
-            className="ml-15 flex text-center gap-3 mt-2 cursor-pointer"
+            className="flex justify-center items-center gap-2 mt-4 cursor-pointer text-sm text-gray-600"
             onClick={() => navigate("/signup")}
           >
-            Create an account ?
-            <span className="text-orange-600 font-bold">Sign Up</span>
+            Don't have an account?{" "}
+            <span className="text-orange-600 font-bold hover:text-orange-700 transition-colors">
+              Sign Up
+            </span>
           </p>
         </div>
       </div>

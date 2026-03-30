@@ -1,16 +1,8 @@
-// TouristDashboard.jsx - Updated with correct backend review integration
+// TouristDashboard.jsx - Responsive version
 
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Menu,
-  X,
   Users,
-  Award,
-  Globe,
-  ShoppingCart,
-  LogOut,
-  UserCircle,
-  ChevronDown,
   ChevronRight,
   Plane,
   Building2,
@@ -21,13 +13,11 @@ import {
   Star,
   Calendar,
   Heart,
-  Bot,
   Send,
   Shield,
   Quote,
   CheckCircle,
   MessageSquare,
-  User,
 } from "lucide-react";
 import Footer from "../../Components/Footer";
 import toast from "react-hot-toast";
@@ -37,7 +27,7 @@ import axios from "axios";
 import { serverURL } from "../../App.jsx";
 import { getToken } from "../Login.jsx";
 
-// ─── ORIGINAL HELPERS (unchanged) ─────────────────────────────────────────────
+// ─── ORIGINAL HELPERS ─────────────────────────────────────────────────────────
 
 const getBadgeInfo = (destination, index) => {
   const status = destination.status?.toLowerCase();
@@ -98,17 +88,11 @@ const StarRating = ({ value, onChange, size = 22, readonly = false }) => (
   </div>
 );
 
-// Transform a raw backend review document into the UI shape
 const transformReview = (review) => ({
   id: review._id,
-  name:
-    review.user?.name ||
-    review.userId?.name ||
-    review.name ||
-    "Anonymous",
+  name: review.user?.name || review.userId?.name || review.name || "Anonymous",
   avatar: (() => {
-    const n =
-      review.user?.name || review.userId?.name || review.name || "A";
+    const n = review.user?.name || review.userId?.name || review.name || "A";
     return n
       .split(" ")
       .slice(0, 2)
@@ -136,7 +120,7 @@ const transformReview = (review) => ({
 
 const ReviewCard = ({ review, isNew }) => (
   <div
-    className={`relative rounded-[24px] p-6 border transition-all duration-500
+    className={`relative rounded-[20px] sm:rounded-[24px] p-4 sm:p-6 border transition-all duration-500
     bg-gradient-to-br from-[#1a0a3e]/80 to-[#0f0524]/80 backdrop-blur-sm
     ${
       isNew
@@ -144,31 +128,33 @@ const ReviewCard = ({ review, isNew }) => (
         : "border-violet-500/20 hover:border-violet-500/50 hover:shadow-[0_10px_40px_rgba(139,92,246,0.18)]"
     }`}
   >
-    <div className="absolute top-5 right-6 text-violet-500/15 pointer-events-none">
-      <Quote size={42} />
+    <div className="absolute top-4 right-5 text-violet-500/15 pointer-events-none">
+      <Quote size={32} />
     </div>
-    <StarRating value={review.rating} readonly size={15} />
-    <p className="text-[#c4b8df] text-sm leading-[1.85] mt-4 mb-5 italic">
+    <StarRating value={review.rating} readonly size={14} />
+    <p className="text-[#c4b8df] text-xs sm:text-sm leading-[1.85] mt-3 sm:mt-4 mb-4 sm:mb-5 italic">
       "{review.comment}"
     </p>
-    <div className="flex items-center gap-3">
-      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white text-xs font-black shrink-0 shadow-[0_4px_12px_rgba(139,92,246,0.4)]">
+    <div className="flex items-center gap-2 sm:gap-3">
+      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white text-xs font-black shrink-0 shadow-[0_4px_12px_rgba(139,92,246,0.4)]">
         {review.avatar}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-white font-bold text-sm">{review.name}</span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-white font-bold text-xs sm:text-sm">
+            {review.name}
+          </span>
           {isNew && (
-            <span className="text-[0.55rem] font-bold px-2 py-0.5 rounded-full bg-violet-500/30 text-violet-300 border border-violet-500/40 shrink-0">
+            <span className="text-[0.5rem] sm:text-[0.55rem] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-violet-500/30 text-violet-300 border border-violet-500/40 shrink-0">
               NEW
             </span>
           )}
         </div>
-        <div className="text-[#6b5a8e] text-xs">
+        <div className="text-[#6b5a8e] text-[0.65rem] sm:text-xs">
           {review.location} · {review.date}
         </div>
       </div>
-      <div className="text-right shrink-0">
+      <div className="text-right shrink-0 hidden sm:block">
         <div className="text-[0.62rem] text-violet-400/70 font-semibold max-w-[120px] leading-tight">
           {review.package}
         </div>
@@ -180,13 +166,11 @@ const ReviewCard = ({ review, isNew }) => (
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
 const TouristDashboard = () => {
-  // ── ORIGINAL STATE (unchanged) ──
   const [packages, setPackages] = useState([]);
   const [pkgLoading, setPkgLoading] = useState(true);
   const [favoriteCards, setFavoriteCards] = useState(new Set());
   const navigate = useNavigate();
 
-  // ── REVIEW STATE ──
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [newReviewIds, setNewReviewIds] = useState(new Set());
@@ -203,7 +187,6 @@ const TouristDashboard = () => {
 
   const reviewFilters = ["All", "5 Stars", "4 Stars", "3 Stars & below"];
 
-  // ── ORIGINAL EFFECT: fetch tour packages ──
   useEffect(() => {
     const fetchTourPackages = async () => {
       try {
@@ -223,7 +206,6 @@ const TouristDashboard = () => {
     fetchTourPackages();
   }, []);
 
-  // ── FETCH ALL REVIEWS from GET /api/review/all ──
   useEffect(() => {
     const fetchReviews = async () => {
       try {
@@ -242,7 +224,6 @@ const TouristDashboard = () => {
     fetchReviews();
   }, []);
 
-  // ── ORIGINAL HANDLERS (unchanged) ──
   const toggleFavorite = (id) => {
     setFavoriteCards((prev) => {
       const s = new Set(prev);
@@ -253,7 +234,6 @@ const TouristDashboard = () => {
 
   const handleCardClick = (id) => navigate(`/package/${id}`);
 
-  // ── FILTERED REVIEWS ──
   const filteredReviews = reviews.filter((r) => {
     if (activeFilter === "5 Stars") return r.rating === 5;
     if (activeFilter === "4 Stars") return r.rating === 4;
@@ -271,7 +251,6 @@ const TouristDashboard = () => {
     count: reviews.filter((r) => r.rating === n).length,
   }));
 
-  // ── VALIDATE REVIEW FORM ──
   const validateReviewForm = () => {
     const errs = {};
     if (!reviewForm.tourPackageId)
@@ -283,7 +262,6 @@ const TouristDashboard = () => {
     return Object.keys(errs).length === 0;
   };
 
-  // ── SUBMIT REVIEW to POST /api/review ──
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!validateReviewForm()) return;
@@ -305,13 +283,11 @@ const TouristDashboard = () => {
           rating: reviewForm.rating,
           comment: reviewForm.comment.trim(),
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (response.data?.success && response.data?.review) {
         const saved = response.data.review;
-
-        // Find the package name for display
         const pkg = packages.find((p) => p._id === reviewForm.tourPackageId);
 
         const uiReview = {
@@ -332,7 +308,7 @@ const TouristDashboard = () => {
           comment: saved.comment,
           date: new Date(saved.createdAt || Date.now()).toLocaleDateString(
             "en-US",
-            { month: "long", year: "numeric" }
+            { month: "long", year: "numeric" },
           ),
           package: pkg?.title || "General",
         };
@@ -340,7 +316,6 @@ const TouristDashboard = () => {
         setReviews((prev) => [uiReview, ...prev]);
         setNewReviewIds((prev) => new Set([...prev, uiReview.id]));
 
-        // Remove "NEW" badge after 5s
         setTimeout(() => {
           setNewReviewIds((prev) => {
             const s = new Set(prev);
@@ -349,7 +324,6 @@ const TouristDashboard = () => {
           });
         }, 5000);
 
-        // Reset form
         setReviewForm({ tourPackageId: "", rating: 0, comment: "" });
         setReviewSubmitted(true);
         setTimeout(() => setReviewSubmitted(false), 3500);
@@ -384,33 +358,36 @@ const TouristDashboard = () => {
 
       {/* Ambient blobs */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-[-8%] left-[20%] w-[520px] h-[520px] rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.18)_0%,transparent_70%)] blur-[70px]" />
-        <div className="absolute top-[40%] right-[-5%] w-[420px] h-[420px] rounded-full bg-[radial-gradient(circle,rgba(109,40,217,0.13)_0%,transparent_70%)] blur-[80px]" />
-        <div className="absolute bottom-0 left-0 w-[360px] h-[360px] rounded-full bg-[radial-gradient(circle,rgba(76,29,149,0.15)_0%,transparent_70%)] blur-[80px]" />
+        <div className="absolute top-[-8%] left-[20%] w-[280px] h-[280px] sm:w-[400px] sm:h-[400px] lg:w-[520px] lg:h-[520px] rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.18)_0%,transparent_70%)] blur-[70px]" />
+        <div className="absolute top-[40%] right-[-5%] w-[220px] h-[220px] sm:w-[320px] sm:h-[320px] lg:w-[420px] lg:h-[420px] rounded-full bg-[radial-gradient(circle,rgba(109,40,217,0.13)_0%,transparent_70%)] blur-[80px]" />
+        <div className="absolute bottom-0 left-0 w-[200px] h-[200px] sm:w-[280px] sm:h-[280px] lg:w-[360px] lg:h-[360px] rounded-full bg-[radial-gradient(circle,rgba(76,29,149,0.15)_0%,transparent_70%)] blur-[80px]" />
       </div>
 
       <div className="relative z-10">
         <Navbar />
 
-        {/* ── HERO (unchanged) ── */}
-        <div id="home" className="relative pt-24 pb-20 overflow-hidden">
+        {/* ── HERO ── */}
+        <div
+          id="home"
+          className="relative pt-20 sm:pt-24 pb-12 sm:pb-20 overflow-hidden"
+        >
           <div className="absolute inset-0 pointer-events-none [background-image:radial-gradient(circle,rgba(139,92,246,0.1)_1px,transparent_1px)] [background-size:28px_28px]" />
-          <div className="absolute right-[-80px] top-[20%] w-[480px] h-[480px] rounded-full border border-violet-500/15 animate-spin [animation-duration:22s] pointer-events-none" />
-          <div className="absolute right-5 top-[30%] w-[300px] h-[300px] rounded-full border border-violet-500/10 pointer-events-none" />
+          <div className="hidden lg:block absolute right-[-80px] top-[20%] w-[480px] h-[480px] rounded-full border border-violet-500/15 animate-spin [animation-duration:22s] pointer-events-none" />
+          <div className="hidden sm:block absolute right-5 top-[30%] w-[200px] h-[200px] sm:w-[300px] sm:h-[300px] rounded-full border border-violet-500/10 pointer-events-none" />
 
-          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-7 bg-violet-500/10 border border-violet-500/20">
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full mb-5 sm:mb-7 bg-violet-500/10 border border-violet-500/20">
                 <span className="w-2 h-2 rounded-full bg-violet-300 animate-pulse" />
-                <span className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400">
+                <span className="text-[0.6rem] sm:text-[0.68rem] font-bold tracking-[0.15em] sm:tracking-[0.2em] uppercase text-violet-400">
                   ✦ 500+ Destinations Worldwide
                 </span>
               </div>
               <h1
-                className="font-black leading-tight mb-6 text-white"
+                className="font-black leading-tight mb-4 sm:mb-6 text-white"
                 style={{
                   fontFamily: "'Playfair Display', Georgia, serif",
-                  fontSize: "clamp(2.8rem,5vw,4.5rem)",
+                  fontSize: "clamp(2.2rem,5vw,4.5rem)",
                 }}
               >
                 Discover the
@@ -421,25 +398,25 @@ const TouristDashboard = () => {
                 <br />
                 Beautiful Places
               </h1>
-              <p className="text-[#9e9ab5] text-lg leading-relaxed max-w-[420px] mb-10">
+              <p className="text-[#9e9ab5] text-base sm:text-lg leading-relaxed max-w-[420px] mb-8 sm:mb-10">
                 From ancient temples to pristine beaches — we craft
                 unforgettable journeys tailored to your soul.
               </p>
-              <div className="flex flex-wrap gap-4 mb-14">
+              <div className="flex flex-wrap gap-3 sm:gap-4 mb-10 sm:mb-14">
                 <a
                   href="#destinations"
-                  className="flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_25px_rgba(139,92,246,0.6)] hover:scale-105 transition-all no-underline"
+                  className="flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 rounded-full font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_25px_rgba(139,92,246,0.6)] hover:scale-105 transition-all no-underline"
                 >
                   Explore Destinations <ChevronRight size={16} />
                 </a>
                 <a
                   href="#packages"
-                  className="flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-sm text-violet-300 bg-violet-500/10 border border-violet-500/40 hover:bg-violet-500/20 transition-all no-underline"
+                  className="flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 rounded-full font-bold text-sm text-violet-300 bg-violet-500/10 border border-violet-500/40 hover:bg-violet-500/20 transition-all no-underline"
                 >
                   View Packages
                 </a>
               </div>
-              <div className="flex gap-10">
+              <div className="flex gap-6 sm:gap-10">
                 {[
                   ["500+", "Destinations"],
                   ["10K+", "Happy Travelers"],
@@ -449,12 +426,12 @@ const TouristDashboard = () => {
                     {i > 0 && <div className="w-px bg-violet-500/30" />}
                     <div>
                       <div
-                        className="text-[2.4rem] font-black leading-none bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent"
+                        className="text-[1.8rem] sm:text-[2.4rem] font-black leading-none bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent"
                         style={{ fontFamily: "'Playfair Display', serif" }}
                       >
                         {num}
                       </div>
-                      <div className="text-[#6b5a8e] text-[0.7rem] font-semibold tracking-[0.15em] uppercase mt-1.5">
+                      <div className="text-[#6b5a8e] text-[0.6rem] sm:text-[0.7rem] font-semibold tracking-[0.15em] uppercase mt-1">
                         {label}
                       </div>
                     </div>
@@ -464,17 +441,17 @@ const TouristDashboard = () => {
             </div>
 
             {/* Search Card */}
-            <div className="rounded-[28px] p-8 border border-violet-500/35 shadow-[0_0_60px_rgba(139,92,246,0.2)] bg-gradient-to-br from-[#1a0a3e] to-[#0f0524]">
+            <div className="rounded-[24px] sm:rounded-[28px] p-5 sm:p-8 border border-violet-500/35 shadow-[0_0_60px_rgba(139,92,246,0.2)] bg-gradient-to-br from-[#1a0a3e] to-[#0f0524] mt-4 lg:mt-0">
               <h3
-                className="text-[1.6rem] font-black text-white mb-1"
+                className="text-[1.3rem] sm:text-[1.6rem] font-black text-white mb-1"
                 style={{ fontFamily: "'Playfair Display', serif" }}
               >
                 Find Your Dream Trip
               </h3>
-              <p className="text-[#6b5a8e] text-sm mb-7">
+              <p className="text-[#6b5a8e] text-sm mb-5 sm:mb-7">
                 Search from 500+ curated destinations
               </p>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3 sm:gap-4">
                 <div>
                   <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
                     Destination
@@ -482,12 +459,12 @@ const TouristDashboard = () => {
                   <div className="flex items-center gap-3 bg-violet-500/10 border border-violet-500/25 rounded-[14px] px-4 py-3">
                     <MapPin size={16} className="text-violet-500" />
                     <input
-                      className="flex-1 bg-transparent outline-none text-white text-sm placeholder:text-violet-400/50"
+                      className="flex-1 bg-transparent outline-none text-white text-sm placeholder:text-violet-400/50 min-w-0"
                       placeholder="Where do you want to go?"
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   {[
                     { label: "Check-in", icon: Calendar, type: "date" },
                     { label: "Travelers", icon: Users, type: "select" },
@@ -496,10 +473,10 @@ const TouristDashboard = () => {
                       <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
                         {label}
                       </label>
-                      <div className="flex items-center gap-2 bg-violet-500/10 border border-violet-500/25 rounded-[14px] px-3 py-3">
+                      <div className="flex items-center gap-2 bg-violet-500/10 border border-violet-500/25 rounded-[14px] px-3 py-2.5 sm:py-3">
                         <Icon size={14} className="text-violet-500 shrink-0" />
                         {type === "select" ? (
-                          <select className="flex-1 bg-transparent text-violet-300 outline-none text-xs [&>option]:bg-[#1a0a3e]">
+                          <select className="flex-1 bg-transparent text-violet-300 outline-none text-xs [&>option]:bg-[#1a0a3e] min-w-0">
                             <option>2 Persons</option>
                             <option>1 Person</option>
                             <option>3 Persons</option>
@@ -508,20 +485,20 @@ const TouristDashboard = () => {
                         ) : (
                           <input
                             type="date"
-                            className="flex-1 bg-transparent text-violet-300 outline-none text-xs"
+                            className="flex-1 bg-transparent text-violet-300 outline-none text-xs min-w-0"
                           />
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
-                <button className="w-full flex items-center justify-center gap-2 py-4 rounded-[16px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_25px_rgba(139,92,246,0.6)] hover:scale-[1.02] transition-all border-none cursor-pointer">
+                <button className="w-full flex items-center justify-center gap-2 py-3.5 sm:py-4 rounded-[16px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_25px_rgba(139,92,246,0.6)] hover:scale-[1.02] transition-all border-none cursor-pointer">
                   <Compass size={16} /> Search Destinations
                 </button>
               </div>
-              <div className="mt-5 pt-5 border-t border-violet-500/20">
-                <p className="text-[#6b5a8e] text-xs mb-2.5">🔥 Popular:</p>
-                <div className="flex flex-wrap gap-2">
+              <div className="mt-4 sm:mt-5 pt-4 sm:pt-5 border-t border-violet-500/20">
+                <p className="text-[#6b5a8e] text-xs mb-2">🔥 Popular:</p>
+                <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   {[
                     ["🏝", "Maldives"],
                     ["🗼", "Paris"],
@@ -530,7 +507,7 @@ const TouristDashboard = () => {
                   ].map(([icon, name]) => (
                     <span
                       key={name}
-                      className="px-3.5 py-1.5 rounded-full text-xs text-violet-300 bg-violet-500/12 border border-violet-500/20 cursor-pointer hover:bg-violet-500/25 transition-all"
+                      className="px-3 py-1.5 rounded-full text-xs text-violet-300 bg-violet-500/12 border border-violet-500/20 cursor-pointer hover:bg-violet-500/25 transition-all"
                     >
                       {icon} {name}
                     </span>
@@ -541,10 +518,10 @@ const TouristDashboard = () => {
           </div>
         </div>
 
-        {/* ── ABOUT (unchanged) ── */}
-        <div id="about" className="py-20 px-6">
-          <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            <div className="rounded-[24px] overflow-hidden shadow-[0_0_60px_rgba(139,92,246,0.2)] border border-violet-500/20">
+        {/* ── ABOUT ── */}
+        <div id="about" className="py-12 sm:py-20 px-4 sm:px-6">
+          <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-16 items-center">
+            <div className="rounded-[20px] sm:rounded-[24px] overflow-hidden shadow-[0_0_60px_rgba(139,92,246,0.2)] border border-violet-500/20">
               <img
                 src="https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=800&q=80"
                 alt="Nepal"
@@ -556,33 +533,33 @@ const TouristDashboard = () => {
                 ✦ Welcome
               </div>
               <h2
-                className="font-black text-white mb-6 leading-tight"
+                className="font-black text-white mb-4 sm:mb-6 leading-tight"
                 style={{
                   fontFamily: "'Playfair Display', serif",
-                  fontSize: "clamp(2rem,3.5vw,2.8rem)",
+                  fontSize: "clamp(1.8rem,3.5vw,2.8rem)",
                 }}
               >
                 The Kingdom We Call Home
               </h2>
-              <p className="text-[#9e9ab5] mb-5 leading-[1.8] text-sm">
+              <p className="text-[#9e9ab5] mb-4 sm:mb-5 leading-[1.8] text-sm">
                 Nestled in the eastern Himalayas, Nepal is a land of stunning
                 natural beauty, rich cultural heritage, and deep spiritual
                 traditions.
               </p>
-              <p className="text-[#9e9ab5] mb-8 leading-[1.8] text-sm">
+              <p className="text-[#9e9ab5] mb-6 sm:mb-8 leading-[1.8] text-sm">
                 Our mission is to share the magic of Nepal with the world while
                 preserving its unique culture and environment.
               </p>
-              <button className="px-7 py-3 rounded-full font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-105 transition-all border-none cursor-pointer">
+              <button className="px-6 sm:px-7 py-2.5 sm:py-3 rounded-full font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-105 transition-all border-none cursor-pointer">
                 Learn More
               </button>
             </div>
           </div>
         </div>
 
-        {/* ── STATS (unchanged) ── */}
-        <div className="px-6 pb-16">
-          <div className="max-w-[1100px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-5">
+        {/* ── STATS ── */}
+        <div className="px-4 sm:px-6 pb-12 sm:pb-16">
+          <div className="max-w-[1100px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5">
             {[
               ["5,500", "Happy Travelers"],
               ["98%", "Satisfaction Rate"],
@@ -591,15 +568,15 @@ const TouristDashboard = () => {
             ].map(([num, label]) => (
               <div
                 key={label}
-                className="bg-violet-500/8 border border-violet-500/20 rounded-[20px] p-9 text-center hover:bg-violet-500/15 hover:border-violet-500/40 transition-all"
+                className="bg-violet-500/8 border border-violet-500/20 rounded-[16px] sm:rounded-[20px] p-5 sm:p-9 text-center hover:bg-violet-500/15 hover:border-violet-500/40 transition-all"
               >
                 <div
-                  className="text-[3rem] font-black leading-none bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent"
+                  className="text-[2rem] sm:text-[3rem] font-black leading-none bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent"
                   style={{ fontFamily: "'Playfair Display', serif" }}
                 >
                   {num}
                 </div>
-                <div className="text-[#6b5a8e] text-sm font-semibold mt-2">
+                <div className="text-[#6b5a8e] text-xs sm:text-sm font-semibold mt-2">
                   {label}
                 </div>
               </div>
@@ -607,10 +584,10 @@ const TouristDashboard = () => {
           </div>
         </div>
 
-        {/* ── DESTINATIONS (unchanged) ── */}
-        <div id="destinations" className="py-20 px-6">
+        {/* ── DESTINATIONS ── */}
+        <div id="destinations" className="py-12 sm:py-20 px-4 sm:px-6">
           <div className="max-w-7xl mx-auto">
-            <div className="flex justify-between items-end mb-12 flex-wrap gap-5">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-12 gap-4 sm:gap-5">
               <div>
                 <div className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400 mb-3">
                   ✦ Handpicked Gems
@@ -619,7 +596,7 @@ const TouristDashboard = () => {
                   className="font-black text-white leading-tight"
                   style={{
                     fontFamily: "'Playfair Display', serif",
-                    fontSize: "clamp(2.5rem,4vw,3.5rem)",
+                    fontSize: "clamp(2rem,4vw,3.5rem)",
                   }}
                 >
                   Featured
@@ -634,7 +611,9 @@ const TouristDashboard = () => {
                 tells a timeless story.
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+
+            {/* Desktop: 3-col grid. Mobile: stacked */}
+            <div className="hidden md:grid grid-cols-3 gap-4">
               <div className="relative overflow-hidden rounded-[20px] row-span-2 min-h-[560px] cursor-pointer border border-violet-500/20 hover:border-violet-500/50 transition-all group">
                 <img
                   src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=700&q=80"
@@ -719,7 +698,7 @@ const TouristDashboard = () => {
                   <div className="absolute top-3.5 right-3.5 text-xs font-bold px-3 py-1.5 rounded-full bg-violet-500/85 text-white">
                     {label}
                   </div>
-                  <div className="absolute bottom-0 p-4.5">
+                  <div className="absolute bottom-0 p-4">
                     <div className="text-amber-400 text-xs mb-1">
                       ★★★★★ {rating}
                     </div>
@@ -741,13 +720,81 @@ const TouristDashboard = () => {
                 </div>
               ))}
             </div>
+
+            {/* Mobile: simple grid */}
+            <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                {
+                  src: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=700&q=80",
+                  label: "Editor's Pick",
+                  title: "Dubai, UAE",
+                  price: "$899",
+                  rating: "4.9",
+                },
+                {
+                  src: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=600&q=80",
+                  label: "Romance",
+                  title: "Paris, France",
+                  price: "$699",
+                  rating: "4.8",
+                },
+                {
+                  src: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
+                  label: "Beach",
+                  title: "Maldives",
+                  price: "$1,299",
+                  rating: "5.0",
+                },
+                {
+                  src: "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=600&q=80",
+                  label: "Temples",
+                  title: "Kyoto, Japan",
+                  price: "$849",
+                  rating: "4.9",
+                },
+              ].map(({ src, label, title, price, rating }) => (
+                <div
+                  key={title}
+                  className="relative overflow-hidden rounded-[16px] h-[200px] cursor-pointer border border-violet-500/20 group"
+                >
+                  <img
+                    src={src}
+                    alt={title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#07030f]/85 to-transparent" />
+                  <div className="absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full bg-violet-500/85 text-white">
+                    {label}
+                  </div>
+                  <div className="absolute bottom-0 p-4">
+                    <div className="text-amber-400 text-xs mb-0.5">
+                      ★★★★★ {rating}
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <h3
+                        className="text-base font-black text-white"
+                        style={{ fontFamily: "'Playfair Display', serif" }}
+                      >
+                        {title}
+                      </h3>
+                      <span
+                        className="font-black text-sm bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
+                        style={{ fontFamily: "'Playfair Display', serif" }}
+                      >
+                        {price}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* ── PACKAGES (unchanged) ── */}
-        <div id="packages" className="py-20 px-6">
+        {/* ── PACKAGES ── */}
+        <div id="packages" className="py-12 sm:py-20 px-4 sm:px-6">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-14">
+            <div className="text-center mb-10 sm:mb-14">
               <div className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400 mb-3">
                 ✦ Best Value
               </div>
@@ -755,7 +802,7 @@ const TouristDashboard = () => {
                 className="font-black text-white mb-4"
                 style={{
                   fontFamily: "'Playfair Display', serif",
-                  fontSize: "clamp(2.5rem,4vw,3.5rem)",
+                  fontSize: "clamp(2rem,4vw,3.5rem)",
                 }}
               >
                 Popular Tour{" "}
@@ -763,7 +810,7 @@ const TouristDashboard = () => {
                   Packages
                 </span>
               </h2>
-              <p className="text-[#6b5a8e] max-w-[500px] mx-auto leading-[1.7]">
+              <p className="text-[#6b5a8e] max-w-[500px] mx-auto leading-[1.7] text-sm sm:text-base">
                 All-inclusive packages — flights, hotels, meals, and expert
                 guides.
               </p>
@@ -785,7 +832,7 @@ const TouristDashboard = () => {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {packages.slice(0, 3).map((pkg, index) => {
                     const badge = getBadgeInfo(pkg, index);
                     const amenities = getAmenities(pkg);
@@ -795,20 +842,20 @@ const TouristDashboard = () => {
                     return (
                       <div
                         key={pkg._id}
-                        className="rounded-[28px] overflow-hidden border border-violet-500/20 hover:border-violet-500/55 hover:shadow-[0_20px_60px_rgba(139,92,246,0.25)] hover:-translate-y-1.5 transition-all duration-[400ms] cursor-pointer bg-gradient-to-br from-[#1a0a3e] to-[#120630]"
+                        className="rounded-[20px] sm:rounded-[28px] overflow-hidden border border-violet-500/20 hover:border-violet-500/55 hover:shadow-[0_20px_60px_rgba(139,92,246,0.25)] hover:-translate-y-1.5 transition-all duration-[400ms] cursor-pointer bg-gradient-to-br from-[#1a0a3e] to-[#120630]"
                       >
                         <div className="relative overflow-hidden">
                           <img
                             src={pkg.imageUrls?.[0]}
                             alt={pkg.title}
-                            className="w-full h-[220px] object-cover block hover:scale-[1.06] transition-transform duration-500"
+                            className="w-full h-[200px] sm:h-[220px] object-cover block hover:scale-[1.06] transition-transform duration-500"
                           />
                           <span
-                            className={`absolute top-4 left-4 text-[0.68rem] font-bold px-3 py-1.5 rounded-full ${badgeClass[badge.cls]}`}
+                            className={`absolute top-3 left-3 text-[0.6rem] sm:text-[0.68rem] font-bold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full ${badgeClass[badge.cls]}`}
                           >
                             {badge.label}
                           </span>
-                          <div className="absolute top-4 right-4 bg-[#07030f]/70 backdrop-blur-sm text-violet-300 text-[0.7rem] font-bold px-3 py-1.5 rounded-full border border-violet-500/30">
+                          <div className="absolute top-3 right-3 bg-[#07030f]/70 backdrop-blur-sm text-violet-300 text-[0.65rem] sm:text-[0.7rem] font-bold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border border-violet-500/30">
                             {nights}
                           </div>
                           <button
@@ -816,10 +863,10 @@ const TouristDashboard = () => {
                               e.stopPropagation();
                               toggleFavorite(pkg._id);
                             }}
-                            className={`absolute bottom-3 right-3 w-9 h-9 rounded-full flex items-center justify-center border-none cursor-pointer transition-all ${favoriteCards.has(pkg._id) ? "bg-violet-500 shadow-[0_4px_15px_rgba(139,92,246,0.5)]" : "bg-[#07030f]/70 backdrop-blur-sm"}`}
+                            className={`absolute bottom-3 right-3 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border-none cursor-pointer transition-all ${favoriteCards.has(pkg._id) ? "bg-violet-500 shadow-[0_4px_15px_rgba(139,92,246,0.5)]" : "bg-[#07030f]/70 backdrop-blur-sm"}`}
                           >
                             <Heart
-                              size={15}
+                              size={14}
                               className="text-white"
                               fill={
                                 favoriteCards.has(pkg._id) ? "white" : "none"
@@ -827,11 +874,11 @@ const TouristDashboard = () => {
                             />
                           </button>
                         </div>
-                        <div className="p-6">
-                          <div className="flex justify-between items-start gap-3 mb-2">
+                        <div className="p-4 sm:p-6">
+                          <div className="flex justify-between items-start gap-2 mb-2">
                             <div>
                               <h3
-                                className="text-[1.3rem] font-black text-white leading-tight"
+                                className="text-base sm:text-[1.3rem] font-black text-white leading-tight"
                                 style={{
                                   fontFamily: "'Playfair Display', serif",
                                 }}
@@ -839,13 +886,13 @@ const TouristDashboard = () => {
                                 {pkg.title}
                               </h3>
                               <p className="flex items-center gap-1 text-[#6b5a8e] text-xs mt-1">
-                                <MapPin size={11} className="text-violet-500" />
+                                <MapPin size={10} className="text-violet-500" />
                                 {pkg.destination}
                               </p>
                             </div>
                             <div className="text-right shrink-0">
                               <div
-                                className="text-[1.6rem] font-black leading-none bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
+                                className="text-[1.3rem] sm:text-[1.6rem] font-black leading-none bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
                                 style={{
                                   fontFamily: "'Playfair Display', serif",
                                 }}
@@ -858,23 +905,23 @@ const TouristDashboard = () => {
                             </div>
                           </div>
                           {amenities.length > 0 && (
-                            <div className="flex flex-wrap gap-2 my-3.5">
+                            <div className="flex flex-wrap gap-1 sm:gap-2 my-2.5 sm:my-3.5">
                               {amenities.map((a, i) => (
                                 <span
                                   key={i}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-500/12 text-violet-300 border border-violet-500/20"
+                                  className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[0.6rem] sm:text-xs font-semibold bg-violet-500/12 text-violet-300 border border-violet-500/20"
                                 >
-                                  <a.icon size={10} />
+                                  <a.icon size={9} />
                                   {a.label}
                                 </span>
                               ))}
                             </div>
                           )}
-                          <div className="flex items-center gap-0.5 mb-3.5">
+                          <div className="flex items-center gap-0.5 mb-3">
                             {[...Array(5)].map((_, i) => (
                               <Star
                                 key={i}
-                                size={12}
+                                size={11}
                                 className={
                                   i < Math.round(pkg.rating || 4)
                                     ? "text-amber-400 fill-amber-400"
@@ -882,7 +929,7 @@ const TouristDashboard = () => {
                                 }
                               />
                             ))}
-                            <span className="ml-1.5 text-sm font-bold text-white">
+                            <span className="ml-1 text-xs sm:text-sm font-bold text-white">
                               {pkg.rating}
                             </span>
                             <span className="text-[#6b5a8e] text-xs">
@@ -891,8 +938,8 @@ const TouristDashboard = () => {
                             </span>
                           </div>
                           {pkg.startDate && (
-                            <div className="flex items-center gap-1.5 text-xs text-[#6b5a8e] mb-4">
-                              <Calendar size={11} className="text-violet-500" />
+                            <div className="flex items-center gap-1.5 text-xs text-[#6b5a8e] mb-3 sm:mb-4">
+                              <Calendar size={10} className="text-violet-500" />
                               Starts:{" "}
                               {new Date(pkg.startDate).toLocaleDateString(
                                 "en-US",
@@ -900,12 +947,12 @@ const TouristDashboard = () => {
                                   year: "numeric",
                                   month: "long",
                                   day: "numeric",
-                                }
+                                },
                               )}
                             </div>
                           )}
                           <button
-                            className="w-full py-3.5 rounded-[16px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_25px_rgba(139,92,246,0.6)] hover:scale-[1.02] transition-all border-none cursor-pointer"
+                            className="w-full py-3 sm:py-3.5 rounded-[12px] sm:rounded-[16px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_25px_rgba(139,92,246,0.6)] hover:scale-[1.02] transition-all border-none cursor-pointer"
                             onClick={() => handleCardClick(pkg._id)}
                           >
                             Book This Package
@@ -915,10 +962,10 @@ const TouristDashboard = () => {
                     );
                   })}
                 </div>
-                <div className="text-center mt-12">
+                <div className="text-center mt-8 sm:mt-12">
                   <button
                     onClick={() => navigate("/explore")}
-                    className="inline-flex items-center gap-2 px-9 py-3.5 rounded-full font-bold text-sm text-violet-300 bg-transparent border-2 border-violet-500/50 hover:bg-violet-500/15 hover:border-violet-500/80 transition-all cursor-pointer"
+                    className="inline-flex items-center gap-2 px-7 sm:px-9 py-3 sm:py-3.5 rounded-full font-bold text-sm text-violet-300 bg-transparent border-2 border-violet-500/50 hover:bg-violet-500/15 hover:border-violet-500/80 transition-all cursor-pointer"
                   >
                     View All Packages <ChevronRight size={16} />
                   </button>
@@ -928,10 +975,10 @@ const TouristDashboard = () => {
           </div>
         </div>
 
-        {/* ── PLACES TO VISIT (unchanged) ── */}
-        <div id="places" className="py-20 px-6">
+        {/* ── PLACES TO VISIT ── */}
+        <div id="places" className="py-12 sm:py-20 px-4 sm:px-6">
           <div className="max-w-[1100px] mx-auto">
-            <div className="text-center mb-12">
+            <div className="text-center mb-8 sm:mb-12">
               <div className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400 mb-3">
                 ✦ Experiences
               </div>
@@ -939,17 +986,17 @@ const TouristDashboard = () => {
                 className="font-black text-white mb-4"
                 style={{
                   fontFamily: "'Playfair Display', serif",
-                  fontSize: "clamp(2rem,3.5vw,3rem)",
+                  fontSize: "clamp(1.8rem,3.5vw,3rem)",
                 }}
               >
                 Places To Visit
               </h2>
-              <p className="text-[#6b5a8e] max-w-[520px] mx-auto leading-[1.7]">
+              <p className="text-[#6b5a8e] max-w-[520px] mx-auto leading-[1.7] text-sm sm:text-base">
                 Discover the hidden gems and iconic landmarks that make Nepal
                 truly magical.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-5 mb-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mb-3 sm:mb-5">
               {[
                 {
                   src: "https://national-parks.org/wp-content/uploads/2025/10/Sagarmatha-National-Park.jpg",
@@ -964,7 +1011,7 @@ const TouristDashboard = () => {
               ].map(({ src, title, sub }) => (
                 <div
                   key={title}
-                  className="relative overflow-hidden rounded-[20px] h-[380px] border border-violet-500/20 cursor-pointer group hover:border-violet-500/50 transition-all"
+                  className="relative overflow-hidden rounded-[16px] sm:rounded-[20px] h-[260px] sm:h-[380px] border border-violet-500/20 cursor-pointer group hover:border-violet-500/50 transition-all"
                 >
                   <img
                     src={src}
@@ -972,22 +1019,24 @@ const TouristDashboard = () => {
                     className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#07030f]/88 to-transparent" />
-                  <div className="absolute bottom-0 p-6">
+                  <div className="absolute bottom-0 p-4 sm:p-6">
                     <h3
-                      className="text-[1.6rem] font-black text-white mb-1.5"
+                      className="text-[1.3rem] sm:text-[1.6rem] font-black text-white mb-1"
                       style={{ fontFamily: "'Playfair Display', serif" }}
                     >
                       {title}
                     </h3>
-                    <p className="text-violet-400 text-sm mb-4">{sub}</p>
-                    <button className="px-5 py-2 rounded-full text-xs font-bold text-violet-300 bg-transparent border border-violet-500/50 hover:bg-violet-500/20 transition-all cursor-pointer">
+                    <p className="text-violet-400 text-sm mb-3 sm:mb-4">
+                      {sub}
+                    </p>
+                    <button className="px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs font-bold text-violet-300 bg-transparent border border-violet-500/50 hover:bg-violet-500/20 transition-all cursor-pointer">
                       Discover
                     </button>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
               {[
                 {
                   src: "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/18/40/f6/3f/manaslu-circuit-trekking.jpg?w=1200&h=-1&s=1",
@@ -1002,7 +1051,7 @@ const TouristDashboard = () => {
               ].map(({ src, title, sub }) => (
                 <div
                   key={title}
-                  className="relative overflow-hidden rounded-[20px] h-[380px] border border-violet-500/20 cursor-pointer group hover:border-violet-500/50 transition-all"
+                  className="relative overflow-hidden rounded-[16px] sm:rounded-[20px] h-[260px] sm:h-[380px] border border-violet-500/20 cursor-pointer group hover:border-violet-500/50 transition-all"
                 >
                   <img
                     src={src}
@@ -1010,15 +1059,17 @@ const TouristDashboard = () => {
                     className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#07030f]/88 to-transparent" />
-                  <div className="absolute bottom-0 p-6">
+                  <div className="absolute bottom-0 p-4 sm:p-6">
                     <h3
-                      className="text-[1.6rem] font-black text-white mb-1.5"
+                      className="text-[1.3rem] sm:text-[1.6rem] font-black text-white mb-1"
                       style={{ fontFamily: "'Playfair Display', serif" }}
                     >
                       {title}
                     </h3>
-                    <p className="text-violet-400 text-sm mb-4">{sub}</p>
-                    <button className="px-5 py-2 rounded-full text-xs font-bold text-violet-300 bg-transparent border border-violet-500/50 hover:bg-violet-500/20 transition-all cursor-pointer">
+                    <p className="text-violet-400 text-sm mb-3 sm:mb-4">
+                      {sub}
+                    </p>
+                    <button className="px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs font-bold text-violet-300 bg-transparent border border-violet-500/50 hover:bg-violet-500/20 transition-all cursor-pointer">
                       Discover
                     </button>
                   </div>
@@ -1028,18 +1079,18 @@ const TouristDashboard = () => {
           </div>
         </div>
 
-        {/* ── WHY US (unchanged) ── */}
-        <div id="why-us" className="py-20 px-6">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+        {/* ── WHY US ── */}
+        <div id="why-us" className="py-12 sm:py-20 px-4 sm:px-6">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div>
               <div className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400 mb-3">
                 ✦ Why Wanderlux
               </div>
               <h2
-                className="font-black text-white leading-tight mb-6"
+                className="font-black text-white leading-tight mb-4 sm:mb-6"
                 style={{
                   fontFamily: "'Playfair Display', serif",
-                  fontSize: "clamp(2.2rem,3.5vw,3.2rem)",
+                  fontSize: "clamp(1.8rem,3.5vw,3.2rem)",
                 }}
               >
                 We Make Travel
@@ -1050,11 +1101,11 @@ const TouristDashboard = () => {
                 &<br />
                 Extraordinary
               </h2>
-              <p className="text-[#6b5a8e] leading-[1.8] mb-12 text-sm">
+              <p className="text-[#6b5a8e] leading-[1.8] mb-8 sm:mb-12 text-sm">
                 From the moment you dream it to the moment you live it — we're
                 with you every step.
               </p>
-              <div className="flex flex-col gap-8">
+              <div className="flex flex-col gap-6 sm:gap-8">
                 {[
                   {
                     title: "100% Verified Packages",
@@ -1072,15 +1123,15 @@ const TouristDashboard = () => {
                     icon: "$",
                   },
                 ].map(({ title, desc, icon }) => (
-                  <div key={title} className="flex gap-5 items-start">
-                    <div className="w-12 h-12 shrink-0 rounded-[14px] flex items-center justify-center text-xl text-violet-500 bg-violet-500/15 border border-violet-500/30">
+                  <div key={title} className="flex gap-4 sm:gap-5 items-start">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-[12px] sm:rounded-[14px] flex items-center justify-center text-lg sm:text-xl text-violet-500 bg-violet-500/15 border border-violet-500/30">
                       {icon}
                     </div>
                     <div>
-                      <h3 className="font-bold text-white text-base mb-1.5">
+                      <h3 className="font-bold text-white text-sm sm:text-base mb-1">
                         {title}
                       </h3>
-                      <p className="text-[#6b5a8e] text-sm leading-[1.7]">
+                      <p className="text-[#6b5a8e] text-xs sm:text-sm leading-[1.7]">
                         {desc}
                       </p>
                     </div>
@@ -1088,7 +1139,7 @@ const TouristDashboard = () => {
                 ))}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3.5">
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5">
               {[
                 "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&q=80",
                 "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=600&q=80",
@@ -1097,12 +1148,12 @@ const TouristDashboard = () => {
               ].map((src, i) => (
                 <div
                   key={i}
-                  className={`rounded-[18px] overflow-hidden border border-violet-500/20 ${i === 1 || i === 2 ? "mt-6" : ""}`}
+                  className={`rounded-[14px] sm:rounded-[18px] overflow-hidden border border-violet-500/20 ${i === 1 || i === 2 ? "mt-4 sm:mt-6" : ""}`}
                 >
                   <img
                     src={src}
                     alt=""
-                    className={`w-full object-cover block ${i === 0 || i === 3 ? "h-[200px]" : "h-[160px]"}`}
+                    className={`w-full object-cover block ${i === 0 || i === 3 ? "h-[140px] sm:h-[200px]" : "h-[110px] sm:h-[160px]"}`}
                   />
                 </div>
               ))}
@@ -1110,13 +1161,15 @@ const TouristDashboard = () => {
           </div>
         </div>
 
-        {/* ════════════════════════════════════════════════════════════════════
-            REVIEWS SECTION — wired to real backend
-        ════════════════════════════════════════════════════════════════════ */}
-        <div id="reviews" className="py-20 px-6" ref={reviewSectionRef}>
+        {/* ── REVIEWS SECTION ── */}
+        <div
+          id="reviews"
+          className="py-12 sm:py-20 px-4 sm:px-6"
+          ref={reviewSectionRef}
+        >
           <div className="max-w-7xl mx-auto">
             {/* Header */}
-            <div className="text-center mb-14">
+            <div className="text-center mb-10 sm:mb-14">
               <div className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400 mb-3">
                 ✦ Traveler Stories
               </div>
@@ -1124,7 +1177,7 @@ const TouristDashboard = () => {
                 className="font-black text-white mb-4"
                 style={{
                   fontFamily: "'Playfair Display', serif",
-                  fontSize: "clamp(2.5rem,4vw,3.5rem)",
+                  fontSize: "clamp(2rem,4vw,3.5rem)",
                 }}
               >
                 What Our Travelers{" "}
@@ -1132,17 +1185,17 @@ const TouristDashboard = () => {
                   Say About Us
                 </span>
               </h2>
-              <p className="text-[#6b5a8e] max-w-[500px] mx-auto leading-[1.7]">
+              <p className="text-[#6b5a8e] max-w-[500px] mx-auto leading-[1.7] text-sm sm:text-base">
                 Real stories from real adventurers — unfiltered and unsponsored.
               </p>
             </div>
 
             {/* Rating summary */}
-            <div className="rounded-[28px] p-8 border border-violet-500/25 bg-gradient-to-br from-[#1a0a3e]/70 to-[#0f0524]/70 backdrop-blur-sm mb-10 max-w-[680px] mx-auto shadow-[0_0_50px_rgba(139,92,246,0.12)]">
-              <div className="flex gap-10 items-center flex-wrap justify-center">
+            <div className="rounded-[20px] sm:rounded-[28px] p-5 sm:p-8 border border-violet-500/25 bg-gradient-to-br from-[#1a0a3e]/70 to-[#0f0524]/70 backdrop-blur-sm mb-8 sm:mb-10 max-w-[680px] mx-auto shadow-[0_0_50px_rgba(139,92,246,0.12)]">
+              <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 items-center justify-center">
                 <div className="text-center">
                   <div
-                    className="text-[4.5rem] font-black leading-none bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent"
+                    className="text-[3.5rem] sm:text-[4.5rem] font-black leading-none bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent"
                     style={{ fontFamily: "'Playfair Display', serif" }}
                   >
                     {avgRating}
@@ -1150,16 +1203,19 @@ const TouristDashboard = () => {
                   <StarRating
                     value={Math.round(parseFloat(avgRating))}
                     readonly
-                    size={20}
+                    size={18}
                   />
                   <div className="text-[#6b5a8e] text-xs mt-2">
                     {reviews.length} total reviews
                   </div>
                 </div>
-                <div className="flex-1 min-w-[200px]">
+                <div className="flex-1 w-full sm:min-w-[200px]">
                   {ratingCounts.map(({ n, count }) => (
-                    <div key={n} className="flex items-center gap-3 mb-2">
-                      <span className="text-xs text-violet-300 w-8 shrink-0">
+                    <div
+                      key={n}
+                      className="flex items-center gap-2 sm:gap-3 mb-2"
+                    >
+                      <span className="text-xs text-violet-300 w-7 sm:w-8 shrink-0">
                         {n} ★
                       </span>
                       <div className="flex-1 h-2 rounded-full bg-white/8 overflow-hidden">
@@ -1182,12 +1238,12 @@ const TouristDashboard = () => {
             </div>
 
             {/* Filter tabs */}
-            <div className="flex gap-3 flex-wrap justify-center mb-8">
+            <div className="flex gap-2 sm:gap-3 flex-wrap justify-center mb-6 sm:mb-8">
               {reviewFilters.map((f) => (
                 <button
                   key={f}
                   onClick={() => setActiveFilter(f)}
-                  className={`px-5 py-2 rounded-full text-xs font-bold transition-all border cursor-pointer
+                  className={`px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full text-[0.65rem] sm:text-xs font-bold transition-all border cursor-pointer
                     ${
                       activeFilter === f
                         ? "bg-violet-500 text-white border-violet-500 shadow-[0_4px_15px_rgba(139,92,246,0.4)]"
@@ -1208,7 +1264,7 @@ const TouristDashboard = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-16">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mb-12 sm:mb-16">
                 {filteredReviews.map((review) => (
                   <ReviewCard
                     key={review.id}
@@ -1231,22 +1287,22 @@ const TouristDashboard = () => {
             )}
 
             {/* ── Write a review form ── */}
-            <div className="rounded-[32px] overflow-hidden border border-violet-500/30 shadow-[0_0_80px_rgba(139,92,246,0.15)] bg-gradient-to-br from-[#1a0a3e]/90 to-[#0f0524]/90 backdrop-blur-md">
+            <div className="rounded-[24px] sm:rounded-[32px] overflow-hidden border border-violet-500/30 shadow-[0_0_80px_rgba(139,92,246,0.15)] bg-gradient-to-br from-[#1a0a3e]/90 to-[#0f0524]/90 backdrop-blur-md">
               {/* Form header */}
-              <div className="relative px-8 pt-8 pb-6 border-b border-violet-500/20 overflow-hidden">
+              <div className="relative px-5 sm:px-8 pt-6 sm:pt-8 pb-5 sm:pb-6 border-b border-violet-500/20 overflow-hidden">
                 <div className="absolute right-0 top-0 w-72 h-72 rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.12)_0%,transparent_70%)] blur-[40px] pointer-events-none" />
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-[15px] bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-[0_4px_15px_rgba(139,92,246,0.4)]">
-                    <MessageSquare size={19} className="text-white" />
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[13px] sm:rounded-[15px] bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-[0_4px_15px_rgba(139,92,246,0.4)]">
+                    <MessageSquare size={17} className="text-white" />
                   </div>
                   <div>
                     <h3
-                      className="text-[1.5rem] font-black text-white leading-tight"
+                      className="text-[1.2rem] sm:text-[1.5rem] font-black text-white leading-tight"
                       style={{ fontFamily: "'Playfair Display', serif" }}
                     >
                       Share Your Experience
                     </h3>
-                    <p className="text-[#6b5a8e] text-sm">
+                    <p className="text-[#6b5a8e] text-xs sm:text-sm">
                       Help future travelers with your honest feedback
                     </p>
                   </div>
@@ -1255,29 +1311,30 @@ const TouristDashboard = () => {
 
               {/* Success banner */}
               {reviewSubmitted && (
-                <div className="mx-8 mt-6 p-4 rounded-[14px] bg-emerald-500/15 border border-emerald-500/35 flex items-center gap-3 animate-[fadeSlideIn_0.4s_ease_both]">
-                  <CheckCircle size={20} className="text-emerald-400 shrink-0" />
-                  <p className="text-emerald-300 font-semibold text-sm">
+                <div className="mx-4 sm:mx-8 mt-5 sm:mt-6 p-3 sm:p-4 rounded-[14px] bg-emerald-500/15 border border-emerald-500/35 flex items-center gap-3 animate-[fadeSlideIn_0.4s_ease_both]">
+                  <CheckCircle
+                    size={18}
+                    className="text-emerald-400 shrink-0"
+                  />
+                  <p className="text-emerald-300 font-semibold text-xs sm:text-sm">
                     Your review has been published! Thank you 🎉
                   </p>
                 </div>
               )}
 
-              <div className="p-8">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="p-4 sm:p-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-8">
                   {/* Left: package selector + rating */}
-                  <div className="flex flex-col gap-5">
-
-                    {/* Package selector — REQUIRED by backend */}
+                  <div className="flex flex-col gap-4 sm:gap-5">
+                    {/* Package selector */}
                     <div>
                       <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
                         Tour Package <span className="text-red-400">*</span>
                       </label>
                       <div
-                        className={`flex items-center gap-3 rounded-[14px] px-4 py-3 border transition-colors
-                        ${reviewErrors.tourPackageId ? "border-red-500/50 bg-red-500/5" : "border-violet-500/25 bg-violet-500/8 focus-within:border-violet-400/60"}`}
+                        className={`flex items-center gap-3 rounded-[14px] px-4 py-3 border transition-colors ${reviewErrors.tourPackageId ? "border-red-500/50 bg-red-500/5" : "border-violet-500/25 bg-violet-500/8 focus-within:border-violet-400/60"}`}
                       >
-                        <Plane size={15} className="text-violet-500 shrink-0" />
+                        <Plane size={14} className="text-violet-500 shrink-0" />
                         <select
                           value={reviewForm.tourPackageId}
                           onChange={(e) =>
@@ -1286,9 +1343,11 @@ const TouristDashboard = () => {
                               tourPackageId: e.target.value,
                             }))
                           }
-                          className="flex-1 bg-transparent outline-none text-white text-sm [&>option]:bg-[#1a0a3e]"
+                          className="flex-1 bg-transparent outline-none text-white text-sm [&>option]:bg-[#1a0a3e] min-w-0"
                         >
-                          <option value="">Select the package you booked</option>
+                          <option value="">
+                            Select the package you booked
+                          </option>
                           {packages.map((pkg) => (
                             <option key={pkg._id} value={pkg._id}>
                               {pkg.title}
@@ -1309,17 +1368,16 @@ const TouristDashboard = () => {
                         Your Rating <span className="text-red-400">*</span>
                       </label>
                       <div
-                        className={`p-4 rounded-[14px] border transition-colors
-                        ${reviewErrors.rating ? "border-red-500/50 bg-red-500/5" : "border-violet-500/20 bg-violet-500/8"}`}
+                        className={`p-3 sm:p-4 rounded-[14px] border transition-colors ${reviewErrors.rating ? "border-red-500/50 bg-red-500/5" : "border-violet-500/20 bg-violet-500/8"}`}
                       >
                         <StarRating
                           value={reviewForm.rating}
                           onChange={(v) =>
                             setReviewForm((p) => ({ ...p, rating: v }))
                           }
-                          size={30}
+                          size={26}
                         />
-                        <p className="text-[#6b5a8e] text-xs mt-2.5">
+                        <p className="text-[#6b5a8e] text-xs mt-2">
                           {reviewForm.rating === 0
                             ? "Click to rate your experience"
                             : [
@@ -1340,23 +1398,27 @@ const TouristDashboard = () => {
                     </div>
 
                     {/* Privacy note */}
-                    <div className="flex items-start gap-2.5 p-4 rounded-[14px] bg-violet-500/8 border border-violet-500/15">
-                      <Shield size={14} className="text-violet-400 shrink-0 mt-0.5" />
-                      <p className="text-[#6b5a8e] text-[0.7rem] leading-[1.65]">
-                        Your review will be publicly visible under your account name. We never share your personal details with third parties.
+                    <div className="flex items-start gap-2.5 p-3 sm:p-4 rounded-[14px] bg-violet-500/8 border border-violet-500/15">
+                      <Shield
+                        size={13}
+                        className="text-violet-400 shrink-0 mt-0.5"
+                      />
+                      <p className="text-[#6b5a8e] text-[0.65rem] sm:text-[0.7rem] leading-[1.65]">
+                        Your review will be publicly visible under your account
+                        name. We never share your personal details with third
+                        parties.
                       </p>
                     </div>
                   </div>
 
                   {/* Right: comment + submit */}
-                  <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-4 sm:gap-5">
                     <div className="flex-1 flex flex-col">
                       <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
                         Your Review <span className="text-red-400">*</span>
                       </label>
                       <div
-                        className={`flex-1 rounded-[14px] border transition-colors
-                        ${reviewErrors.comment ? "border-red-500/50 bg-red-500/5" : "border-violet-500/25 bg-violet-500/8 focus-within:border-violet-400/60 focus-within:bg-violet-500/12"}`}
+                        className={`flex-1 rounded-[14px] border transition-colors ${reviewErrors.comment ? "border-red-500/50 bg-red-500/5" : "border-violet-500/25 bg-violet-500/8 focus-within:border-violet-400/60 focus-within:bg-violet-500/12"}`}
                       >
                         <textarea
                           value={reviewForm.comment}
@@ -1366,7 +1428,7 @@ const TouristDashboard = () => {
                               comment: e.target.value,
                             }))
                           }
-                          className="w-full min-h-[220px] bg-transparent outline-none text-white text-sm placeholder:text-violet-400/40 resize-none p-4 leading-[1.85]"
+                          className="w-full min-h-[160px] sm:min-h-[220px] bg-transparent outline-none text-white text-sm placeholder:text-violet-400/40 resize-none p-3 sm:p-4 leading-[1.85]"
                           placeholder="Tell us about your experience — the highlights, what surprised you, and whether you'd recommend it to others..."
                         />
                       </div>
@@ -1391,16 +1453,16 @@ const TouristDashboard = () => {
                     <button
                       onClick={handleReviewSubmit}
                       disabled={reviewSubmitting}
-                      className="w-full flex items-center justify-center gap-2.5 py-4 rounded-[16px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_20px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_30px_rgba(139,92,246,0.6)] hover:scale-[1.02] transition-all border-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                      className="w-full flex items-center justify-center gap-2 sm:gap-2.5 py-3.5 sm:py-4 rounded-[14px] sm:rounded-[16px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_20px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_30px_rgba(139,92,246,0.6)] hover:scale-[1.02] transition-all border-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
                       {reviewSubmitting ? (
                         <>
                           <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{" "}
-                          Publishing your review…
+                          Publishing…
                         </>
                       ) : (
                         <>
-                          <Send size={15} /> Publish My Review
+                          <Send size={14} /> Publish My Review
                         </>
                       )}
                     </button>

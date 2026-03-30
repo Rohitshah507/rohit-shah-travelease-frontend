@@ -171,7 +171,6 @@ const BookingPage = () => {
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      console.log("TOKEN:", token);
       const khaltiPaymentUrl =
         (typeof paymentResponse.data?.paymentUrl === "string"
           ? paymentResponse.data.paymentUrl
@@ -197,10 +196,10 @@ const BookingPage = () => {
 
   if (loading)
     return (
-      <div className="min-h-screen bg-[#07030f] flex items-center justify-center">
+      <div className="min-h-screen bg-[#07030f] flex items-center justify-center px-4">
         <div className="text-center">
-          <div className="w-14 h-14 rounded-full border-[3px] border-violet-500/20 border-t-violet-500 animate-spin mx-auto mb-4" />
-          <p className="text-[#6b5a8e] font-semibold">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-[3px] border-violet-500/20 border-t-violet-500 animate-spin mx-auto mb-4" />
+          <p className="text-[#6b5a8e] font-semibold text-sm sm:text-base">
             Loading booking details...
           </p>
         </div>
@@ -209,22 +208,23 @@ const BookingPage = () => {
 
   if (!tourPackage)
     return (
-      <div className="min-h-screen bg-[#07030f] flex items-center justify-center">
-        <p className="text-[#6b5a8e] text-xl font-bold">Package not found</p>
+      <div className="min-h-screen bg-[#07030f] flex items-center justify-center px-4">
+        <p className="text-[#6b5a8e] text-lg sm:text-xl font-bold">
+          Package not found
+        </p>
       </div>
     );
 
   const inputClass =
-    "w-full bg-violet-500/8 border border-violet-500/25 text-white rounded-[14px] px-4 py-3 outline-none text-sm font-medium placeholder:text-violet-400/40 focus:border-violet-500/70 focus:shadow-[0_0_0_3px_rgba(139,92,246,0.12)] transition-all [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-50";
-  const iconInputClass = "relative";
+    "w-full bg-violet-500/8 border border-violet-500/25 text-white rounded-[14px] px-3 sm:px-4 py-2.5 sm:py-3 outline-none text-sm font-medium placeholder:text-violet-400/40 focus:border-violet-500/70 focus:shadow-[0_0_0_3px_rgba(139,92,246,0.12)] transition-all [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-50";
 
   return (
     <div className="min-h-screen bg-[#07030f] text-white font-sans">
       {/* Ambient blobs */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-[-10%] left-[15%] w-[540px] h-[540px] rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.16)_0%,transparent_70%)] blur-[70px]" />
-        <div className="absolute top-[40%] right-[-5%] w-[420px] h-[420px] rounded-full bg-[radial-gradient(circle,rgba(109,40,217,0.12)_0%,transparent_70%)] blur-[80px]" />
-        <div className="absolute bottom-0 left-0 w-[360px] h-[360px] rounded-full bg-[radial-gradient(circle,rgba(76,29,149,0.14)_0%,transparent_70%)] blur-[80px]" />
+        <div className="absolute top-[-10%] left-[15%] w-[300px] sm:w-[540px] h-[300px] sm:h-[540px] rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.16)_0%,transparent_70%)] blur-[70px]" />
+        <div className="absolute top-[40%] right-[-5%] w-[200px] sm:w-[420px] h-[200px] sm:h-[420px] rounded-full bg-[radial-gradient(circle,rgba(109,40,217,0.12)_0%,transparent_70%)] blur-[80px]" />
+        <div className="absolute bottom-0 left-0 w-[180px] sm:w-[360px] h-[180px] sm:h-[360px] rounded-full bg-[radial-gradient(circle,rgba(76,29,149,0.14)_0%,transparent_70%)] blur-[80px]" />
       </div>
 
       <Toaster
@@ -237,7 +237,7 @@ const BookingPage = () => {
             border: "1px solid rgba(139,92,246,0.35)",
             borderRadius: 14,
             fontWeight: 600,
-            fontSize: 14,
+            fontSize: 13,
             boxShadow: "0 8px 32px rgba(139,92,246,0.25)",
           },
           success: { iconTheme: { primary: "#8b5cf6", secondary: "#1a0a3e" } },
@@ -253,37 +253,37 @@ const BookingPage = () => {
       />
 
       <div className="relative z-10">
-        {/* ── CANCEL MODAL ── */}
+        {/* Cancel Modal */}
         {showCancelConfirm && (
           <div className="fixed inset-0 bg-black/75 backdrop-blur-[10px] z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-[400px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#0f0524] border border-violet-500/40 shadow-[0_0_80px_rgba(139,92,246,0.3)] animate-[slideUp_0.3s_ease]">
-              <div className="p-7">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-[52px] h-[52px] rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
-                    <XCircle size={24} className="text-red-400" />
+            <div className="w-full max-w-[400px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#0f0524] border border-violet-500/40 shadow-[0_0_80px_rgba(139,92,246,0.3)]">
+              <div className="p-5 sm:p-7">
+                <div className="flex items-center gap-3 sm:gap-4 mb-4">
+                  <div className="w-11 h-11 sm:w-[52px] sm:h-[52px] rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
+                    <XCircle size={22} className="text-red-400" />
                   </div>
                   <div>
-                    <h3 className="font-black text-white text-lg mb-0.5">
+                    <h3 className="font-black text-white text-base sm:text-lg mb-0.5">
                       Cancel Booking?
                     </h3>
-                    <p className="text-[#6b5a8e] text-sm">
+                    <p className="text-[#6b5a8e] text-xs sm:text-sm">
                       This action cannot be undone.
                     </p>
                   </div>
                 </div>
-                <p className="text-[#9e9ab5] text-sm leading-[1.7] mb-6">
+                <p className="text-[#9e9ab5] text-xs sm:text-sm leading-[1.7] mb-5 sm:mb-6">
                   Are you sure you want to cancel? Your reservation will be
                   permanently removed.
                 </p>
-                <div className="flex gap-2.5">
+                <div className="flex gap-2 sm:gap-2.5">
                   <button
-                    className="flex-1 py-3 rounded-[14px] font-bold text-sm text-violet-300 bg-violet-500/10 border border-violet-500/30 hover:bg-violet-500/20 transition-all cursor-pointer"
+                    className="flex-1 py-2.5 sm:py-3 rounded-[14px] font-bold text-xs sm:text-sm text-violet-300 bg-violet-500/10 border border-violet-500/30 hover:bg-violet-500/20 transition-all cursor-pointer"
                     onClick={() => setShowCancelConfirm(false)}
                   >
                     Keep Booking
                   </button>
                   <button
-                    className="flex-1 py-3 rounded-[14px] font-bold text-sm text-white bg-gradient-to-r from-red-500 to-red-700 shadow-[0_4px_15px_rgba(239,68,68,0.4)] hover:scale-[1.02] disabled:opacity-55 transition-all cursor-pointer flex items-center justify-center gap-2 border-none"
+                    className="flex-1 py-2.5 sm:py-3 rounded-[14px] font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-red-500 to-red-700 shadow-[0_4px_15px_rgba(239,68,68,0.4)] hover:scale-[1.02] disabled:opacity-55 transition-all cursor-pointer flex items-center justify-center gap-2 border-none"
                     onClick={handleCancelBooking}
                     disabled={cancelling}
                   >
@@ -302,37 +302,35 @@ const BookingPage = () => {
           </div>
         )}
 
-        {/* ── SUCCESS MODAL ── */}
+        {/* Success Modal */}
         {showSuccessModal && (
-          <div className="fixed inset-0 bg-black/75 backdrop-blur-[10px] z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-[460px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#0f0524] border border-violet-500/40 shadow-[0_0_80px_rgba(139,92,246,0.3)]">
-              {/* Header */}
-              <div className="relative overflow-hidden bg-gradient-to-r from-violet-500 via-violet-700 to-violet-900 px-7 py-7 text-center">
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-[10px] z-50 flex items-center justify-center p-3 sm:p-4">
+            <div className="w-full max-w-[460px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#0f0524] border border-violet-500/40 shadow-[0_0_80px_rgba(139,92,246,0.3)] max-h-[90vh] overflow-y-auto">
+              <div className="relative overflow-hidden bg-gradient-to-r from-violet-500 via-violet-700 to-violet-900 px-5 sm:px-7 py-5 sm:py-7 text-center">
                 <div className="absolute inset-0 [background-image:radial-gradient(circle,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:24px_24px]" />
                 <div className="relative">
-                  <div className="w-16 h-16 mx-auto mb-3.5 bg-white/15 rounded-full border-2 border-white/30 flex items-center justify-center">
-                    <CheckCircle size={34} className="text-white" />
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 bg-white/15 rounded-full border-2 border-white/30 flex items-center justify-center">
+                    <CheckCircle size={30} className="text-white" />
                   </div>
                   <h3
-                    className="font-black text-white text-2xl mb-1 flex items-center justify-center gap-2"
+                    className="font-black text-white text-xl sm:text-2xl mb-1 flex items-center justify-center gap-2"
                     style={{ fontFamily: "'Playfair Display', serif" }}
                   >
-                    <Sparkles size={18} className="animate-pulse" /> Booking
-                    Confirmed! <Sparkles size={18} className="animate-pulse" />
+                    <Sparkles size={16} className="animate-pulse" /> Booking
+                    Confirmed! <Sparkles size={16} className="animate-pulse" />
                   </h3>
-                  <p className="text-white/70 text-sm">
+                  <p className="text-white/70 text-xs sm:text-sm">
                     Your adventure is reserved
                   </p>
                 </div>
               </div>
 
-              {/* Body */}
-              <div className="px-6 py-5">
-                <div className="bg-violet-500/12 border border-violet-500/30 rounded-[14px] px-4 py-3 mb-4">
-                  <p className="text-[0.65rem] font-bold tracking-[0.18em] uppercase text-violet-400 mb-1">
+              <div className="px-4 sm:px-6 py-4 sm:py-5">
+                <div className="bg-violet-500/12 border border-violet-500/30 rounded-[14px] px-3 sm:px-4 py-2.5 sm:py-3 mb-4">
+                  <p className="text-[0.6rem] font-bold tracking-[0.18em] uppercase text-violet-400 mb-1">
                     Booking ID
                   </p>
-                  <p className="font-mono font-bold text-white text-sm">
+                  <p className="font-mono font-bold text-white text-xs sm:text-sm break-all">
                     {bookingId}
                   </p>
                 </div>
@@ -351,31 +349,31 @@ const BookingPage = () => {
                   ].map((row) => (
                     <div
                       key={row.label}
-                      className="flex justify-between items-center py-2.5 border-b border-violet-500/12 last:border-b-0"
+                      className="flex justify-between items-center py-2 sm:py-2.5 border-b border-violet-500/12 last:border-b-0"
                     >
-                      <span className="text-[#6b5a8e] text-sm">
+                      <span className="text-[#6b5a8e] text-xs sm:text-sm">
                         {row.label}
                       </span>
-                      <span className="text-white text-sm font-bold">
+                      <span className="text-white text-xs sm:text-sm font-bold text-right ml-2 truncate max-w-[55%]">
                         {row.value}
                       </span>
                     </div>
                   ))}
-                  <div className="flex justify-between items-center px-4 py-3.5 bg-violet-500/12 border border-violet-500/25 rounded-[14px] mt-2.5">
-                    <span className="text-violet-300 font-bold">
+                  <div className="flex justify-between items-center px-3 sm:px-4 py-3 bg-violet-500/12 border border-violet-500/25 rounded-[14px] mt-2">
+                    <span className="text-violet-300 font-bold text-sm">
                       Total Amount
                     </span>
                     <span
-                      className="text-[1.6rem] font-black bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
+                      className="text-xl sm:text-[1.6rem] font-black bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
                       style={{ fontFamily: "'Playfair Display', serif" }}
                     >
                       Rs. {tourPackage.price}
                     </span>
                   </div>
                 </div>
-                <div className="mt-3.5 bg-violet-500/10 border border-violet-500/25 rounded-[14px] px-4 py-3 flex gap-2.5">
+                <div className="mt-3 bg-violet-500/10 border border-violet-500/25 rounded-[14px] px-3 sm:px-4 py-2.5 sm:py-3 flex gap-2">
                   <Shield
-                    size={15}
+                    size={14}
                     className="text-violet-500 shrink-0 mt-0.5"
                   />
                   <div className="text-xs text-[#9e9ab5] leading-[1.6]">
@@ -387,16 +385,15 @@ const BookingPage = () => {
                 </div>
               </div>
 
-              {/* Footer */}
-              <div className="px-6 pb-6 flex gap-2.5">
+              <div className="px-4 sm:px-6 pb-5 sm:pb-6 flex gap-2 sm:gap-2.5">
                 <button
-                  className="flex-1 py-3 rounded-[14px] font-bold text-sm text-violet-300 bg-violet-500/10 border border-violet-500/30 hover:bg-violet-500/20 transition-all cursor-pointer"
+                  className="flex-1 py-2.5 sm:py-3 rounded-[14px] font-bold text-xs sm:text-sm text-violet-300 bg-violet-500/10 border border-violet-500/30 hover:bg-violet-500/20 transition-all cursor-pointer"
                   onClick={() => setShowSuccessModal(false)}
                 >
                   Pay Later
                 </button>
                 <button
-                  className="flex-1 py-3 rounded-[14px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-[1.02] disabled:opacity-55 transition-all cursor-pointer flex items-center justify-center gap-2 border-none"
+                  className="flex-1 py-2.5 sm:py-3 rounded-[14px] font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-[1.02] disabled:opacity-55 transition-all cursor-pointer flex items-center justify-center gap-1.5 border-none"
                   onClick={handlePayment}
                   disabled={processingPayment}
                 >
@@ -407,7 +404,7 @@ const BookingPage = () => {
                     </>
                   ) : (
                     <>
-                      <CreditCard size={15} /> Pay with Khalti
+                      <CreditCard size={14} /> Pay with Khalti
                     </>
                   )}
                 </button>
@@ -416,25 +413,27 @@ const BookingPage = () => {
           </div>
         )}
 
-        {/* ── HEADER ── */}
+        {/* Header */}
         <div className="sticky top-0 z-40 bg-[rgba(10,5,30,0.85)] backdrop-blur-[20px] border-b border-violet-500/20">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
             <button
               onClick={() => window.history.back()}
-              className="flex items-center gap-2 bg-transparent border-none cursor-pointer text-violet-300 font-bold text-sm hover:text-white transition-colors p-0"
+              className="flex items-center gap-1.5 sm:gap-2 bg-transparent border-none cursor-pointer text-violet-300 font-bold text-xs sm:text-sm hover:text-white transition-colors p-0"
             >
-              <ArrowLeft size={18} /> Back to Destinations
+              <ArrowLeft size={16} />{" "}
+              <span className="hidden xs:inline">Back to Destinations</span>
+              <span className="xs:hidden">Back</span>
             </button>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <div className="hidden md:flex items-center gap-1.5 text-sm text-[#6b5a8e]">
-                <Shield size={15} className="text-emerald-500" /> Secure Booking
+                <Shield size={14} className="text-emerald-500" /> Secure Booking
               </div>
               <button
                 onClick={() => setIsFavorite(!isFavorite)}
-                className={`w-10 h-10 rounded-full flex items-center justify-center border cursor-pointer transition-all ${isFavorite ? "bg-violet-500/30 border-violet-500/30" : "bg-violet-500/10 border-violet-500/30 hover:bg-violet-500/20"}`}
+                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border cursor-pointer transition-all ${isFavorite ? "bg-violet-500/30 border-violet-500/30" : "bg-violet-500/10 border-violet-500/30 hover:bg-violet-500/20"}`}
               >
                 <Heart
-                  size={18}
+                  size={15}
                   className={isFavorite ? "text-violet-300" : "text-[#6b5a8e]"}
                   fill={isFavorite ? "#c4b5fd" : "none"}
                 />
@@ -443,24 +442,24 @@ const BookingPage = () => {
           </div>
         </div>
 
-        {/* ── MAIN CONTENT ── */}
-        <div className="max-w-7xl mx-auto px-6 py-10 pb-20 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-10 pb-16 sm:pb-20 grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-start">
           {/* LEFT: Summary */}
           <div className="lg:col-span-1 lg:sticky lg:top-20">
             <div className="rounded-[24px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22">
-              <div className="relative h-[240px] overflow-hidden">
+              <div className="relative h-[200px] sm:h-[240px] overflow-hidden">
                 <img
                   src={tourPackage.imageUrls?.[0]}
                   alt={tourPackage.title}
                   className="w-full h-full object-cover block"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#07030f]/85 via-[#07030f]/20 to-transparent" />
-                <div className="absolute top-3.5 left-3.5 text-xs font-bold px-3 py-1.5 rounded-full bg-violet-500/12 text-violet-300 border border-violet-500/20">
+                <div className="absolute top-3 left-3 text-xs font-bold px-2.5 py-1 rounded-full bg-violet-500/12 text-violet-300 border border-violet-500/20">
                   {tourPackage.status}
                 </div>
-                <div className="absolute bottom-3.5 right-3.5 flex items-center gap-1.5 bg-[#07030f]/70 backdrop-blur-sm px-3 py-1.5 rounded-full border border-amber-500/25">
-                  <Star size={13} className="text-amber-400 fill-amber-400" />
-                  <span className="text-amber-300 font-bold text-sm">
+                <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-[#07030f]/70 backdrop-blur-sm px-2.5 py-1 rounded-full border border-amber-500/25">
+                  <Star size={11} className="text-amber-400 fill-amber-400" />
+                  <span className="text-amber-300 font-bold text-xs sm:text-sm">
                     {tourPackage.rating}
                   </span>
                   <span className="text-white/40 text-xs">
@@ -468,52 +467,54 @@ const BookingPage = () => {
                   </span>
                 </div>
               </div>
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <h2
-                  className="text-[1.4rem] font-black text-white mb-1.5"
+                  className="text-lg sm:text-[1.4rem] font-black text-white mb-1.5"
                   style={{ fontFamily: "'Playfair Display', serif" }}
                 >
                   {tourPackage.title}
                 </h2>
-                <div className="flex items-center gap-1.5 mb-5">
-                  <MapPin size={14} className="text-violet-500" />
-                  <span className="text-violet-400 text-sm">
+                <div className="flex items-center gap-1.5 mb-4 sm:mb-5">
+                  <MapPin size={13} className="text-violet-500" />
+                  <span className="text-violet-400 text-xs sm:text-sm">
                     {tourPackage.destination}
                   </span>
                 </div>
-                <div className="flex gap-4 py-3.5 border-t border-b border-violet-500/15 mb-4">
+                <div className="flex gap-3 sm:gap-4 py-3 border-t border-b border-violet-500/15 mb-3 sm:mb-4">
                   <div className="flex items-center gap-1.5">
-                    <Clock size={14} className="text-violet-500" />
-                    <span className="text-violet-300 text-sm font-semibold">
+                    <Clock size={13} className="text-violet-500" />
+                    <span className="text-violet-300 text-xs sm:text-sm font-semibold">
                       {tourPackage.duration}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Users size={14} className="text-violet-500" />
-                    <span className="text-violet-300 text-sm font-semibold">
+                    <Users size={13} className="text-violet-500" />
+                    <span className="text-violet-300 text-xs sm:text-sm font-semibold">
                       {tourPackage.group}
                     </span>
                   </div>
                 </div>
-                <div className="mb-5">
+                <div className="mb-4 sm:mb-5">
                   <span className="text-[#6b5a8e] text-xs">Starts: </span>
-                  <span className="text-violet-400 text-sm font-bold">
+                  <span className="text-violet-400 text-xs sm:text-sm font-bold">
                     {new Date(tourPackage.startDate).toLocaleDateString(
                       "en-US",
                       { year: "numeric", month: "long", day: "numeric" },
                     )}
                   </span>
                 </div>
-                <div className="flex justify-between items-center py-3.5 border-t border-violet-500/15 mb-5">
-                  <span className="font-bold text-violet-300">Total</span>
+                <div className="flex justify-between items-center py-3 border-t border-violet-500/15 mb-4 sm:mb-5">
+                  <span className="font-bold text-violet-300 text-sm">
+                    Total
+                  </span>
                   <span
-                    className="text-[2rem] font-black bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
+                    className="text-[1.6rem] sm:text-[2rem] font-black bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
                     style={{ fontFamily: "'Playfair Display', serif" }}
                   >
                     Rs. {tourPackage.price}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-2.5 pt-3.5 border-t border-violet-500/12">
+                <div className="grid grid-cols-2 gap-2 pt-3 border-t border-violet-500/12">
                   {[
                     "Free Cancellation",
                     "Best Price",
@@ -522,9 +523,9 @@ const BookingPage = () => {
                   ].map((item) => (
                     <div
                       key={item}
-                      className="flex items-center gap-2 text-xs text-[#9e9ab5]"
+                      className="flex items-center gap-1.5 text-xs text-[#9e9ab5]"
                     >
-                      <Check size={13} className="text-emerald-500 shrink-0" />{" "}
+                      <Check size={11} className="text-emerald-500 shrink-0" />{" "}
                       {item}
                     </div>
                   ))}
@@ -536,25 +537,25 @@ const BookingPage = () => {
           {/* RIGHT: Form */}
           <div className="lg:col-span-2">
             {/* Progress */}
-            <div className="bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22 rounded-[24px] px-7 py-6 mb-6">
+            <div className="bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22 rounded-[24px] px-4 sm:px-7 py-4 sm:py-6 mb-4 sm:mb-6">
               <div className="flex items-center">
                 {[1, 2, 3].map((step) => (
                   <React.Fragment key={step}>
                     <div className="flex flex-col items-center flex-1">
                       <div
-                        className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-base transition-all ${currentStep > step ? "bg-gradient-to-r from-emerald-500 to-emerald-700 text-white shadow-[0_4px_16px_rgba(16,185,129,0.4)]" : currentStep === step ? "bg-gradient-to-r from-violet-500 to-violet-700 text-white shadow-[0_4px_16px_rgba(139,92,246,0.5)] scale-110" : "bg-violet-500/10 text-[#6b5a8e] border border-violet-500/20"}`}
+                        className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center font-bold text-sm sm:text-base transition-all ${currentStep > step ? "bg-gradient-to-r from-emerald-500 to-emerald-700 text-white shadow-[0_4px_16px_rgba(16,185,129,0.4)]" : currentStep === step ? "bg-gradient-to-r from-violet-500 to-violet-700 text-white shadow-[0_4px_16px_rgba(139,92,246,0.5)] scale-110" : "bg-violet-500/10 text-[#6b5a8e] border border-violet-500/20"}`}
                       >
-                        {currentStep > step ? <Check size={20} /> : step}
+                        {currentStep > step ? <Check size={16} /> : step}
                       </div>
                       <p
-                        className={`text-xs mt-2 font-bold ${currentStep >= step ? "text-violet-400" : "text-[#4a3a6a]"}`}
+                        className={`text-[0.6rem] sm:text-xs mt-1.5 sm:mt-2 font-bold text-center ${currentStep >= step ? "text-violet-400" : "text-[#4a3a6a]"}`}
                       >
                         {["Trip Details", "Your Info", "Review"][step - 1]}
                       </p>
                     </div>
                     {step < 3 && (
                       <div
-                        className={`flex-1 h-[3px] rounded-full mx-1 mb-[22px] transition-all ${currentStep > step ? "bg-gradient-to-r from-violet-500 to-violet-700" : "bg-violet-500/15"}`}
+                        className={`flex-1 h-[2px] sm:h-[3px] rounded-full mx-1 mb-[22px] sm:mb-[26px] transition-all ${currentStep > step ? "bg-gradient-to-r from-violet-500 to-violet-700" : "bg-violet-500/15"}`}
                       />
                     )}
                   </React.Fragment>
@@ -562,26 +563,26 @@ const BookingPage = () => {
               </div>
             </div>
 
-            {/* STEP 1 */}
+            {/* Step 1 */}
             {currentStep === 1 && (
-              <div className="bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22 rounded-[24px] px-8 py-7 mb-5">
-                <div className="flex items-center gap-4 mb-7">
-                  <div className="w-12 h-12 rounded-[14px] bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-[0_4px_16px_rgba(139,92,246,0.4)] shrink-0">
-                    <Calendar size={22} className="text-white" />
+              <div className="bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22 rounded-[24px] px-4 sm:px-8 py-5 sm:py-7 mb-4 sm:mb-5">
+                <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-7">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-[0_4px_16px_rgba(139,92,246,0.4)] shrink-0">
+                    <Calendar size={18} className="text-white" />
                   </div>
                   <div>
                     <h3
-                      className="text-[1.35rem] font-black text-white leading-tight"
+                      className="text-lg sm:text-[1.35rem] font-black text-white leading-tight"
                       style={{ fontFamily: "'Playfair Display', serif" }}
                     >
                       Trip Details
                     </h3>
-                    <p className="text-[#6b5a8e] text-sm">
+                    <p className="text-[#6b5a8e] text-xs sm:text-sm">
                       When do you want to travel?
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-5 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-5 sm:mb-6">
                   {[
                     {
                       label: "Start Date",
@@ -597,7 +598,7 @@ const BookingPage = () => {
                     },
                   ].map(({ label, name, min }) => (
                     <div key={name}>
-                      <label className="block text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
+                      <label className="block text-[0.65rem] sm:text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-1.5 sm:mb-2">
                         {label} *
                       </label>
                       <input
@@ -612,16 +613,16 @@ const BookingPage = () => {
                     </div>
                   ))}
                 </div>
-                <div className="grid grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                   {[
                     { label: "Adults *", key: "numberOfAdults", min: 1 },
                     { label: "Children", key: "numberOfChildren", min: 0 },
                   ].map(({ label, key, min }) => (
                     <div key={key}>
-                      <label className="block text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
+                      <label className="block text-[0.65rem] sm:text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-1.5 sm:mb-2">
                         {label}
                       </label>
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() =>
@@ -630,11 +631,11 @@ const BookingPage = () => {
                               [key]: Math.max(min, prev[key] - 1),
                             }))
                           }
-                          className="w-11 h-11 rounded-[12px] border border-violet-500/30 bg-violet-500/10 text-violet-300 text-xl font-bold cursor-pointer hover:bg-violet-500/25 hover:border-violet-500/60 transition-all flex items-center justify-center shrink-0"
+                          className="w-9 h-9 sm:w-11 sm:h-11 rounded-[12px] border border-violet-500/30 bg-violet-500/10 text-violet-300 text-lg sm:text-xl font-bold cursor-pointer hover:bg-violet-500/25 hover:border-violet-500/60 transition-all flex items-center justify-center shrink-0"
                         >
                           −
                         </button>
-                        <div className="flex-1 bg-violet-500/8 border border-violet-500/20 text-white rounded-[14px] text-center font-extrabold text-xl py-2.5">
+                        <div className="flex-1 bg-violet-500/8 border border-violet-500/20 text-white rounded-[14px] text-center font-extrabold text-lg sm:text-xl py-2">
                           {formData[key]}
                         </div>
                         <button
@@ -645,7 +646,7 @@ const BookingPage = () => {
                               [key]: prev[key] + 1,
                             }))
                           }
-                          className="w-11 h-11 rounded-[12px] border border-violet-500/30 bg-violet-500/10 text-violet-300 text-xl font-bold cursor-pointer hover:bg-violet-500/25 hover:border-violet-500/60 transition-all flex items-center justify-center shrink-0"
+                          className="w-9 h-9 sm:w-11 sm:h-11 rounded-[12px] border border-violet-500/30 bg-violet-500/10 text-violet-300 text-lg sm:text-xl font-bold cursor-pointer hover:bg-violet-500/25 hover:border-violet-500/60 transition-all flex items-center justify-center shrink-0"
                         >
                           +
                         </button>
@@ -656,34 +657,34 @@ const BookingPage = () => {
               </div>
             )}
 
-            {/* STEP 2 */}
+            {/* Step 2 */}
             {currentStep === 2 && (
-              <div className="bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22 rounded-[24px] px-8 py-7 mb-5">
-                <div className="flex items-center gap-4 mb-7">
-                  <div className="w-12 h-12 rounded-[14px] bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-[0_4px_16px_rgba(139,92,246,0.4)] shrink-0">
-                    <User size={22} className="text-white" />
+              <div className="bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22 rounded-[24px] px-4 sm:px-8 py-5 sm:py-7 mb-4 sm:mb-5">
+                <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-7">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-[0_4px_16px_rgba(139,92,246,0.4)] shrink-0">
+                    <User size={18} className="text-white" />
                   </div>
                   <div>
                     <h3
-                      className="text-[1.35rem] font-black text-white leading-tight"
+                      className="text-lg sm:text-[1.35rem] font-black text-white leading-tight"
                       style={{ fontFamily: "'Playfair Display', serif" }}
                     >
                       Personal Information
                     </h3>
-                    <p className="text-[#6b5a8e] text-sm">
+                    <p className="text-[#6b5a8e] text-xs sm:text-sm">
                       Tell us about yourself
                     </p>
                   </div>
                 </div>
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3 sm:gap-4">
                   <div>
-                    <label className="block text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
+                    <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-1.5">
                       Full Name *
                     </label>
                     <div className="relative">
                       <User
-                        size={16}
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-500 pointer-events-none"
+                        size={14}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-500 pointer-events-none"
                       />
                       <input
                         type="text"
@@ -692,19 +693,19 @@ const BookingPage = () => {
                         onChange={handleInputChange}
                         required
                         placeholder="John Doe"
-                        className={`${inputClass} pl-10`}
+                        className={`${inputClass} pl-9`}
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <label className="block text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
+                      <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-1.5">
                         Email *
                       </label>
                       <div className="relative">
                         <Mail
-                          size={16}
-                          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-500 pointer-events-none"
+                          size={14}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-500 pointer-events-none"
                         />
                         <input
                           type="email"
@@ -713,18 +714,18 @@ const BookingPage = () => {
                           onChange={handleInputChange}
                           required
                           placeholder="john@example.com"
-                          className={`${inputClass} pl-10`}
+                          className={`${inputClass} pl-9`}
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
+                      <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-1.5">
                         Phone *
                       </label>
                       <div className="relative">
                         <Phone
-                          size={16}
-                          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-500 pointer-events-none"
+                          size={14}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-500 pointer-events-none"
                         />
                         <input
                           type="tel"
@@ -733,19 +734,19 @@ const BookingPage = () => {
                           onChange={handleInputChange}
                           required
                           placeholder="+977 98xxxxxxxx"
-                          className={`${inputClass} pl-10`}
+                          className={`${inputClass} pl-9`}
                         />
                       </div>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
+                    <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-1.5">
                       Country *
                     </label>
                     <div className="relative">
                       <Globe
-                        size={16}
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-500 pointer-events-none"
+                        size={14}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-500 pointer-events-none"
                       />
                       <input
                         type="text"
@@ -754,18 +755,18 @@ const BookingPage = () => {
                         onChange={handleInputChange}
                         required
                         placeholder="Nepal"
-                        className={`${inputClass} pl-10`}
+                        className={`${inputClass} pl-9`}
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[0.68rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
+                    <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-1.5">
                       Special Requests
                     </label>
                     <div className="relative">
                       <MessageSquare
-                        size={16}
-                        className="absolute left-3.5 top-4 text-violet-500 pointer-events-none"
+                        size={14}
+                        className="absolute left-3 top-3.5 text-violet-500 pointer-events-none"
                       />
                       <textarea
                         name="specialRequests"
@@ -773,7 +774,7 @@ const BookingPage = () => {
                         onChange={handleInputChange}
                         rows={4}
                         placeholder="Any special requirements..."
-                        className={`${inputClass} pl-10 resize-none`}
+                        className={`${inputClass} pl-9 resize-none`}
                       />
                     </div>
                   </div>
@@ -781,29 +782,29 @@ const BookingPage = () => {
               </div>
             )}
 
-            {/* STEP 3 */}
+            {/* Step 3 */}
             {currentStep === 3 && (
-              <div className="bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22 rounded-[24px] px-8 py-7 mb-5">
-                <div className="flex items-center gap-4 mb-7">
-                  <div className="w-12 h-12 rounded-[14px] bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-[0_4px_16px_rgba(139,92,246,0.4)] shrink-0">
-                    <CheckCircle size={22} className="text-white" />
+              <div className="bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22 rounded-[24px] px-4 sm:px-8 py-5 sm:py-7 mb-4 sm:mb-5">
+                <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-7">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-[0_4px_16px_rgba(139,92,246,0.4)] shrink-0">
+                    <CheckCircle size={18} className="text-white" />
                   </div>
                   <div>
                     <h3
-                      className="text-[1.35rem] font-black text-white leading-tight"
+                      className="text-lg sm:text-[1.35rem] font-black text-white leading-tight"
                       style={{ fontFamily: "'Playfair Display', serif" }}
                     >
                       Review & Confirm
                     </h3>
-                    <p className="text-[#6b5a8e] text-sm">
+                    <p className="text-[#6b5a8e] text-xs sm:text-sm">
                       Check your booking details
                     </p>
                   </div>
                 </div>
-                <div className="bg-violet-500/8 border border-violet-500/20 rounded-[18px] px-5 py-5 mb-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <MapPin size={15} className="text-violet-500" />
-                    <span className="font-extrabold text-white text-sm">
+                <div className="bg-violet-500/8 border border-violet-500/20 rounded-[18px] px-4 py-4 sm:px-5 sm:py-5 mb-4">
+                  <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                    <MapPin size={14} className="text-violet-500" />
+                    <span className="font-extrabold text-white text-xs sm:text-sm">
                       Trip Summary
                     </span>
                   </div>
@@ -822,23 +823,23 @@ const BookingPage = () => {
                   ].map((row) => (
                     <div
                       key={row.label}
-                      className="flex justify-between items-center py-2.5 border-b border-violet-500/12 last:border-b-0"
+                      className="flex justify-between items-start gap-2 py-2 border-b border-violet-500/12 last:border-b-0"
                     >
-                      <span className="text-[#6b5a8e] text-sm">
+                      <span className="text-[#6b5a8e] text-xs sm:text-sm shrink-0">
                         {row.label}
                       </span>
-                      <span className="text-white text-sm font-bold">
+                      <span className="text-white text-xs sm:text-sm font-bold text-right">
                         {row.value}
                       </span>
                     </div>
                   ))}
                 </div>
-                <div className="bg-emerald-500/8 border border-emerald-500/25 rounded-[14px] px-4 py-3.5 flex gap-3">
+                <div className="bg-emerald-500/8 border border-emerald-500/25 rounded-[14px] px-3 sm:px-4 py-3 flex gap-2 sm:gap-3">
                   <Shield
-                    size={16}
+                    size={14}
                     className="text-emerald-500 shrink-0 mt-0.5"
                   />
-                  <div className="text-sm text-[#9e9ab5] leading-[1.65]">
+                  <div className="text-xs sm:text-sm text-[#9e9ab5] leading-[1.65]">
                     <p className="font-bold text-emerald-400 mb-1">
                       Ready to Book
                     </p>
@@ -850,24 +851,24 @@ const BookingPage = () => {
             )}
 
             {/* Navigation */}
-            <div className="bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22 rounded-[24px] px-7 py-5 flex items-center justify-between gap-3 flex-wrap">
+            <div className="bg-gradient-to-br from-[#1a0a3e] to-[#120630] border border-violet-500/22 rounded-[24px] px-4 sm:px-7 py-4 sm:py-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}
                 disabled={currentStep === 1}
-                className="flex items-center gap-2 px-6 py-3 rounded-[14px] font-bold text-sm text-violet-300 bg-violet-500/10 border border-violet-500/30 hover:bg-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-[14px] font-bold text-xs sm:text-sm text-violet-300 bg-violet-500/10 border border-violet-500/30 hover:bg-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
               >
-                <ArrowLeft size={17} /> Previous
+                <ArrowLeft size={15} /> Previous
               </button>
 
-              <div className="flex items-center gap-2.5 flex-wrap">
+              <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 sm:gap-2.5">
                 {bookingId && currentStep === 3 && (
                   <>
                     <button
                       type="button"
                       onClick={handlePayment}
                       disabled={processingPayment}
-                      className="flex items-center gap-2 px-6 py-3 rounded-[14px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-[1.03] disabled:opacity-55 disabled:cursor-not-allowed transition-all border-none cursor-pointer"
+                      className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-[14px] font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-[1.03] disabled:opacity-55 disabled:cursor-not-allowed transition-all border-none cursor-pointer"
                     >
                       {processingPayment ? (
                         <>
@@ -876,7 +877,7 @@ const BookingPage = () => {
                         </>
                       ) : (
                         <>
-                          <CreditCard size={17} /> Pay Rs. {tourPackage.price}
+                          <CreditCard size={15} /> Pay Rs. {tourPackage.price}
                         </>
                       )}
                     </button>
@@ -884,9 +885,9 @@ const BookingPage = () => {
                       type="button"
                       onClick={() => setShowCancelConfirm(true)}
                       disabled={cancelling}
-                      className="flex items-center gap-2 px-5 py-3 rounded-[14px] font-bold text-sm text-white bg-gradient-to-r from-red-500 to-red-700 shadow-[0_4px_15px_rgba(239,68,68,0.4)] hover:scale-[1.03] disabled:opacity-55 disabled:cursor-not-allowed transition-all border-none cursor-pointer"
+                      className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-[14px] font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-red-500 to-red-700 shadow-[0_4px_15px_rgba(239,68,68,0.4)] hover:scale-[1.03] disabled:opacity-55 disabled:cursor-not-allowed transition-all border-none cursor-pointer"
                     >
-                      <XCircle size={17} /> Cancel
+                      <XCircle size={15} /> Cancel
                     </button>
                   </>
                 )}
@@ -894,16 +895,16 @@ const BookingPage = () => {
                   <button
                     type="button"
                     onClick={() => setCurrentStep((s) => Math.min(3, s + 1))}
-                    className="flex items-center gap-2 px-7 py-3 rounded-[14px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-[1.03] transition-all border-none cursor-pointer"
+                    className="flex items-center justify-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-[14px] font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-[1.03] transition-all border-none cursor-pointer"
                   >
-                    Next Step <ArrowRight size={17} />
+                    Next Step <ArrowRight size={15} />
                   </button>
                 ) : (
                   <button
                     type="button"
                     onClick={handleBooking}
                     disabled={submitting || !!bookingId}
-                    className="flex items-center gap-2 px-7 py-3 rounded-[14px] font-bold text-sm text-white bg-gradient-to-r from-emerald-500 to-emerald-700 shadow-[0_4px_15px_rgba(16,185,129,0.4)] hover:scale-[1.03] disabled:opacity-55 disabled:cursor-not-allowed transition-all border-none cursor-pointer"
+                    className="flex items-center justify-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-[14px] font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-emerald-500 to-emerald-700 shadow-[0_4px_15px_rgba(16,185,129,0.4)] hover:scale-[1.03] disabled:opacity-55 disabled:cursor-not-allowed transition-all border-none cursor-pointer"
                   >
                     {submitting ? (
                       <>
@@ -912,11 +913,11 @@ const BookingPage = () => {
                       </>
                     ) : bookingId ? (
                       <>
-                        <CheckCircle size={17} /> Already Booked ✓
+                        <CheckCircle size={15} /> Already Booked ✓
                       </>
                     ) : (
                       <>
-                        <CheckCircle size={17} /> Confirm Booking
+                        <CheckCircle size={15} /> Confirm Booking
                       </>
                     )}
                   </button>
