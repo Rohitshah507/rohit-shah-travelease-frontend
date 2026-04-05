@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { ChevronRight, MapPin, Calendar, Users, Star } from "lucide-react";
 import { Menu, X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import Footer from "../Components/Footer";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -379,15 +380,26 @@ const Hero = () => {
 
             {/* Wide diffuse glow below planet */}
             <ellipse
-              cx="400" cy="750" rx="340" ry="120"
+              cx="400"
+              cy="750"
+              rx="340"
+              ry="120"
               fill="rgba(160,210,255,0.08)"
               className="te-atmo-pulse"
             />
-            <ellipse cx="400" cy="780" rx="280" ry="90" fill="rgba(200,230,255,0.06)" />
+            <ellipse
+              cx="400"
+              cy="780"
+              rx="280"
+              ry="90"
+              fill="rgba(200,230,255,0.06)"
+            />
 
             {/* Atmosphere ring */}
             <circle
-              cx="400" cy="400" r="370"
+              cx="400"
+              cy="400"
+              r="370"
               fill="url(#atmoRing)"
               className="te-atmo-pulse"
             />
@@ -397,7 +409,10 @@ const Hero = () => {
 
             {/* Horizon glow on planet bottom */}
             <ellipse
-              cx="400" cy="760" rx="370" ry="160"
+              cx="400"
+              cy="760"
+              rx="370"
+              ry="160"
               fill="url(#horizonGlow)"
               clipPath="url(#planetClip)"
               className="te-atmo-pulse"
@@ -405,7 +420,10 @@ const Hero = () => {
 
             {/* Bright horizon line */}
             <ellipse
-              cx="400" cy="768" rx="320" ry="50"
+              cx="400"
+              cy="768"
+              rx="320"
+              ry="50"
               fill="url(#bottomSpill)"
               clipPath="url(#planetClip)"
             />
@@ -422,7 +440,9 @@ const Hero = () => {
 
             {/* Planet edge glow ring */}
             <circle
-              cx="400" cy="400" r="368"
+              cx="400"
+              cy="400"
+              r="368"
               fill="none"
               stroke="rgba(180,215,255,0.2)"
               strokeWidth="2"
@@ -430,7 +450,10 @@ const Hero = () => {
 
             {/* Subtle darkness on top half (terminator effect) */}
             <ellipse
-              cx="400" cy="40" rx="380" ry="280"
+              cx="400"
+              cy="40"
+              rx="380"
+              ry="280"
               fill="rgba(0,0,0,0.25)"
               clipPath="url(#planetClip)"
             />
@@ -462,7 +485,8 @@ const Hero = () => {
           className="absolute bottom-0 left-0 right-0 pointer-events-none"
           style={{
             height: "220px",
-            background: "linear-gradient(to top, #000 0%, rgba(0,0,0,0.85) 40%, transparent 100%)",
+            background:
+              "linear-gradient(to top, #000 0%, rgba(0,0,0,0.85) 40%, transparent 100%)",
             zIndex: 2,
           }}
         />
@@ -692,7 +716,8 @@ const Hero = () => {
       <section
         id="destinations"
         style={{
-          background: "linear-gradient(to bottom, #000 0%, #070a0e 30%, #0a0f16 60%, #0d1520 100%)",
+          background:
+            "linear-gradient(to bottom, #000 0%, #070a0e 30%, #0a0f16 60%, #0d1520 100%)",
           padding: "100px 0",
         }}
       >
@@ -730,7 +755,10 @@ const Hero = () => {
                 className="te-dest-card"
                 onClick={() => navigate("/login")}
               >
-                <div className="relative overflow-hidden" style={{ height: "280px" }}>
+                <div
+                  className="relative overflow-hidden"
+                  style={{ height: "280px" }}
+                >
                   <img
                     src={dest.image}
                     alt={dest.title}
@@ -757,7 +785,10 @@ const Hero = () => {
                     </h3>
                     <p
                       className="flex items-center gap-1.5 text-white/65"
-                      style={{ fontFamily: "'Outfit', sans-serif", fontSize: "13px" }}
+                      style={{
+                        fontFamily: "'Outfit', sans-serif",
+                        fontSize: "13px",
+                      }}
                     >
                       <MapPin size={13} /> {dest.location}
                     </p>
@@ -777,7 +808,10 @@ const Hero = () => {
                 <div className="p-5">
                   <p
                     className="text-white/45 leading-relaxed"
-                    style={{ fontFamily: "'Outfit', sans-serif", fontSize: "14px" }}
+                    style={{
+                      fontFamily: "'Outfit', sans-serif",
+                      fontSize: "14px",
+                    }}
                   >
                     {dest.description}
                   </p>
@@ -792,14 +826,13 @@ const Hero = () => {
       <section
         id="experiences"
         style={{
-          background: "linear-gradient(to bottom, #0d1520 0%, #060a10 50%, #000 100%)",
+          background:
+            "linear-gradient(to bottom, #0d1520 0%, #060a10 50%, #000 100%)",
           padding: "100px 0",
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div
-            className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 xl:gap-16 items-center mb-14 sm:mb-20 lg:mb-28"
-          >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 xl:gap-16 items-center mb-14 sm:mb-20 lg:mb-28">
             <div
               className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl group cursor-pointer"
               onClick={() => navigate("/signup")}
@@ -813,7 +846,8 @@ const Hero = () => {
               <div
                 className="absolute inset-0"
                 style={{
-                  background: "linear-gradient(to top, rgba(0,0,0,0.65), transparent)",
+                  background:
+                    "linear-gradient(to top, rgba(0,0,0,0.65), transparent)",
                 }}
               />
               <div className="absolute inset-0 flex items-end p-6 sm:p-10">
@@ -937,6 +971,7 @@ const Hero = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </>
   );
 };

@@ -28,7 +28,7 @@ const ForgetPassword = () => {
       await axios.post(
         `${serverURL}/api/auth/send-otp`,
         { email },
-        { withCredentials: true }
+        { withCredentials: true },
       );
       toast.success("OTP sent to your email!");
       setStep(2);
@@ -52,7 +52,7 @@ const ForgetPassword = () => {
         `${serverURL}/api/auth/verify-otp`,
         // Send both string and number forms — adjust based on your backend expectation
         { email, otp: otp.trim() },
-        { withCredentials: true }
+        { withCredentials: true },
       );
       toast.success("OTP verified!");
       setStep(3);
@@ -84,7 +84,7 @@ const ForgetPassword = () => {
       await axios.post(
         `${serverURL}/api/auth/reset-password`,
         { email, newPassword: password },
-        { withCredentials: true }
+        { withCredentials: true },
       );
       toast.success("Password reset successfully!");
       setTimeout(() => navigate("/login"), 1500);
@@ -260,9 +260,7 @@ const ForgetPassword = () => {
                   style={{ border: `1px solid ${borderColor}` }}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && handleResetPassword()
-                  }
+                  onKeyDown={(e) => e.key === "Enter" && handleResetPassword()}
                 />
                 <button
                   type="button"
