@@ -1,4 +1,4 @@
-// TouristDashboard.jsx - Responsive version
+// TouristDashboard.jsx - Responsive version with functional search
 
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -171,6 +171,11 @@ const TouristDashboard = () => {
   const [favoriteCards, setFavoriteCards] = useState(new Set());
   const navigate = useNavigate();
 
+  // ── SEARCH STATE (new) ──
+  const [searchDestination, setSearchDestination] = useState("");
+  const [searchDate, setSearchDate] = useState("");
+  const [searchTravelers, setSearchTravelers] = useState("2");
+
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [newReviewIds, setNewReviewIds] = useState(new Set());
@@ -223,6 +228,15 @@ const TouristDashboard = () => {
     };
     fetchReviews();
   }, []);
+
+  // ── SEARCH HANDLER (new) ──
+  const handleSearch = () => {
+    if (!searchDestination.trim()) {
+      toast.error("Please enter a destination to search");
+      return;
+    }
+    navigate(`/explore?search=${encodeURIComponent(searchDestination.trim())}`);
+  };
 
   const toggleFavorite = (id) => {
     setFavoriteCards((prev) => {
@@ -440,7 +454,7 @@ const TouristDashboard = () => {
               </div>
             </div>
 
-            {/* Search Card */}
+            {/* ── SEARCH CARD (updated) ── */}
             <div className="rounded-[24px] sm:rounded-[28px] p-5 sm:p-8 border border-violet-500/35 shadow-[0_0_60px_rgba(139,92,246,0.2)] bg-gradient-to-br from-[#1a0a3e] to-[#0f0524] mt-4 lg:mt-0">
               <h3
                 className="text-[1.3rem] sm:text-[1.6rem] font-black text-white mb-1"
@@ -452,50 +466,75 @@ const TouristDashboard = () => {
                 Search from 500+ curated destinations
               </p>
               <div className="flex flex-col gap-3 sm:gap-4">
+                {/* Destination Input */}
                 <div>
                   <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
                     Destination
                   </label>
-                  <div className="flex items-center gap-3 bg-violet-500/10 border border-violet-500/25 rounded-[14px] px-4 py-3">
-                    <MapPin size={16} className="text-violet-500" />
+                  <div className="flex items-center gap-3 bg-violet-500/10 border border-violet-500/25 rounded-[14px] px-4 py-3 focus-within:border-violet-400/60 transition-colors">
+                    <MapPin size={16} className="text-violet-500 shrink-0" />
                     <input
                       className="flex-1 bg-transparent outline-none text-white text-sm placeholder:text-violet-400/50 min-w-0"
                       placeholder="Where do you want to go?"
+                      value={searchDestination}
+                      onChange={(e) => setSearchDestination(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                     />
                   </div>
                 </div>
+
+                {/* Check-in + Travelers */}
                 <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                  {[
-                    { label: "Check-in", icon: Calendar, type: "date" },
-                    { label: "Travelers", icon: Users, type: "select" },
-                  ].map(({ label, icon: Icon, type }) => (
-                    <div key={label}>
-                      <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
-                        {label}
-                      </label>
-                      <div className="flex items-center gap-2 bg-violet-500/10 border border-violet-500/25 rounded-[14px] px-3 py-2.5 sm:py-3">
-                        <Icon size={14} className="text-violet-500 shrink-0" />
-                        {type === "select" ? (
-                          <select className="flex-1 bg-transparent text-violet-300 outline-none text-xs [&>option]:bg-[#1a0a3e] min-w-0">
-                            <option>2 Persons</option>
-                            <option>1 Person</option>
-                            <option>3 Persons</option>
-                            <option>4+ Persons</option>
-                          </select>
-                        ) : (
-                          <input
-                            type="date"
-                            className="flex-1 bg-transparent text-violet-300 outline-none text-xs min-w-0"
-                          />
-                        )}
-                      </div>
+                  {/* Check-in */}
+                  <div>
+                    <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
+                      Check-in
+                    </label>
+                    <div className="flex items-center gap-2 bg-violet-500/10 border border-violet-500/25 rounded-[14px] px-3 py-2.5 sm:py-3 focus-within:border-violet-400/60 transition-colors">
+                      <Calendar
+                        size={14}
+                        className="text-violet-500 shrink-0"
+                      />
+                      <input
+                        type="date"
+                        value={searchDate}
+                        onChange={(e) => setSearchDate(e.target.value)}
+                        className="flex-1 bg-transparent text-violet-300 outline-none text-xs min-w-0"
+                      />
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Travelers */}
+                  <div>
+                    <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
+                      Travelers
+                    </label>
+                    <div className="flex items-center gap-2 bg-violet-500/10 border border-violet-500/25 rounded-[14px] px-3 py-2.5 sm:py-3 focus-within:border-violet-400/60 transition-colors">
+                      <Users size={14} className="text-violet-500 shrink-0" />
+                      <select
+                        value={searchTravelers}
+                        onChange={(e) => setSearchTravelers(e.target.value)}
+                        className="flex-1 bg-transparent text-violet-300 outline-none text-xs [&>option]:bg-[#1a0a3e] min-w-0"
+                      >
+                        <option value="1">1 Person</option>
+                        <option value="2">2 Persons</option>
+                        <option value="3">3 Persons</option>
+                        <option value="4">4+ Persons</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <button className="w-full flex items-center justify-center gap-2 py-3.5 sm:py-4 rounded-[16px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_25px_rgba(139,92,246,0.6)] hover:scale-[1.02] transition-all border-none cursor-pointer">
+
+                {/* Search Button */}
+                <button
+                  onClick={handleSearch}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 sm:py-4 rounded-[16px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_25px_rgba(139,92,246,0.6)] hover:scale-[1.02] transition-all border-none cursor-pointer"
+                >
                   <Compass size={16} /> Search Destinations
                 </button>
               </div>
+
+              {/* Popular Pills */}
               <div className="mt-4 sm:mt-5 pt-4 sm:pt-5 border-t border-violet-500/20">
                 <p className="text-[#6b5a8e] text-xs mb-2">🔥 Popular:</p>
                 <div className="flex flex-wrap gap-1.5 sm:gap-2">
@@ -507,7 +546,10 @@ const TouristDashboard = () => {
                   ].map(([icon, name]) => (
                     <span
                       key={name}
-                      className="px-3 py-1.5 rounded-full text-xs text-violet-300 bg-violet-500/12 border border-violet-500/20 cursor-pointer hover:bg-violet-500/25 transition-all"
+                      onClick={() =>
+                        navigate(`/explore?search=${encodeURIComponent(name)}`)
+                      }
+                      className="px-3 py-1.5 rounded-full text-xs text-violet-300 bg-violet-500/12 border border-violet-500/20 cursor-pointer hover:bg-violet-500/25 transition-all select-none"
                     >
                       {icon} {name}
                     </span>
@@ -612,7 +654,7 @@ const TouristDashboard = () => {
               </p>
             </div>
 
-            {/* Desktop: 3-col grid. Mobile: stacked */}
+            {/* Desktop: 3-col grid */}
             <div className="hidden md:grid grid-cols-3 gap-4">
               <div className="relative overflow-hidden rounded-[20px] row-span-2 min-h-[560px] cursor-pointer border border-violet-500/20 hover:border-violet-500/50 transition-all group">
                 <img
@@ -649,7 +691,14 @@ const TouristDashboard = () => {
                         $899
                       </span>
                     </span>
-                    <button className="px-5 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-r from-violet-500 to-violet-700 border-none cursor-pointer hover:scale-105 transition-all">
+                    <button
+                      onClick={() =>
+                        navigate(
+                          `/explore?search=${encodeURIComponent("Dubai")}`,
+                        )
+                      }
+                      className="px-5 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-r from-violet-500 to-violet-700 border-none cursor-pointer hover:scale-105 transition-all"
+                    >
                       Explore →
                     </button>
                   </div>
@@ -660,6 +709,7 @@ const TouristDashboard = () => {
                   src: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=600&q=80",
                   label: "Romance",
                   title: "Paris, France",
+                  search: "Paris",
                   price: "$699",
                   rating: "4.8",
                 },
@@ -667,6 +717,7 @@ const TouristDashboard = () => {
                   src: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
                   label: "Beach",
                   title: "Maldives",
+                  search: "Maldives",
                   price: "$1,299",
                   rating: "5.0",
                 },
@@ -674,6 +725,7 @@ const TouristDashboard = () => {
                   src: "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=600&q=80",
                   label: "Temples",
                   title: "Kyoto, Japan",
+                  search: "Kyoto",
                   price: "$849",
                   rating: "4.9",
                 },
@@ -681,12 +733,16 @@ const TouristDashboard = () => {
                   src: "https://www.royalcaribbean.com/media-assets/pmc/content/dam/shore-x/santorini-jtr/soc2-pyrgos-village-and-fira-town-with-wine-tasting/stock-photo-fira-town-volcano-sea-santorini_149799614.jpg?w=1024",
                   label: "Islands",
                   title: "Santorini, Greece",
+                  search: "Santorini",
                   price: "$999",
                   rating: "4.8",
                 },
-              ].map(({ src, label, title, price, rating }) => (
+              ].map(({ src, label, title, search, price, rating }) => (
                 <div
                   key={title}
+                  onClick={() =>
+                    navigate(`/explore?search=${encodeURIComponent(search)}`)
+                  }
                   className="relative overflow-hidden rounded-[20px] h-[265px] cursor-pointer border border-violet-500/20 hover:border-violet-500/50 transition-all group"
                 >
                   <img
@@ -728,6 +784,7 @@ const TouristDashboard = () => {
                   src: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=700&q=80",
                   label: "Editor's Pick",
                   title: "Dubai, UAE",
+                  search: "Dubai",
                   price: "$899",
                   rating: "4.9",
                 },
@@ -735,6 +792,7 @@ const TouristDashboard = () => {
                   src: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=600&q=80",
                   label: "Romance",
                   title: "Paris, France",
+                  search: "Paris",
                   price: "$699",
                   rating: "4.8",
                 },
@@ -742,6 +800,7 @@ const TouristDashboard = () => {
                   src: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
                   label: "Beach",
                   title: "Maldives",
+                  search: "Maldives",
                   price: "$1,299",
                   rating: "5.0",
                 },
@@ -749,12 +808,16 @@ const TouristDashboard = () => {
                   src: "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=600&q=80",
                   label: "Temples",
                   title: "Kyoto, Japan",
+                  search: "Kyoto",
                   price: "$849",
                   rating: "4.9",
                 },
-              ].map(({ src, label, title, price, rating }) => (
+              ].map(({ src, label, title, search, price, rating }) => (
                 <div
                   key={title}
+                  onClick={() =>
+                    navigate(`/explore?search=${encodeURIComponent(search)}`)
+                  }
                   className="relative overflow-hidden rounded-[16px] h-[200px] cursor-pointer border border-violet-500/20 group"
                 >
                   <img
@@ -1029,7 +1092,12 @@ const TouristDashboard = () => {
                     <p className="text-violet-400 text-sm mb-3 sm:mb-4">
                       {sub}
                     </p>
-                    <button className="px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs font-bold text-violet-300 bg-transparent border border-violet-500/50 hover:bg-violet-500/20 transition-all cursor-pointer">
+                    <button
+                      onClick={() =>
+                        navigate(`/explore?search=${encodeURIComponent(title)}`)
+                      }
+                      className="px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs font-bold text-violet-300 bg-transparent border border-violet-500/50 hover:bg-violet-500/20 transition-all cursor-pointer"
+                    >
                       Discover
                     </button>
                   </div>
@@ -1069,7 +1137,12 @@ const TouristDashboard = () => {
                     <p className="text-violet-400 text-sm mb-3 sm:mb-4">
                       {sub}
                     </p>
-                    <button className="px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs font-bold text-violet-300 bg-transparent border border-violet-500/50 hover:bg-violet-500/20 transition-all cursor-pointer">
+                    <button
+                      onClick={() =>
+                        navigate(`/explore?search=${encodeURIComponent(title)}`)
+                      }
+                      className="px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs font-bold text-violet-300 bg-transparent border border-violet-500/50 hover:bg-violet-500/20 transition-all cursor-pointer"
+                    >
                       Discover
                     </button>
                   </div>
@@ -1168,7 +1241,6 @@ const TouristDashboard = () => {
           ref={reviewSectionRef}
         >
           <div className="max-w-7xl mx-auto">
-            {/* Header */}
             <div className="text-center mb-10 sm:mb-14">
               <div className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400 mb-3">
                 ✦ Traveler Stories
@@ -1288,7 +1360,6 @@ const TouristDashboard = () => {
 
             {/* ── Write a review form ── */}
             <div className="rounded-[24px] sm:rounded-[32px] overflow-hidden border border-violet-500/30 shadow-[0_0_80px_rgba(139,92,246,0.15)] bg-gradient-to-br from-[#1a0a3e]/90 to-[#0f0524]/90 backdrop-blur-md">
-              {/* Form header */}
               <div className="relative px-5 sm:px-8 pt-6 sm:pt-8 pb-5 sm:pb-6 border-b border-violet-500/20 overflow-hidden">
                 <div className="absolute right-0 top-0 w-72 h-72 rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.12)_0%,transparent_70%)] blur-[40px] pointer-events-none" />
                 <div className="flex items-center gap-3">
@@ -1309,7 +1380,6 @@ const TouristDashboard = () => {
                 </div>
               </div>
 
-              {/* Success banner */}
               {reviewSubmitted && (
                 <div className="mx-4 sm:mx-8 mt-5 sm:mt-6 p-3 sm:p-4 rounded-[14px] bg-emerald-500/15 border border-emerald-500/35 flex items-center gap-3 animate-[fadeSlideIn_0.4s_ease_both]">
                   <CheckCircle
@@ -1324,9 +1394,7 @@ const TouristDashboard = () => {
 
               <div className="p-4 sm:p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-8">
-                  {/* Left: package selector + rating */}
                   <div className="flex flex-col gap-4 sm:gap-5">
-                    {/* Package selector */}
                     <div>
                       <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
                         Tour Package <span className="text-red-400">*</span>
@@ -1362,7 +1430,6 @@ const TouristDashboard = () => {
                       )}
                     </div>
 
-                    {/* Star rating */}
                     <div>
                       <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-3">
                         Your Rating <span className="text-red-400">*</span>
@@ -1397,7 +1464,6 @@ const TouristDashboard = () => {
                       )}
                     </div>
 
-                    {/* Privacy note */}
                     <div className="flex items-start gap-2.5 p-3 sm:p-4 rounded-[14px] bg-violet-500/8 border border-violet-500/15">
                       <Shield
                         size={13}
@@ -1411,7 +1477,6 @@ const TouristDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Right: comment + submit */}
                   <div className="flex flex-col gap-4 sm:gap-5">
                     <div className="flex-1 flex flex-col">
                       <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">

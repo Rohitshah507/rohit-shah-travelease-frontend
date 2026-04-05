@@ -13,7 +13,7 @@ import {
   X,
   SlidersHorizontal,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import { serverURL } from "../../App.jsx";
@@ -52,6 +52,8 @@ const badgeClass = {
 
 const Packages = () => {
   const navigate = useNavigate();
+  const location = useLocation(); // ← NEW: read URL query params
+
   const [packages, setPackages] = useState([]);
   const [filteredPackages, setFilteredPackages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,6 +62,15 @@ const Packages = () => {
   const [priceRange, setPriceRange] = useState("all");
   const [sortBy, setSortBy] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
+
+  // ── READ ?search= PARAM FROM URL (new) ──
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get("search");
+    if (q) {
+      setSearchQuery(q);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     const fetchPackages = async () => {
@@ -168,6 +179,7 @@ const Packages = () => {
               travel packages
             </p>
 
+            {/* Search bar — pre-filled if navigated from homepage */}
             <div className="max-w-[680px] mx-auto flex items-center gap-0 bg-violet-500/10 border border-violet-500/30 rounded-[14px] sm:rounded-[18px] px-3 sm:px-4 py-1 focus-within:border-violet-500/70 focus-within:shadow-[0_0_0_3px_rgba(139,92,246,0.1)] transition-all">
               <Search size={16} className="text-violet-500 shrink-0" />
               <input
@@ -179,7 +191,11 @@ const Packages = () => {
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => {
+                    setSearchQuery("");
+                    // Also clear the URL param so it doesn't re-trigger
+                    navigate("/explore", { replace: true });
+                  }}
                   className="bg-none border-none cursor-pointer text-violet-400 p-1 flex items-center shrink-0"
                 >
                   <X size={14} />
@@ -189,6 +205,24 @@ const Packages = () => {
                 Search
               </button>
             </div>
+
+            {/* Show active search label when navigated from homepage */}
+            {searchQuery && (
+              <p className="text-violet-400 text-xs sm:text-sm mt-4">
+                Showing results for{" "}
+                <span className="text-white font-bold">"{searchQuery}"</span>
+                {" — "}
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    navigate("/explore", { replace: true });
+                  }}
+                  className="text-violet-400 underline underline-offset-2 cursor-pointer bg-transparent border-none hover:text-violet-300 transition-colors"
+                >
+                  Clear
+                </button>
+              </p>
+            )}
           </div>
         </div>
 
@@ -272,6 +306,7 @@ const Packages = () => {
                     setSearchQuery("");
                     setPriceRange("all");
                     setSortBy("featured");
+                    navigate("/explore", { replace: true });
                   }}
                   className="flex items-center gap-1.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-[12px] text-sm font-bold text-red-300 bg-red-500/15 border border-red-500/30 hover:bg-red-500/25 transition-all cursor-pointer sm:ml-auto"
                 >
@@ -304,13 +339,16 @@ const Packages = () => {
                 No packages found
               </h3>
               <p className="text-[#6b5a8e] mb-7">
-                Try adjusting your filters or search query
+                {searchQuery
+                  ? `No packages match "${searchQuery}". Try a different destination.`
+                  : "Try adjusting your filters or search query"}
               </p>
               <button
                 onClick={() => {
                   setSearchQuery("");
                   setPriceRange("all");
                   setSortBy("featured");
+                  navigate("/explore", { replace: true });
                 }}
                 className="px-7 py-3 rounded-full font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-[1.03] transition-all border-none cursor-pointer"
               >

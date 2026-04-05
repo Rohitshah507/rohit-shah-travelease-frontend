@@ -50,7 +50,6 @@ const ForgetPassword = () => {
     try {
       await axios.post(
         `${serverURL}/api/auth/verify-otp`,
-        // Send both string and number forms — adjust based on your backend expectation
         { email, otp: otp.trim() },
         { withCredentials: true },
       );
