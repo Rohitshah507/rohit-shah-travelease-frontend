@@ -166,7 +166,7 @@ const ForgetPassword = () => {
             </div>
             <div className="px-4">
               <button
-                className="w-full bg-orange-600 text-white font-bold py-2 rounded-lg shadow-lg hover:bg-orange-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full cursor-pointer bg-orange-600 text-white font-bold py-2 rounded-lg shadow-lg hover:bg-orange-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 onClick={handleSendOTP}
                 disabled={loading}
               >
@@ -199,7 +199,7 @@ const ForgetPassword = () => {
             </div>
             <div className="px-4">
               <button
-                className="w-full bg-orange-600 text-white font-bold py-2 rounded-lg shadow-lg hover:bg-orange-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full cursor-pointer bg-orange-600 text-white font-bold py-2 rounded-lg shadow-lg hover:bg-orange-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 onClick={handleVerifyOTP}
                 disabled={loading}
               >
@@ -286,7 +286,7 @@ const ForgetPassword = () => {
 
             <div className="px-4">
               <button
-                className="w-full bg-orange-600 text-white font-bold py-2 rounded-lg shadow-lg hover:bg-orange-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full bg-orange-600 cursor-pointer text-white font-bold py-2 rounded-lg shadow-lg hover:bg-orange-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 onClick={handleResetPassword}
                 disabled={loading}
               >
