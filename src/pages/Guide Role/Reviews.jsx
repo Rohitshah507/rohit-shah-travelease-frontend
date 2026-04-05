@@ -21,12 +21,13 @@ export function Reviews({ guideId }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchReviews = async () => {
       try {
         setLoading(true);
         const token = localStorage.getItem("token");
+        // ✅ Correct route: /api/review/guide/:guideId
         const res = await axios.get(
-          `${serverURL}/api/guide/${guideId}/reviews`,
+          `${serverURL}/api/review/guide/${guideId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
@@ -34,12 +35,15 @@ export function Reviews({ guideId }) {
         setReviews(res.data.reviews || []);
         setAvgRating(res.data.avgRating || 0);
       } catch (err) {
-        console.error(err);
+        console.error("Failed to fetch guide reviews:", err);
+        setReviews([]);
+        setAvgRating(0);
       } finally {
         setLoading(false);
       }
     };
-    fetch();
+
+    if (guideId) fetchReviews();
   }, [guideId]);
 
   return (
@@ -48,7 +52,9 @@ export function Reviews({ guideId }) {
       <div className="bg-gradient-to-br from-yellow-500 to-amber-600 rounded-2xl p-4 sm:p-6 text-gray-900 shadow-sm">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <p className="text-3xl sm:text-4xl font-black">{avgRating}</p>
+            <p className="text-3xl sm:text-4xl font-black">
+              {Number(avgRating).toFixed(1)}
+            </p>
             <div className="flex gap-1 my-1">
               {[...Array(5)].map((_, i) => (
                 <Star
@@ -115,14 +121,27 @@ export function Reviews({ guideId }) {
                 <div
                   className={`w-9 sm:w-10 h-9 sm:h-10 ${avatarColors3[i % avatarColors3.length]} rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm`}
                 >
-                  {h.tourist?.[0]}
+                  {/* Support both field name shapes the backend might return */}
+                  {(h.tourist ||
+                    h.userId?.name ||
+                    h.user?.name ||
+                    "?")[0]?.toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-gray-900 text-sm truncate">
-                    {h.tourist}
+                    {h.tourist || h.userId?.name || h.user?.name || "Anonymous"}
                   </p>
                   <p className="text-[10px] sm:text-xs text-gray-500 truncate">
-                    {h.tourTitle} · {h.date}
+                    {h.tourTitle ||
+                      h.tourPackageId?.title ||
+                      h.tourPackage?.title ||
+                      "Tour Package"}
+                    {" · "}
+                    {h.date ||
+                      new Date(h.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        year: "numeric",
+                      })}
                   </p>
                 </div>
                 <div className="flex gap-0.5 flex-shrink-0">
@@ -140,7 +159,7 @@ export function Reviews({ guideId }) {
                 </div>
               </div>
               <p className="text-xs sm:text-sm text-gray-600 italic bg-gray-50 p-2.5 sm:p-3 rounded-xl leading-relaxed">
-                "{h.review}"
+                "{h.review || h.comment}"
               </p>
             </div>
           ))}
