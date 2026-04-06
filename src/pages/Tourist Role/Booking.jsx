@@ -511,7 +511,7 @@ const BookingPage = () => {
                     className="text-[1.6rem] sm:text-[2rem] font-black bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
                     style={{ fontFamily: "'Playfair Display', serif" }}
                   >
-                    Rs. {tourPackage.price}
+                    {tourPackage.price}$
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 pt-3 border-t border-violet-500/12">
