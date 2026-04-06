@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import axios from "axios";
 import { serverURL } from "../../App";
+import { getToken } from "../Login";
 
 const avatarColors3 = [
   "bg-yellow-500",
@@ -24,8 +25,7 @@ export function Reviews({ guideId }) {
     const fetchReviews = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("token");
-        // ✅ Correct route: /api/review/guide/:guideId
+        const token = getToken();
         const res = await axios.get(
           `${serverURL}/api/review/guide/${guideId}`,
           {

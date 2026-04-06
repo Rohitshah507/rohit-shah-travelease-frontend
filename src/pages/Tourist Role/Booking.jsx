@@ -305,7 +305,7 @@ const BookingPage = () => {
         {/* Success Modal */}
         {showSuccessModal && (
           <div className="fixed inset-0 bg-black/75 backdrop-blur-[10px] z-50 flex items-center justify-center p-3 sm:p-4">
-            <div className="w-full max-w-[460px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#0f0524] border border-violet-500/40 shadow-[0_0_80px_rgba(139,92,246,0.3)] max-h-[90vh] overflow-y-auto">
+            <div className="w-full max-w-[460px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#1a0a3e] to-[#0f0524] border border-violet-500/40 shadow-[0_0_80px_rgba(139,92,246,0.3)]">
               <div className="relative overflow-hidden bg-gradient-to-r from-violet-500 via-violet-700 to-violet-900 px-5 sm:px-7 py-5 sm:py-7 text-center">
                 <div className="absolute inset-0 [background-image:radial-gradient(circle,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:24px_24px]" />
                 <div className="relative">

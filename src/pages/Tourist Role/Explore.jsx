@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Search,
   MapPin,
@@ -495,13 +495,17 @@ Return ONLY this JSON structure:
 // ─── Main Explore Page ────────────────────────────────────────────────────────
 const Explore = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [urlSearch, setUrlSearch] = useState("");
   const [selectedPkg, setSelectedPkg] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
   const topRef = useRef(null);
 
+  // Fetch packages
   useEffect(() => {
     const fetchPackages = async () => {
       try {
@@ -520,6 +524,20 @@ const Explore = () => {
     };
     fetchPackages();
   }, []);
+
+  // Read ?search= from URL and apply it as the filter
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get("search") || "";
+    setSearchQuery(q);
+    setUrlSearch(q);
+  }, [location.search]);
+
+  const handleClearFilter = () => {
+    setSearchQuery("");
+    setUrlSearch("");
+    navigate("/explore", { replace: true });
+  };
 
   const filtered = packages.filter(
     (p) =>
@@ -635,7 +653,7 @@ const Explore = () => {
                   Click any destination to explore.
                 </p>
 
-                {/* Search */}
+                {/* Search bar */}
                 <div
                   className="max-w-lg mx-auto flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl"
                   style={{
@@ -648,16 +666,62 @@ const Explore = () => {
                     type="text"
                     placeholder="Search destinations or packages..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      // if user clears the input manually, also clear urlSearch banner
+                      if (!e.target.value) setUrlSearch("");
+                    }}
                     className="flex-1 bg-transparent outline-none text-sm font-medium text-white placeholder-gray-600"
                   />
                   {searchQuery && (
-                    <button onClick={() => setSearchQuery("")}>
+                    <button onClick={handleClearFilter}>
                       <X size={15} style={{ color: "#6b5a8e" }} />
                     </button>
                   )}
                 </div>
               </div>
+
+              {/* ── Active filter banner (shown only when came from URL search) ── */}
+              {urlSearch && (
+                <div
+                  className="flex items-center justify-between mb-6 sm:mb-8 px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl max-w-2xl mx-auto"
+                  style={{
+                    background: "rgba(139,92,246,0.1)",
+                    border: "1px solid rgba(139,92,246,0.3)",
+                  }}
+                >
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Search size={14} style={{ color: "#a78bfa" }} />
+                    <span
+                      className="text-xs sm:text-sm font-semibold"
+                      style={{ color: "#c4b5fd" }}
+                    >
+                      Showing results for{" "}
+                      <span className="text-white font-black">
+                        "{urlSearch}"
+                      </span>
+                      {!loading && (
+                        <span style={{ color: "#6b5a8e" }}>
+                          {" "}
+                          · {filtered.length} package
+                          {filtered.length !== 1 ? "s" : ""} found
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleClearFilter}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105 cursor-pointer shrink-0 ml-3"
+                    style={{
+                      background: "rgba(139,92,246,0.2)",
+                      border: "1px solid rgba(139,92,246,0.4)",
+                      color: "#c4b5fd",
+                    }}
+                  >
+                    <X size={11} /> Clear filter
+                  </button>
+                </div>
+              )}
 
               {/* Grid */}
               {loading ? (
@@ -681,10 +745,24 @@ const Explore = () => {
                   />
                   <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
                     No packages found
+                    {searchQuery ? ` for "${searchQuery}"` : ""}
                   </h3>
-                  <p style={{ color: "#6b5a8e" }}>
+                  <p style={{ color: "#6b5a8e" }} className="mb-5">
                     Try a different search term
                   </p>
+                  {urlSearch && (
+                    <button
+                      onClick={handleClearFilter}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-105 cursor-pointer"
+                      style={{
+                        background: "rgba(139,92,246,0.2)",
+                        border: "1px solid rgba(139,92,246,0.4)",
+                        color: "#c4b5fd",
+                      }}
+                    >
+                      <X size={14} /> Clear filter & show all
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">

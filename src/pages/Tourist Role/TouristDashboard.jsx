@@ -235,6 +235,16 @@ const TouristDashboard = () => {
       toast.error("Please enter a destination to search");
       return;
     }
+    const query = searchDestination.trim().toLowerCase();
+    const match = packages.some(
+      (p) =>
+        p.title?.toLowerCase().includes(query) ||
+        p.destination?.toLowerCase().includes(query),
+    );
+    if (!match) {
+      toast.error(`No packages found for "${searchDestination.trim()}" 😔`);
+      return;
+    }
     navigate(`/explore?search=${encodeURIComponent(searchDestination.trim())}`);
   };
 
