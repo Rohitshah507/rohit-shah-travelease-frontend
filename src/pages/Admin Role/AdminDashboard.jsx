@@ -580,10 +580,7 @@ const AdminDashboard = () => {
               <div className="relative" ref={notifBellRef}>
                 <button
                   onClick={() => {
-                    setShowNotifications((v) => {
-                      if (!v) markAllRead();
-                      return !v;
-                    });
+                    setShowNotifications((v) => !v);
                     setShowProfileMenu(false);
                   }}
                   className="relative p-2 sm:p-2.5 hover:bg-violet-50 rounded-xl transition-colors group"
