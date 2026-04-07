@@ -158,7 +158,7 @@ const AllPackages = () => {
                   </h3>
                   <div className="text-right shrink-0">
                     <p className="font-black text-violet-600 text-[15px] leading-none">
-                      Rs.{(pkg.price || 0).toLocaleString()}
+                      ${(pkg.price || 0).toLocaleString()}
                     </p>
                     <p className="text-gray-400 text-[10px] mt-0.5">
                       per person
@@ -289,7 +289,7 @@ const AllPackages = () => {
                 </span>
                 <span className="flex items-center gap-1 px-2.5 py-1.5 bg-green-50 text-green-700 rounded-xl text-xs font-semibold">
                   <Tag size={12} />
-                  Rs.{(selectedPkg.price || 0).toLocaleString()}
+                  ${(selectedPkg.price || 0).toLocaleString()}
                 </span>
                 {(selectedPkg.group || selectedPkg.groupSize) && (
                   <span className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 text-blue-700 rounded-xl text-xs font-semibold">

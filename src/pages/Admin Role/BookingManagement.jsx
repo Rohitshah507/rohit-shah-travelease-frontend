@@ -293,7 +293,7 @@ const BookingManagement = () => {
                         {getStatusBadge(booking.bookingStatus)}
                       </td>
                       <td className="px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-bold text-gray-900 hidden lg:table-cell">
-                        Rs.{" "}
+                        ${" "}
                         {(booking.tourPackageId?.price || 0).toLocaleString()}
                       </td>
                       <td className="px-4 sm:px-6 py-3 sm:py-4">
@@ -401,7 +401,7 @@ const BookingManagement = () => {
                       Price
                     </p>
                     <p className="text-lg sm:text-xl font-black text-gray-900">
-                      Rs.{" "}
+                      ${" "}
                       {(
                         selectedBooking.tourPackageId?.price || 0
                       ).toLocaleString()}

@@ -168,7 +168,7 @@ const AdminOverview = () => {
     },
     {
       title: "Total Revenue",
-      value: `Rs. ${stats.totalRevenue.toLocaleString()}`,
+      value: `$ ${stats.totalRevenue.toLocaleString()}`,
       sub: `${stats.pendingPayments} pending payments`,
       icon: TrendingUp,
       iconBg: "bg-indigo-100",
