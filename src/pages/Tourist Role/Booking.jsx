@@ -877,7 +877,7 @@ const BookingPage = () => {
                         </>
                       ) : (
                         <>
-                          <CreditCard size={15} /> Pay Rs. {tourPackage.price}
+                          <CreditCard size={15} /> Pay $ {tourPackage.price}
                         </>
                       )}
                     </button>

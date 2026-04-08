@@ -243,7 +243,7 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
                     className="text-xl sm:text-[1.4rem] font-black leading-none bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
                     style={{ fontFamily: "'Playfair Display', serif" }}
                   >
-                    Rs. {pkg.price}
+                    $ {pkg.price}
                   </div>
                   <div className="text-[#6b5a8e] text-[0.65rem]">
                     per person
