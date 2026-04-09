@@ -970,7 +970,7 @@ const TouristDashboard = () => {
                                   fontFamily: "'Playfair Display', serif",
                                 }}
                               >
-                                ${pkg.price}
+                                Rs.{pkg.price}
                               </div>
                               <div className="text-[#6b5a8e] text-xs">
                                 per person

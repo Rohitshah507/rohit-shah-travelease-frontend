@@ -129,7 +129,7 @@ export function History() {
               },
               {
                 label: "Total Earnings",
-                value: `$${stats.totalEarnings}`,
+                value: `Rs.${stats.totalEarnings}`,
                 icon: "💰",
               },
               {

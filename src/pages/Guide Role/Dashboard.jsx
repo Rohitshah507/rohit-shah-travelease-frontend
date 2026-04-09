@@ -194,7 +194,7 @@ export default function Dashboard({
     },
     {
       label: "Total Earnings",
-      value: `$${earnings.toLocaleString()}`,
+      value: `Rs.${earnings.toLocaleString()}`,
       icon: DollarSign,
       gradient: "from-amber-400 to-orange-500",
       change: "from confirmed",
@@ -475,7 +475,7 @@ export default function Dashboard({
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="text-[11px] font-black text-violet-700">
-                        ${t.price}
+                        Rs.{t.price}
                       </p>
                       <div
                         className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${t.status === "ACTIVE" || t.status === "Active" ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}

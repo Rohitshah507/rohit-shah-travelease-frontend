@@ -426,7 +426,7 @@ const Packages = () => {
                             className="text-[1.3rem] sm:text-[1.6rem] font-black leading-none bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
                             style={{ fontFamily: "'Playfair Display', serif" }}
                           >
-                            ${pkg.price}
+                            Rs.{pkg.price}
                           </div>
                           <div className="text-[#6b5a8e] text-xs">
                             per person

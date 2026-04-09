@@ -94,7 +94,7 @@ const PaymentHistory = () => {
         User: p.userId?.username || p.user?.username || "N/A",
         Email: p.userId?.email || p.user?.email || "N/A",
         Method: p.method || p.paymentMethod || "KHALTI",
-        "Amount ($)": p.amount || 0,
+        "Amount (Rs)": p.amount || 0,
         Status: (p.status || "PENDING").toUpperCase(),
         "Booking ID":
           p.bookingId?._id?.toString() || p.bookingId?.toString() || "N/A",
@@ -133,7 +133,7 @@ const PaymentHistory = () => {
           ).length,
         },
         {
-          "#": "Total Revenue ($)",
+          "#": "Total Revenue (Rs)",
           "Transaction ID": completedTotal.toLocaleString(),
         },
       ];
@@ -258,7 +258,7 @@ const PaymentHistory = () => {
             Total Revenue
           </p>
           <p className="text-xl sm:text-3xl font-black text-gray-900">
-            {totalRevenue.toLocaleString()}$
+            Rs.{totalRevenue.toLocaleString()}
           </p>
         </div>
 
@@ -410,7 +410,7 @@ const PaymentHistory = () => {
                         </span>
                       </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-bold text-gray-900">
-                        {(payment.amount || 0).toLocaleString()}$
+                        Rs.{(payment.amount || 0).toLocaleString()}
                       </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700 hidden sm:table-cell">
                         {payment.createdAt

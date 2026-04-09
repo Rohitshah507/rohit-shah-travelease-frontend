@@ -3,6 +3,7 @@ import { TrendingUp, DollarSign, Clock, Download } from "lucide-react";
 import axios from "axios";
 import { serverURL } from "../../App";
 import { getToken } from "../Login";
+import { FaRupeeSign } from "react-icons/fa";
 
 const Skeleton4 = ({ className = "" }) => (
   <div className={`animate-pulse bg-gray-200 rounded-xl ${className}`} />
@@ -144,7 +145,7 @@ export function Earnings() {
           : [
               {
                 label: "This Month",
-                value: `$${stats.thisMonthEarnings}`,
+                value: `Rs.${stats.thisMonthEarnings}`,
                 icon: TrendingUp,
                 change:
                   stats.monthlyChange >= 0
@@ -154,15 +155,15 @@ export function Earnings() {
               },
               {
                 label: "Total Earnings",
-                value: `$${stats.totalEarnings}`,
-                icon: DollarSign,
+                value: `Rs.${stats.totalEarnings}`,
+                icon: FaRupeeSign,
                 change: "All time",
                 color: "from-gray-700 to-gray-900",
               },
               {
                 label: "Pending Payout",
-                value: `$${stats.pendingPayout}`,
-                icon: Clock,
+                value: `Rs.${stats.pendingPayout}`,
+                icon: FaRupeeSign,
                 change: "Processing",
                 color: "from-orange-500 to-amber-600",
               },
@@ -226,7 +227,7 @@ export function Earnings() {
                   Paid
                 </span>
                 <span className="font-bold text-gray-900 text-sm flex-shrink-0">
-                  +${h.amount}
+                  +Rs.{h.amount}
                 </span>
               </div>
             ))}

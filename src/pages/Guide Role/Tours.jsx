@@ -143,7 +143,7 @@ function TourCard({ t, idx, onEdit, onDelete }) {
           </h3>
           <div className="text-right flex-shrink-0">
             <p className="text-violet-600 font-black text-lg sm:text-xl leading-none">
-              ${t.price}
+              Rs.{t.price}
             </p>
             <p className="text-gray-400 text-[9px] sm:text-[10px] font-medium">
               per person
@@ -439,11 +439,11 @@ export default function Tours() {
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 <div>
                   <label className="text-[10px] font-black text-violet-500 uppercase tracking-widest mb-1 sm:mb-1.5 block">
-                    Price (USD) *
+                    Price (NPR) *
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-400 font-bold text-sm">
-                      $
+                      Rs.
                     </span>
                     <input
                       type="number"

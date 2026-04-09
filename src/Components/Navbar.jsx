@@ -158,24 +158,19 @@ const socketEventToNotif = (event, payload) => {
   );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// useNotifications  — FIXED: no duplicate toasts
-// ─────────────────────────────────────────────────────────────────────────────
+
 const useNotifications = (userId) => {
   const [notifs, setNotifs] = useState([]);
   const [unread, setUnread] = useState(0);
   const [connected, setConnected] = useState(false);
 
-  // Set of every _id we have already toasted — never toast the same id twice.
   const toastedIds = useRef(new Set());
 
-  // null = first fetch hasn't seeded knownIds yet (seed silently)
   const knownIds = useRef(null);
 
   const mounted = useRef(true);
   const timerRef = useRef(null);
 
-  // ── REST fetch ────────────────────────────────────────────────────────────
   const doFetch = useCallback(async () => {
     try {
       const token = getToken();
@@ -195,16 +190,12 @@ const useNotifications = (userId) => {
       setUnread(raw.filter((n) => !n.isRead).length);
 
       if (knownIds.current === null) {
-        // Very first fetch — seed silently, never toast any of these
         knownIds.current = new Set(raw.map((n) => n._id));
         raw.forEach((n) => toastedIds.current.add(n._id));
       } else {
         const newOnes = raw.filter((n) => !knownIds.current.has(n._id));
         newOnes.forEach((n) => knownIds.current.add(n._id));
 
-        // FIX: only toast if we haven't already toasted this id
-        // (socket may have already shown the toast via a pseudo-id that
-        //  we linked to the real DB id below)
         newOnes.forEach((n) => {
           if (!toastedIds.current.has(n._id)) {
             toastedIds.current.add(n._id);
@@ -240,13 +231,11 @@ const useNotifications = (userId) => {
       socket.on(event, (payload) => {
         if (!mounted.current) return;
 
-        // Generate a stable pseudo-id for this socket event
+
         const pseudoId = `socket-${Date.now()}-${Math.random()}`;
 
-        // Mark as toasted BEFORE showing — prevents doFetch from re-toasting
         toastedIds.current.add(pseudoId);
 
-        // Show exactly ONE toast
         const pseudoNotif = {
           _id: pseudoId,
           ...socketEventToNotif(event, payload),
@@ -256,19 +245,11 @@ const useNotifications = (userId) => {
 
         showNotifToast(pseudoNotif);
 
-        // Optimistically prepend & bump badge
         setNotifs((prev) => [pseudoNotif, ...prev]);
         setUnread((prev) => prev + 1);
 
-        // Add pseudo-id to knownIds so doFetch won't treat it as "new"
         if (knownIds.current) knownIds.current.add(pseudoId);
 
-        // Re-fetch to replace pseudo-entry with real DB record.
-        // The real DB record's _id will be added to toastedIds inside doFetch
-        // only if it's genuinely new — but we need to pre-seed it here so the
-        // toast is suppressed. We do this by marking the real record's id
-        // after fetch via the toastedIds check inside doFetch (it checks before
-        // toasting). This is safe because doFetch marks all fetched new ids.
         setTimeout(() => {
           if (mounted.current) doFetch();
         }, 1500);
@@ -280,7 +261,6 @@ const useNotifications = (userId) => {
     };
   }, [userId, doFetch]);
 
-  // ── Polling ───────────────────────────────────────────────────────────────
   useEffect(() => {
     mounted.current = true;
     doFetch();
@@ -291,7 +271,7 @@ const useNotifications = (userId) => {
     };
   }, [doFetch]);
 
-  // ── Mark all as read ──────────────────────────────────────────────────────
+  // Mark all as read
   const markAllRead = useCallback(async () => {
     const unreadNotifs = notifs.filter((n) => !n.isRead);
     if (unreadNotifs.length === 0) return;
@@ -321,9 +301,8 @@ const useNotifications = (userId) => {
   return { notifs, unread, connected, markAllRead, refreshNow };
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+
 // Notification Panel
-// ─────────────────────────────────────────────────────────────────────────────
 const NotifPanel = ({ notifs, connected, onClose, onNavigate, onRefresh }) => (
   <div
     className="absolute right-0 mt-2 w-[380px] rounded-[22px] overflow-hidden z-50"
@@ -439,9 +418,7 @@ const NotifPanel = ({ notifs, connected, onClose, onNavigate, onRefresh }) => (
   </div>
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Navbar
-// ─────────────────────────────────────────────────────────────────────────────
+
 const Navbar = () => {
   useUser();
   const navigate = useNavigate();

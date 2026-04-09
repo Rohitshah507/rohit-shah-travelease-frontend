@@ -85,7 +85,7 @@ const getBookingStatus = (status = "") =>
 
 const getPaymentStatus = (paymentStatus = "", bookingStatus = "") => {
   const bs = bookingStatus?.toLowerCase();
-  if (bs === "confirmed")
+  if (bs === "confirmed" || bs === "completed")
     return {
       label: "Paid",
       classes:
@@ -179,11 +179,15 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
     booking.paymentStatus,
     booking.bookingStatus,
   );
-  const isCancelled = booking.bookingStatus?.toLowerCase() === "cancelled";
+
+  // FIX 1: treat "completed" booking status as paid too
   const isPaid =
     ["success", "completed", "paid"].includes(
       booking.paymentStatus?.toLowerCase(),
-    ) || booking.bookingStatus?.toLowerCase() === "confirmed";
+    ) ||
+    ["confirmed", "completed"].includes(booking.bookingStatus?.toLowerCase());
+
+  const isCancelled = booking.bookingStatus?.toLowerCase() === "cancelled";
 
   return (
     <div
@@ -243,7 +247,7 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
                     className="text-xl sm:text-[1.4rem] font-black leading-none bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
                     style={{ fontFamily: "'Playfair Display', serif" }}
                   >
-                    $ {pkg.price}
+                    Rs. {pkg.price}
                   </div>
                   <div className="text-[#6b5a8e] text-[0.65rem]">
                     per person
@@ -308,6 +312,7 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
               <Eye size={12} /> View Details
             </button>
 
+            {/* FIX 1: Hide Pay Now when isPaid */}
             {!isPaid && !isCancelled && (
               <button
                 onClick={() => onPayClick(booking)}
@@ -323,10 +328,20 @@ const BookingCard = ({ booking, index, onCancelClick, onPayClick }) => {
               </div>
             )}
 
+            {/* FIX 2: Disable Cancel button when isPaid */}
             {!isCancelled && (
               <button
-                onClick={() => onCancelClick(booking)}
-                className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-[10px] text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/25 hover:bg-red-500/20 hover:border-red-500/40 transition-all cursor-pointer ml-auto"
+                onClick={() => !isPaid && onCancelClick(booking)}
+                disabled={isPaid}
+                title={
+                  isPaid ? "Cannot cancel a paid booking" : "Cancel booking"
+                }
+                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-[10px] text-xs font-bold transition-all ml-auto border
+                  ${
+                    isPaid
+                      ? "text-red-400/30 bg-red-500/5 border-red-500/10 cursor-not-allowed opacity-50"
+                      : "text-red-400 bg-red-500/10 border-red-500/25 hover:bg-red-500/20 hover:border-red-500/40 cursor-pointer"
+                  }`}
               >
                 <Ban size={12} /> Cancel
               </button>
@@ -522,7 +537,7 @@ const MyBookings = () => {
                   {refreshing ? "Refreshing..." : "Refresh"}
                 </button>
                 <button
-                  onClick={() => navigate("/packages")}
+                  onClick={() => navigate("/package")}
                   className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-[14px] text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-[1.03] transition-all border-none cursor-pointer"
                 >
                   <Plane size={13} /> Explore Packages

@@ -206,7 +206,7 @@ const PackageDetail = () => {
                   {
                     icon: DollarSign,
                     label: "Price",
-                    value: pkg.price ? `$${pkg.price} / person` : "—",
+                    value: pkg.price ? `Rs.${pkg.price} / person` : "—",
                   },
                   {
                     icon: MapPin,
@@ -330,7 +330,7 @@ const PackageDetail = () => {
                     className="text-[2rem] sm:text-[2.4rem] font-black leading-none bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent"
                     style={{ fontFamily: "'Playfair Display', serif" }}
                   >
-                    ${pkg.price}
+                    Rs.{pkg.price}
                   </div>
                   <p className="text-[#6b5a8e] text-xs mt-0.5">
                     per person · all inclusive

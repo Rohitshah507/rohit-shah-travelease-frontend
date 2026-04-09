@@ -20,6 +20,7 @@ import {
 import axios from "axios";
 import { serverURL } from "../../App";
 import { getToken } from "../Login";
+import { FaRupeeSign } from "react-icons/fa";
 
 const avatarColors = [
   "from-violet-400 to-purple-500",
@@ -585,14 +586,14 @@ export default function Bookings() {
                   <div className="flex items-center justify-between pt-0.5">
                     <div className="flex items-center gap-1.5">
                       <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
-                        <DollarSign size={11} className="text-white" />
+                        <FaRupeeSign size={11} className="text-white" />
                       </div>
                       <div>
                         <p className="text-[8px] text-violet-400 font-semibold leading-none">
                           Amount
                         </p>
                         <p className="font-black text-violet-900 text-[13px] leading-tight">
-                          ${b.amount}
+                          Rs.{b.amount}
                         </p>
                       </div>
                     </div>

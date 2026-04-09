@@ -38,6 +38,8 @@ const BookingPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
   const [bookingId, setBookingId] = useState(null);
+  const [existingBookingStatus, setExistingBookingStatus] = useState(null); // "pending" | "confirmed" | "completed" | etc.
+  const [existingPaymentStatus, setExistingPaymentStatus] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
@@ -55,6 +57,13 @@ const BookingPage = () => {
     country: "",
     specialRequests: "",
   });
+
+  // Derive isPaid from existing booking statuses
+  const isPaid =
+    ["success", "completed", "paid"].includes(
+      existingPaymentStatus?.toLowerCase(),
+    ) ||
+    ["confirmed", "completed"].includes(existingBookingStatus?.toLowerCase());
 
   useEffect(() => {
     if (userData?.userDetails) {
@@ -88,7 +97,15 @@ const BookingPage = () => {
                 booking.tourPackageId === id) &&
               (booking.bookingStatus || "").toLowerCase() !== "cancelled",
           );
-          setBookingId(existingBooking ? existingBooking._id : null);
+          if (existingBooking) {
+            setBookingId(existingBooking._id);
+            setExistingBookingStatus(existingBooking.bookingStatus || null);
+            setExistingPaymentStatus(existingBooking.paymentStatus || null);
+          } else {
+            setBookingId(null);
+            setExistingBookingStatus(null);
+            setExistingPaymentStatus(null);
+          }
         } catch {}
       } catch {
         toast.error("Failed to load package details.");
@@ -117,6 +134,8 @@ const BookingPage = () => {
       );
       toast.success("Booking cancelled successfully!");
       setBookingId(null);
+      setExistingBookingStatus(null);
+      setExistingPaymentStatus(null);
       setCurrentStep(1);
       setShowSuccessModal(false);
     } catch (error) {
@@ -148,6 +167,8 @@ const BookingPage = () => {
         bookingResponse.data.data?._id || bookingResponse.data._id;
       if (!createdBookingId) throw new Error("Booking ID not returned");
       setBookingId(createdBookingId);
+      setExistingBookingStatus("pending");
+      setExistingPaymentStatus("pending");
       toast.success("Booking created successfully! 🎉");
       setShowSuccessModal(true);
     } catch (error) {
@@ -367,7 +388,7 @@ const BookingPage = () => {
                       className="text-xl sm:text-[1.6rem] font-black bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
                       style={{ fontFamily: "'Playfair Display', serif" }}
                     >
-                      {tourPackage.price}$
+                      Rs.{tourPackage.price}
                     </span>
                   </div>
                 </div>
@@ -511,7 +532,7 @@ const BookingPage = () => {
                     className="text-[1.6rem] sm:text-[2rem] font-black bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
                     style={{ fontFamily: "'Playfair Display', serif" }}
                   >
-                    {tourPackage.price}$
+                    Rs.{tourPackage.price}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 pt-3 border-t border-violet-500/12">
@@ -834,19 +855,40 @@ const BookingPage = () => {
                     </div>
                   ))}
                 </div>
-                <div className="bg-emerald-500/8 border border-emerald-500/25 rounded-[14px] px-3 sm:px-4 py-3 flex gap-2 sm:gap-3">
-                  <Shield
-                    size={14}
-                    className="text-emerald-500 shrink-0 mt-0.5"
-                  />
-                  <div className="text-xs sm:text-sm text-[#9e9ab5] leading-[1.65]">
-                    <p className="font-bold text-emerald-400 mb-1">
-                      Ready to Book
-                    </p>
-                    Click "Confirm Booking" to reserve your spot. Pay via Khalti
-                    immediately or later.
+
+                {/* Paid notice banner — shown when booking is already paid */}
+                {bookingId && isPaid && (
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-[14px] px-3 sm:px-4 py-3 flex gap-2 sm:gap-3 mb-4">
+                    <CheckCircle
+                      size={15}
+                      className="text-emerald-400 shrink-0 mt-0.5"
+                    />
+                    <div className="text-xs sm:text-sm text-[#9e9ab5] leading-[1.65]">
+                      <p className="font-bold text-emerald-400 mb-0.5">
+                        Payment Complete
+                      </p>
+                      This booking has already been paid. No further action
+                      needed.
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Ready to book notice — only when booked but not paid */}
+                {(!bookingId || !isPaid) && (
+                  <div className="bg-emerald-500/8 border border-emerald-500/25 rounded-[14px] px-3 sm:px-4 py-3 flex gap-2 sm:gap-3">
+                    <Shield
+                      size={14}
+                      className="text-emerald-500 shrink-0 mt-0.5"
+                    />
+                    <div className="text-xs sm:text-sm text-[#9e9ab5] leading-[1.65]">
+                      <p className="font-bold text-emerald-400 mb-1">
+                        Ready to Book
+                      </p>
+                      Click "Confirm Booking" to reserve your spot. Pay via
+                      Khalti immediately or later.
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -861,36 +903,51 @@ const BookingPage = () => {
                 <ArrowLeft size={15} /> Previous
               </button>
 
-              <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 sm:gap-2.5">
+              <div className="flex flex-row xs:flex-row items-stretch xs:items-center gap-2 sm:gap-2.5">
                 {bookingId && currentStep === 3 && (
                   <>
-                    <button
-                      type="button"
-                      onClick={handlePayment}
-                      disabled={processingPayment}
-                      className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-[14px] font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-[1.03] disabled:opacity-55 disabled:cursor-not-allowed transition-all border-none cursor-pointer"
-                    >
-                      {processingPayment ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white/25 border-t-white rounded-full animate-spin" />{" "}
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard size={15} /> Pay $ {tourPackage.price}
-                        </>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowCancelConfirm(true)}
-                      disabled={cancelling}
-                      className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-[14px] font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-red-500 to-red-700 shadow-[0_4px_15px_rgba(239,68,68,0.4)] hover:scale-[1.03] disabled:opacity-55 disabled:cursor-not-allowed transition-all border-none cursor-pointer"
-                    >
-                      <XCircle size={15} /> Cancel
-                    </button>
+                    {/* Pay button — only shown when NOT paid */}
+                    {!isPaid && (
+                      <button
+                        type="button"
+                        onClick={handlePayment}
+                        disabled={processingPayment}
+                        className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-[14px] font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-[1.03] disabled:opacity-55 disabled:cursor-not-allowed transition-all border-none cursor-pointer"
+                      >
+                        {processingPayment ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/25 border-t-white rounded-full animate-spin" />{" "}
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard size={15} /> Pay $ {tourPackage.price}
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Cancel button — only shown when NOT paid */}
+                    {!isPaid && (
+                      <button
+                        type="button"
+                        onClick={() => setShowCancelConfirm(true)}
+                        disabled={cancelling}
+                        className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-[14px] font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-red-500 to-red-700 shadow-[0_4px_15px_rgba(239,68,68,0.4)] hover:scale-[1.03] disabled:opacity-55 disabled:cursor-not-allowed transition-all border-none cursor-pointer"
+                      >
+                        <XCircle size={15} /> Cancel
+                      </button>
+                    )}
+
+                    {/* Paid badge — shown instead of buttons when paid */}
+                    {isPaid && (
+                      <div className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-[14px] text-xs sm:text-sm font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30">
+                        <CheckCircle size={15} /> Payment Complete
+                      </div>
+                    )}
                   </>
                 )}
+
                 {currentStep < 3 ? (
                   <button
                     type="button"
