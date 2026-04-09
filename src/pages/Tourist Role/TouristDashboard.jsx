@@ -1428,7 +1428,7 @@ const TouristDashboard = () => {
                           </option>
                           {packages.map((pkg) => (
                             <option key={pkg._id} value={pkg._id}>
-                              {pkg.title}
+                              {pkg.destination}
                             </option>
                           ))}
                         </select>
