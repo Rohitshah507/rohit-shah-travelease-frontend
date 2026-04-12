@@ -16,7 +16,7 @@ import {
   MessageSquare,
   Users,
 } from "lucide-react";
-import { serverURL } from "../../App.jsx";
+import { serverURL } from "../App.jsx";
 import { getToken } from "./Login.jsx";
 
 // ─── PACKAGE HELPERS (same as TouristDashboard) ───────────────────────────────
@@ -164,11 +164,7 @@ export default function Landing() {
     const fetchTourPackages = async () => {
       try {
         setPkgLoading(true);
-        // Try with token if available, else without
-        const token = getToken();
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const response = await axios.get(`${serverURL}/api/user/package`, {
-          headers,
         });
         setPackages(response.data.getPackages || []);
       } catch (error) {
@@ -603,7 +599,7 @@ export default function Landing() {
         </div>
 
         {/* ── PACKAGES ── */}
-        <div id="packages" className="py-16 sm:py-24 px-4 sm:px-6">
+        <div id="packages" className="py-20 sm:py-24 px-4 sm:px-6">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
               <div className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400 mb-3">
