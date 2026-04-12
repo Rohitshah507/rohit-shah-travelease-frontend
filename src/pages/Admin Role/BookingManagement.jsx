@@ -293,8 +293,7 @@ const BookingManagement = () => {
                         {getStatusBadge(booking.bookingStatus)}
                       </td>
                       <td className="px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-bold text-gray-900 hidden lg:table-cell">
-                        ${" "}
-                        {(booking.tourPackageId?.price || 0).toLocaleString()}
+                        $ {(booking.tourPackageId?.price || 0).toLocaleString()}
                       </td>
                       <td className="px-4 sm:px-6 py-3 sm:py-4">
                         <button

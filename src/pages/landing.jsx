@@ -401,13 +401,6 @@ const services = [
   },
 ];
 
-const stats = [
-  { num: "10K+", label: "Happy Travelers" },
-  { num: "120+", label: "Destinations" },
-  { num: "50+", label: "Travel Partners" },
-  { num: "5+", label: "Years Experience" },
-];
-
 export default function Landing() {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);

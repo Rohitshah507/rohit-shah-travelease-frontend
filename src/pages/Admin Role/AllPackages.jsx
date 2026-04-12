@@ -78,8 +78,7 @@ const AllPackages = () => {
     setShowModal(true);
   };
 
-  const isActive = (status) =>
-    (status || "").toLowerCase() === "active";
+  const isActive = (status) => (status || "").toLowerCase() === "active";
 
   return (
     <>
@@ -232,7 +231,10 @@ const AllPackages = () => {
           <div>
             <h1
               className="text-2xl sm:text-3xl font-black text-gray-900"
-              style={{ fontFamily: "'Times New Roman', Times, serif", fontStyle: "italic" }}
+              style={{
+                fontFamily: "'Times New Roman', Times, serif",
+                fontStyle: "italic",
+              }}
             >
               All Packages
             </h1>
@@ -275,7 +277,10 @@ const AllPackages = () => {
             className="rounded-2xl p-12 text-center"
             style={{ border: "2px dashed #ddd6fe", background: "#faf8ff" }}
           >
-            <Package size={36} style={{ color: "#c4b5fd", margin: "0 auto 10px" }} />
+            <Package
+              size={36}
+              style={{ color: "#c4b5fd", margin: "0 auto 10px" }}
+            />
             <p className="pkg-italic font-bold" style={{ color: "#a78bfa" }}>
               No packages yet
             </p>
@@ -285,7 +290,10 @@ const AllPackages = () => {
             {packages.map((pkg) => (
               <div key={pkg._id} className="pkg-card">
                 {/* Image */}
-                <div className="relative overflow-hidden bg-gray-100" style={{ height: "156px" }}>
+                <div
+                  className="relative overflow-hidden bg-gray-100"
+                  style={{ height: "156px" }}
+                >
                   {pkg.imageUrls?.[0] ? (
                     <img
                       src={pkg.imageUrls[0]}
@@ -295,19 +303,33 @@ const AllPackages = () => {
                   ) : (
                     <div
                       className="w-full h-full flex items-center justify-center"
-                      style={{ background: "linear-gradient(135deg,#ede9fe,#f5f3ff)" }}
+                      style={{
+                        background: "linear-gradient(135deg,#ede9fe,#f5f3ff)",
+                      }}
                     >
                       <Package size={32} style={{ color: "#c4b5fd" }} />
                     </div>
                   )}
-                  <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(30,10,60,0.45), transparent)" }} />
-                  <span className={`absolute bottom-2.5 left-3 ${isActive(pkg.status) ? "pkg-badge-active" : "pkg-badge-inactive"}`}>
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        "linear-gradient(to top, rgba(30,10,60,0.45), transparent)",
+                    }}
+                  />
+                  <span
+                    className={`absolute bottom-2.5 left-3 ${isActive(pkg.status) ? "pkg-badge-active" : "pkg-badge-inactive"}`}
+                  >
                     {pkg.status || "Active"}
                   </span>
                   {pkg.duration && (
                     <span
                       className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-xs font-bold pkg-italic"
-                      style={{ background: "rgba(255,255,255,0.92)", color: "#4c1d95", fontSize: "10px" }}
+                      style={{
+                        background: "rgba(255,255,255,0.92)",
+                        color: "#4c1d95",
+                        fontSize: "10px",
+                      }}
                     >
                       {pkg.duration}
                     </span>
@@ -319,37 +341,73 @@ const AllPackages = () => {
                   <div className="flex items-start justify-between gap-2">
                     <h3
                       className="font-black text-gray-900 leading-snug line-clamp-1 flex-1"
-                      style={{ fontFamily: "'Times New Roman', Times, serif", fontStyle: "italic", fontSize: "14px" }}
+                      style={{
+                        fontFamily: "'Times New Roman', Times, serif",
+                        fontStyle: "italic",
+                        fontSize: "14px",
+                      }}
                     >
                       {pkg.title}
                     </h3>
                     <div className="text-right shrink-0">
                       <p
                         className="font-black leading-none"
-                        style={{ color: "#6d28d9", fontSize: "13px", fontFamily: "'Times New Roman', Times, serif", fontStyle: "italic" }}
+                        style={{
+                          color: "#6d28d9",
+                          fontSize: "13px",
+                          fontFamily: "'Times New Roman', Times, serif",
+                          fontStyle: "italic",
+                        }}
                       >
                         Rs.{(pkg.price || 0).toLocaleString()}
                       </p>
-                      <p className="pkg-italic" style={{ color: "#9ca3af", fontSize: "9px", marginTop: "2px" }}>
+                      <p
+                        className="pkg-italic"
+                        style={{
+                          color: "#9ca3af",
+                          fontSize: "9px",
+                          marginTop: "2px",
+                        }}
+                      >
                         per person
                       </p>
                     </div>
                   </div>
 
-                  <p className="flex items-center gap-1 pkg-italic" style={{ fontSize: "11px", color: "#9ca3af" }}>
-                    <MapPin size={10} style={{ color: "#a78bfa", flexShrink: 0 }} />
+                  <p
+                    className="flex items-center gap-1 pkg-italic"
+                    style={{ fontSize: "11px", color: "#9ca3af" }}
+                  >
+                    <MapPin
+                      size={10}
+                      style={{ color: "#a78bfa", flexShrink: 0 }}
+                    />
                     <span className="truncate">{pkg.destination || "N/A"}</span>
                     {pkg.startDate && (
                       <span className="shrink-0">
-                        · {new Date(pkg.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        ·{" "}
+                        {new Date(pkg.startDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
                       </span>
                     )}
                   </p>
 
                   {/* ✅ Guide name shown on card */}
-                  <p className="flex items-center gap-1 pkg-italic" style={{ fontSize: "11px", color: "#9ca3af" }}>
-                    <User size={10} style={{ color: "#a78bfa", flexShrink: 0 }} />
-                    Guide: <span style={{ color: "#6d28d9", fontWeight: 700 }}>{getGuideName(pkg)}</span>
+                  <p
+                    className="flex items-center gap-1 pkg-italic"
+                    style={{ fontSize: "11px", color: "#9ca3af" }}
+                  >
+                    <User
+                      size={10}
+                      style={{ color: "#a78bfa", flexShrink: 0 }}
+                    />
+                    Guide:{" "}
+                    <span style={{ color: "#6d28d9", fontWeight: 700 }}>
+                      {getGuideName(pkg)}
+                    </span>
                   </p>
 
                   {pkg.inclusions?.length > 0 && (
@@ -358,7 +416,12 @@ const AllPackages = () => {
                         <span
                           key={i}
                           className="px-2 py-0.5 rounded-full pkg-italic"
-                          style={{ background: "#f3f0ff", color: "#6d28d9", fontSize: "10px", border: "1px solid #ede9fe" }}
+                          style={{
+                            background: "#f3f0ff",
+                            color: "#6d28d9",
+                            fontSize: "10px",
+                            border: "1px solid #ede9fe",
+                          }}
                         >
                           {inc}
                         </span>
@@ -367,10 +430,16 @@ const AllPackages = () => {
                   )}
 
                   <div className="flex gap-2 pt-0.5">
-                    <button className="pkg-btn-view" onClick={() => openView(pkg)}>
+                    <button
+                      className="pkg-btn-view"
+                      onClick={() => openView(pkg)}
+                    >
                       <Eye size={12} /> View
                     </button>
-                    <button className="pkg-btn-del" onClick={() => setDeleteId(pkg._id)}>
+                    <button
+                      className="pkg-btn-del"
+                      onClick={() => setDeleteId(pkg._id)}
+                    >
                       <Trash2 size={12} /> Delete
                     </button>
                   </div>
@@ -382,32 +451,94 @@ const AllPackages = () => {
 
         {/* ── View Modal ── */}
         {showModal && selectedPkg && (
-          <div className="pkg-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}>
+          <div
+            className="pkg-modal-overlay"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowModal(false);
+            }}
+          >
             <div className="pkg-modal">
               {/* Image header */}
-              <div className="relative shrink-0 bg-gray-900" style={{ height: "170px" }}>
+              <div
+                className="relative shrink-0 bg-gray-900"
+                style={{ height: "170px" }}
+              >
                 {selectedPkg.imageUrls?.length > 0 ? (
-                  <img src={selectedPkg.imageUrls[imgIndex]} alt={selectedPkg.title} className="w-full h-full object-cover" />
+                  <img
+                    src={selectedPkg.imageUrls[imgIndex]}
+                    alt={selectedPkg.title}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg,#4c1d95,#6d28d9)" }}>
+                  <div
+                    className="w-full h-full flex items-center justify-center"
+                    style={{
+                      background: "linear-gradient(135deg,#4c1d95,#6d28d9)",
+                    }}
+                  >
                     <Package size={40} style={{ color: "#c4b5fd" }} />
                   </div>
                 )}
-                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(30,10,60,0.7) 0%, transparent 55%)" }} />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(to top, rgba(30,10,60,0.7) 0%, transparent 55%)",
+                  }}
+                />
 
                 {selectedPkg.imageUrls?.length > 1 && (
                   <>
                     <button
                       onClick={() => setImgIndex((i) => Math.max(0, i - 1))}
                       disabled={imgIndex === 0}
-                      style={{ position:"absolute",left:8,top:"50%",transform:"translateY(-50%)",width:26,height:26,background:"rgba(0,0,0,0.45)",color:"#fff",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",border:"none",cursor:"pointer",opacity:imgIndex===0?0.3:1 }}
+                      style={{
+                        position: "absolute",
+                        left: 8,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        width: 26,
+                        height: 26,
+                        background: "rgba(0,0,0,0.45)",
+                        color: "#fff",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        border: "none",
+                        cursor: "pointer",
+                        opacity: imgIndex === 0 ? 0.3 : 1,
+                      }}
                     >
                       <ChevronLeft size={14} />
                     </button>
                     <button
-                      onClick={() => setImgIndex((i) => Math.min(selectedPkg.imageUrls.length - 1, i + 1))}
+                      onClick={() =>
+                        setImgIndex((i) =>
+                          Math.min(selectedPkg.imageUrls.length - 1, i + 1),
+                        )
+                      }
                       disabled={imgIndex === selectedPkg.imageUrls.length - 1}
-                      style={{ position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",width:26,height:26,background:"rgba(0,0,0,0.45)",color:"#fff",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",border:"none",cursor:"pointer",opacity:imgIndex===selectedPkg.imageUrls.length-1?0.3:1 }}
+                      style={{
+                        position: "absolute",
+                        right: 8,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        width: 26,
+                        height: 26,
+                        background: "rgba(0,0,0,0.45)",
+                        color: "#fff",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        border: "none",
+                        cursor: "pointer",
+                        opacity:
+                          imgIndex === selectedPkg.imageUrls.length - 1
+                            ? 0.3
+                            : 1,
+                      }}
                     >
                       <ChevronRight size={14} />
                     </button>
@@ -416,34 +547,77 @@ const AllPackages = () => {
 
                 <div className="absolute bottom-0 left-0 right-0 px-4 pb-3">
                   <p className="pkg-glow-title">{selectedPkg.title}</p>
-                  <span className={`inline-block mt-1 ${isActive(selectedPkg.status) ? "pkg-badge-active" : "pkg-badge-inactive"}`}>
+                  <span
+                    className={`inline-block mt-1 ${isActive(selectedPkg.status) ? "pkg-badge-active" : "pkg-badge-inactive"}`}
+                  >
                     {selectedPkg.status || "Active"}
                   </span>
                 </div>
                 <button
                   onClick={() => setShowModal(false)}
-                  style={{ position:"absolute",top:10,right:10,width:26,height:26,background:"rgba(0,0,0,0.45)",color:"#fff",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",border:"none",cursor:"pointer" }}
+                  style={{
+                    position: "absolute",
+                    top: 10,
+                    right: 10,
+                    width: 26,
+                    height: 26,
+                    background: "rgba(0,0,0,0.45)",
+                    color: "#fff",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
                 >
                   <X size={13} />
                 </button>
               </div>
 
               {/* Content */}
-              <div className="overflow-y-auto" style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div
+                className="overflow-y-auto"
+                style={{
+                  padding: "14px 16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
                 {/* Pill row */}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                  <span className="pkg-pill pkg-pill-purple"><MapPin size={11} />{selectedPkg.destination || "N/A"}</span>
-                  <span className="pkg-pill pkg-pill-green"><Tag size={11} />Rs.{(selectedPkg.price || 0).toLocaleString()}</span>
+                  <span className="pkg-pill pkg-pill-purple">
+                    <MapPin size={11} />
+                    {selectedPkg.destination || "N/A"}
+                  </span>
+                  <span className="pkg-pill pkg-pill-green">
+                    <Tag size={11} />
+                    Rs.{(selectedPkg.price || 0).toLocaleString()}
+                  </span>
                   {(selectedPkg.group || selectedPkg.groupSize) && (
-                    <span className="pkg-pill pkg-pill-blue"><Users size={11} />Group: {selectedPkg.group || selectedPkg.groupSize}</span>
+                    <span className="pkg-pill pkg-pill-blue">
+                      <Users size={11} />
+                      Group: {selectedPkg.group || selectedPkg.groupSize}
+                    </span>
                   )}
                   {selectedPkg.duration && (
-                    <span className="pkg-pill pkg-pill-amber"><Clock size={11} />{selectedPkg.duration}</span>
+                    <span className="pkg-pill pkg-pill-amber">
+                      <Clock size={11} />
+                      {selectedPkg.duration}
+                    </span>
                   )}
                 </div>
 
                 {selectedPkg.description && (
-                  <p className="pkg-italic" style={{ fontSize: "12.5px", color: "#374151", lineHeight: 1.65 }}>
+                  <p
+                    className="pkg-italic"
+                    style={{
+                      fontSize: "12.5px",
+                      color: "#374151",
+                      lineHeight: 1.65,
+                    }}
+                  >
                     {selectedPkg.description}
                   </p>
                 )}
@@ -451,37 +625,88 @@ const AllPackages = () => {
                 <hr className="pkg-divider" />
 
                 {/* Details grid */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "8px",
+                  }}
+                >
                   {selectedPkg.startDate && (
-                    <div style={{ background: "#faf8ff", borderRadius: 10, padding: "10px 12px", border: "1px solid #ede9fe" }}>
+                    <div
+                      style={{
+                        background: "#faf8ff",
+                        borderRadius: 10,
+                        padding: "10px 12px",
+                        border: "1px solid #ede9fe",
+                      }}
+                    >
                       <p className="pkg-section-label">Start Date</p>
                       <p className="pkg-section-value">
-                        {new Date(selectedPkg.startDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                        {new Date(selectedPkg.startDate).toLocaleDateString(
+                          "en-US",
+                          { year: "numeric", month: "short", day: "numeric" },
+                        )}
                       </p>
                     </div>
                   )}
                   {selectedPkg.endDate && (
-                    <div style={{ background: "#faf8ff", borderRadius: 10, padding: "10px 12px", border: "1px solid #ede9fe" }}>
+                    <div
+                      style={{
+                        background: "#faf8ff",
+                        borderRadius: 10,
+                        padding: "10px 12px",
+                        border: "1px solid #ede9fe",
+                      }}
+                    >
                       <p className="pkg-section-label">End Date</p>
                       <p className="pkg-section-value">
-                        {new Date(selectedPkg.endDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                        {new Date(selectedPkg.endDate).toLocaleDateString(
+                          "en-US",
+                          { year: "numeric", month: "short", day: "numeric" },
+                        )}
                       </p>
                     </div>
                   )}
 
                   {/* ✅ FIXED: Guide name properly resolved */}
-                  <div style={{ background: "#faf8ff", borderRadius: 10, padding: "10px 12px", border: "1px solid #ede9fe" }}>
+                  <div
+                    style={{
+                      background: "#faf8ff",
+                      borderRadius: 10,
+                      padding: "10px 12px",
+                      border: "1px solid #ede9fe",
+                    }}
+                  >
                     <p className="pkg-section-label">Guide</p>
-                    <p className="pkg-section-value" style={{ color: getGuideName(selectedPkg) === "N/A" ? "#9ca3af" : "#1e1b4b" }}>
+                    <p
+                      className="pkg-section-value"
+                      style={{
+                        color:
+                          getGuideName(selectedPkg) === "N/A"
+                            ? "#9ca3af"
+                            : "#1e1b4b",
+                      }}
+                    >
                       {getGuideName(selectedPkg)}
                     </p>
                   </div>
 
-                  <div style={{ background: "#faf8ff", borderRadius: 10, padding: "10px 12px", border: "1px solid #ede9fe" }}>
+                  <div
+                    style={{
+                      background: "#faf8ff",
+                      borderRadius: 10,
+                      padding: "10px 12px",
+                      border: "1px solid #ede9fe",
+                    }}
+                  >
                     <p className="pkg-section-label">Created</p>
                     <p className="pkg-section-value">
                       {selectedPkg.createdAt
-                        ? new Date(selectedPkg.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+                        ? new Date(selectedPkg.createdAt).toLocaleDateString(
+                            "en-US",
+                            { year: "numeric", month: "short", day: "numeric" },
+                          )
                         : "N/A"}
                     </p>
                   </div>
@@ -490,19 +715,51 @@ const AllPackages = () => {
 
               {/* Footer */}
               <div
-                style={{ padding: "10px 14px", background: "#faf8ff", borderTop: "1px solid #ede9fe", display: "flex", gap: "10px", flexShrink: 0 }}
+                style={{
+                  padding: "10px 14px",
+                  background: "#faf8ff",
+                  borderTop: "1px solid #ede9fe",
+                  display: "flex",
+                  gap: "10px",
+                  flexShrink: 0,
+                }}
               >
                 <button
                   onClick={() => setShowModal(false)}
                   className="pkg-italic"
-                  style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "1.5px solid #ddd6fe", background: "#fff", color: "#6d28d9", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+                  style={{
+                    flex: 1,
+                    padding: "9px 0",
+                    borderRadius: 10,
+                    border: "1.5px solid #ddd6fe",
+                    background: "#fff",
+                    color: "#6d28d9",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
                 >
                   Close
                 </button>
                 <button
-                  onClick={() => { setShowModal(false); setDeleteId(selectedPkg._id); }}
+                  onClick={() => {
+                    setShowModal(false);
+                    setDeleteId(selectedPkg._id);
+                  }}
                   className="pkg-italic"
-                  style={{ padding: "9px 18px", borderRadius: 10, background: "#ef4444", color: "#fff", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", gap: 6, cursor: "pointer", border: "none" }}
+                  style={{
+                    padding: "9px 18px",
+                    borderRadius: 10,
+                    background: "#ef4444",
+                    color: "#fff",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    cursor: "pointer",
+                    border: "none",
+                  }}
                 >
                   <Trash2 size={13} /> Delete
                 </button>
@@ -514,14 +771,52 @@ const AllPackages = () => {
         {/* Delete Confirm */}
         {deleteId && (
           <div className="pkg-modal-overlay">
-            <div style={{ background: "#fff", borderRadius: 18, border: "2px solid #fecaca", boxShadow: "0 8px 32px rgba(220,38,38,0.13)", width: "100%", maxWidth: 320, padding: "24px 20px" }}>
-              <div style={{ width: 48, height: 48, background: "#fee2e2", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+            <div
+              style={{
+                background: "#fff",
+                borderRadius: 18,
+                border: "2px solid #fecaca",
+                boxShadow: "0 8px 32px rgba(220,38,38,0.13)",
+                width: "100%",
+                maxWidth: 320,
+                padding: "24px 20px",
+              }}
+            >
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  background: "#fee2e2",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 14px",
+                }}
+              >
                 <Trash2 size={22} style={{ color: "#dc2626" }} />
               </div>
-              <h3 className="pkg-italic" style={{ fontSize: 17, fontWeight: 900, color: "#111827", textAlign: "center", marginBottom: 6 }}>
+              <h3
+                className="pkg-italic"
+                style={{
+                  fontSize: 17,
+                  fontWeight: 900,
+                  color: "#111827",
+                  textAlign: "center",
+                  marginBottom: 6,
+                }}
+              >
                 Delete Package?
               </h3>
-              <p className="pkg-italic" style={{ color: "#9ca3af", fontSize: 12, textAlign: "center", marginBottom: 18 }}>
+              <p
+                className="pkg-italic"
+                style={{
+                  color: "#9ca3af",
+                  fontSize: 12,
+                  textAlign: "center",
+                  marginBottom: 18,
+                }}
+              >
                 This action cannot be undone.
               </p>
               <div style={{ display: "flex", gap: 10 }}>
@@ -529,7 +824,18 @@ const AllPackages = () => {
                   onClick={() => setDeleteId(null)}
                   disabled={deleting}
                   className="pkg-italic"
-                  style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: "1.5px solid #e5e7eb", background: "#fff", color: "#374151", fontWeight: 700, fontSize: 13, cursor: "pointer", opacity: deleting ? 0.5 : 1 }}
+                  style={{
+                    flex: 1,
+                    padding: "9px 0",
+                    borderRadius: 10,
+                    border: "1.5px solid #e5e7eb",
+                    background: "#fff",
+                    color: "#374151",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    opacity: deleting ? 0.5 : 1,
+                  }}
                 >
                   Cancel
                 </button>
@@ -537,11 +843,36 @@ const AllPackages = () => {
                   onClick={() => handleDelete(deleteId)}
                   disabled={deleting}
                   className="pkg-italic"
-                  style={{ flex: 1, padding: "9px 0", borderRadius: 10, background: "#ef4444", color: "#fff", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer", border: "none", opacity: deleting ? 0.6 : 1 }}
+                  style={{
+                    flex: 1,
+                    padding: "9px 0",
+                    borderRadius: 10,
+                    background: "#ef4444",
+                    color: "#fff",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    cursor: "pointer",
+                    border: "none",
+                    opacity: deleting ? 0.6 : 1,
+                  }}
                 >
                   {deleting ? (
                     <>
-                      <span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} />
+                      <span
+                        style={{
+                          width: 14,
+                          height: 14,
+                          border: "2px solid rgba(255,255,255,0.4)",
+                          borderTopColor: "#fff",
+                          borderRadius: "50%",
+                          display: "inline-block",
+                          animation: "spin 0.7s linear infinite",
+                        }}
+                      />
                       Deleting...
                     </>
                   ) : (
