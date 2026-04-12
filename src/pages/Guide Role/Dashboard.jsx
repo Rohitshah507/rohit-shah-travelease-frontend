@@ -153,6 +153,59 @@ export default function Dashboard({
     fetchAll();
   }, [guideId]);
 
+  useEffect(() => {
+    if (isTracking) {
+      socket = io(serverURL, {
+        query: { userId: guideId, role: "GUIDE" },
+      });
+
+      socket.on("connect", () => console.log("Socket connected:", socket.id));
+      socket.on("disconnect", () => console.log("Socket disconnected"));
+
+      navigator.geolocation.getCurrentPosition(
+        ({ coords: { latitude, longitude } }) => {
+          setLocation({ lat: latitude, lng: longitude });
+          setLocationError(null);
+          emitLocation(latitude, longitude);
+        },
+        (err) => setLocationError(err.message),
+        { enableHighAccuracy: true },
+      );
+
+      intervalRef.current = setInterval(() => {
+        navigator.geolocation.getCurrentPosition(
+          ({ coords: { latitude, longitude } }) => {
+            setLocation({ lat: latitude, lng: longitude });
+            setLocationError(null);
+            emitLocation(latitude, longitude);
+          },
+          (err) => {
+            console.error("Geolocation error:", err);
+            setLocationError(err.message);
+          },
+          { enableHighAccuracy: true },
+        );
+      }, 5000);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (socket) {
+        socket.disconnect();
+        socket = null;
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (socket) {
+        socket.disconnect();
+        socket = null;
+      }
+    };
+  }, [isTracking, guideId, userDetails]);
+
   const total = bookings.length;
   const confirmed = bookings.filter((b) => b.status === "confirmed").length;
   const pending = bookings.filter((b) => b.status === "pending").length;

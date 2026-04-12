@@ -251,9 +251,6 @@ const PackageDetail = () => {
               <div>
                 <div className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full mb-3 sm:mb-4 bg-violet-500/10 border border-violet-500/20">
                   <Sparkles size={11} className="text-violet-400" />
-                  <span className="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.2em] uppercase text-violet-400">
-                    AI-Powered Description
-                  </span>
                 </div>
 
                 <h1

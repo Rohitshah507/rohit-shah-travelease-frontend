@@ -1,416 +1,156 @@
-import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import {
+  Plane,
+  Building2,
+  UtensilsCrossed,
+  Sparkles,
+  Compass,
+  MapPin,
+  Star,
+  Calendar,
+  Heart,
+  Quote,
+  ChevronRight,
+  MessageSquare,
+  Users,
+} from "lucide-react";
+import { serverURL } from "../../App.jsx";
 
-const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+// ─── PACKAGE HELPERS (same as TouristDashboard) ───────────────────────────────
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+const getBadgeInfo = (destination, index) => {
+  const status = destination.status?.toLowerCase();
+  if (status === "bestseller" || index % 3 === 0)
+    return { label: "🔥 BESTSELLER", cls: "bestseller" };
+  if (status === "popular" || index % 3 === 1)
+    return { label: "⭐ POPULAR", cls: "popular" };
+  return { label: "💎 LUXURY", cls: "luxury" };
+};
 
-  :root {
-    --purple-dark: #1a0a2e;
-    --purple-mid: #2d1457;
-    --purple-soft: #4a1e8a;
-    --purple-accent: #7c3aed;
-    --purple-light: #a855f7;
-    --pink-primary: #ec4899;
-    --pink-soft: #f472b6;
-    --pink-light: #fce7f3;
-    --pink-glow: rgba(236,72,153,0.15);
-    --text-primary: #f8f4ff;
-    --text-secondary: #c4b5d4;
-    --text-muted: #8b7aab;
-    --border-color: rgba(236,72,153,0.2);
-    --card-bg: rgba(45,20,87,0.5);
-    --card-border: rgba(236,72,153,0.15);
-  }
+const getAmenities = (destination) => {
+  const pills = [];
+  if (destination.flights !== false)
+    pills.push({ icon: Plane, label: "Flights" });
+  pills.push({ icon: Building2, label: destination.hotel || "Hotel" });
+  if (destination.meals)
+    pills.push({ icon: UtensilsCrossed, label: destination.meals });
+  else if (destination.activities)
+    pills.push({ icon: Sparkles, label: "Activities" });
+  else if (destination.tours)
+    pills.push({ icon: Compass, label: destination.tours });
+  return pills;
+};
 
-  body {
-    font-family: 'Inter', sans-serif;
-    background: var(--purple-dark);
-    color: var(--text-primary);
-    overflow-x: hidden;
-  }
+const badgeClass = {
+  bestseller: "bg-red-500/20 text-red-300 border border-red-500/30",
+  popular: "bg-amber-500/20 text-amber-300 border border-amber-500/30",
+  luxury: "bg-violet-500/25 text-violet-300 border border-violet-500/25",
+};
 
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: var(--purple-dark); }
-  ::-webkit-scrollbar-thumb { background: var(--purple-accent); border-radius: 3px; }
+// ─── REVIEW HELPERS ────────────────────────────────────────────────────────────
 
-  /* NAVBAR */
-  .te-nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    padding: 16px 60px;
-    display: flex; align-items: center; justify-content: space-between;
-    background: transparent;
-    transition: all 0.3s;
-    border-bottom: 1px solid transparent;
-  }
-  .te-nav.scrolled {
-    background: rgba(26,10,46,0.92);
-    backdrop-filter: blur(16px);
-    border-bottom-color: var(--border-color);
-  }
-  .te-nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; cursor: pointer; }
-  .te-nav-logo-icon {
-    width: 38px; height: 38px; border-radius: 10px;
-    background: linear-gradient(135deg, #ec4899, #a855f7);
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 13px; color: #fff; letter-spacing: 0.5px;
-  }
-  .te-nav-logo-text { font-size: 20px; font-weight: 700; color: var(--text-primary); }
-  .te-nav-logo-text span { color: var(--pink-primary); }
-  .te-nav-links { display: flex; gap: 36px; }
-  .te-nav-links a {
-    text-decoration: none; color: var(--text-muted); font-size: 14px; font-weight: 500;
-    transition: color 0.2s; letter-spacing: 0.3px;
-  }
-  .te-nav-links a:hover { color: var(--text-primary); }
-  .te-nav-actions { display: flex; align-items: center; gap: 12px; }
-  .te-btn-login {
-    padding: 9px 24px; border-radius: 50px; font-size: 13px; font-weight: 500;
-    color: var(--text-primary); background: transparent; cursor: pointer;
-    border: 1px solid rgba(236,72,153,0.35); font-family: 'Inter', sans-serif;
-    transition: all 0.3s; letter-spacing: 0.3px;
-  }
-  .te-btn-login:hover {
-    border-color: var(--pink-primary); color: var(--pink-soft);
-    box-shadow: 0 0 20px rgba(236,72,153,0.2);
-  }
+const transformReview = (review) => ({
+  id: review._id,
+  name: review.user?.name || review.userId?.name || review.name || "Anonymous",
+  avatar: (() => {
+    const n = review.user?.name || review.userId?.name || review.name || "A";
+    return n
+      .split(" ")
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase();
+  })(),
+  location:
+    review.user?.location ||
+    review.userId?.location ||
+    review.location ||
+    "Traveler",
+  rating: review.rating,
+  comment: review.comment || "",
+  date: new Date(review.createdAt).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  }),
+  package:
+    review.tourPackage?.title ||
+    review.tourPackageId?.title ||
+    review.packageName ||
+    "General",
+});
 
-  /* HERO */
-  .te-hero {
-    min-height: 100vh;
-    background: radial-gradient(ellipse at 20% 50%, rgba(124,58,237,0.25) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 20%, rgba(236,72,153,0.2) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 100%, rgba(124,58,237,0.15) 0%, transparent 60%),
-                linear-gradient(180deg, #1a0a2e 0%, #0d0520 100%);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; padding: 120px 20px 80px;
-    position: relative; overflow: hidden;
-  }
-  .te-hero::before {
-    content: '';
-    position: absolute; inset: 0;
-    background-image:
-      linear-gradient(rgba(236,72,153,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(236,72,153,0.04) 1px, transparent 1px);
-    background-size: 60px 60px;
-    pointer-events: none;
-  }
-  .te-hero-blob {
-    position: absolute; border-radius: 50%;
-    background: radial-gradient(circle, rgba(236,72,153,0.12) 0%, transparent 70%);
-    pointer-events: none; animation: blobFloat 6s ease-in-out infinite;
-  }
-  @keyframes blobFloat {
-    0%,100% { transform: translateY(0px) scale(1); }
-    50% { transform: translateY(-20px) scale(1.05); }
-  }
-  .te-hero-blob-1 { width: 300px; height: 300px; left: 5%; top: 15%; animation-delay: 0s; }
-  .te-hero-blob-2 { width: 200px; height: 200px; right: 10%; top: 30%; animation-delay: 2s; background: radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%); }
-  .te-hero-blob-3 { width: 150px; height: 150px; right: 30%; bottom: 10%; animation-delay: 4s; }
+const StarRating = ({ value, size = 14 }) => (
+  <div className="flex gap-0.5">
+    {[1, 2, 3, 4, 5].map((s) => (
+      <Star
+        key={s}
+        size={size}
+        className={
+          s <= value
+            ? "text-amber-400 fill-amber-400"
+            : "text-white/20 fill-transparent"
+        }
+        style={{
+          filter:
+            s <= value ? "drop-shadow(0 0 5px rgba(251,191,36,0.55))" : "none",
+        }}
+      />
+    ))}
+  </div>
+);
 
-  .te-hero-badge {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 8px 20px; border-radius: 50px; margin-bottom: 32px;
-    border: 1px solid rgba(236,72,153,0.3);
-    background: rgba(236,72,153,0.06);
-    animation: fadeUp 0.8s ease 0.2s both;
-  }
-  .te-hero-badge-dot {
-    width: 7px; height: 7px; border-radius: 50%; background: var(--pink-primary);
-    animation: blink 2s ease-in-out infinite;
-  }
-  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-  .te-hero-badge span { font-size: 12px; color: var(--pink-soft); letter-spacing: 1px; font-weight: 500; }
+const ReviewCard = ({ review }) => (
+  <div className="relative rounded-[20px] p-5 border border-violet-500/20 hover:border-violet-500/50 hover:shadow-[0_10px_40px_rgba(139,92,246,0.18)] transition-all duration-500 bg-gradient-to-br from-[#1a0a3e]/80 to-[#0f0524]/80 backdrop-blur-sm">
+    <div className="absolute top-4 right-5 text-violet-500/15 pointer-events-none">
+      <Quote size={28} />
+    </div>
+    <StarRating value={review.rating} size={13} />
+    <p className="text-[#c4b8df] text-sm leading-[1.85] mt-3 mb-4 italic">
+      "{review.comment}"
+    </p>
+    <div className="flex items-center gap-3">
+      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white text-xs font-black shrink-0 shadow-[0_4px_12px_rgba(139,92,246,0.4)]">
+        {review.avatar}
+      </div>
+      <div className="flex-1 min-w-0">
+        <span className="text-white font-bold text-sm block">
+          {review.name}
+        </span>
+        <div className="text-[#6b5a8e] text-xs">
+          {review.location} · {review.date}
+        </div>
+      </div>
+      <div className="text-right shrink-0 hidden sm:block">
+        <div className="text-[0.62rem] text-violet-400/70 font-semibold max-w-[120px] leading-tight">
+          {review.package}
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
-  .te-hero-title {
-    font-size: clamp(40px, 7vw, 76px); font-weight: 800; line-height: 1.1;
-    margin-bottom: 20px; animation: fadeUp 0.8s ease 0.4s both;
-  }
-  .te-hero-title .pink { color: var(--pink-primary); }
-  .te-hero-subtitle {
-    font-size: clamp(15px, 2vw, 18px); color: var(--text-secondary); max-width: 560px;
-    line-height: 1.7; margin-bottom: 44px; font-weight: 400;
-    animation: fadeUp 0.8s ease 0.6s both;
-  }
-  .te-hero-btns {
-    display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
-    margin-bottom: 60px; animation: fadeUp 0.8s ease 0.7s both;
-  }
-  .te-btn-primary {
-    padding: 14px 36px; border-radius: 50px; font-size: 15px; font-weight: 600;
-    color: #fff; border: none; cursor: pointer; font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #ec4899, #a855f7);
-    transition: all 0.3s; letter-spacing: 0.3px;
-  }
-  .te-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(236,72,153,0.4); }
-  .te-btn-secondary {
-    padding: 14px 36px; border-radius: 50px; font-size: 15px; font-weight: 500;
-    color: var(--text-primary); background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.15); cursor: pointer; font-family: 'Inter', sans-serif;
-    transition: all 0.3s;
-  }
-  .te-btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: rgba(236,72,153,0.4); }
-
-  .te-hero-stats { display: flex; gap: 0; animation: fadeUp 0.8s ease 0.8s both; }
-  .te-stat-item { text-align: center; padding: 0 32px; }
-  .te-stat-item + .te-stat-item { border-left: 1px solid rgba(255,255,255,0.1); }
-  .te-stat-num { font-size: 26px; font-weight: 800; color: var(--pink-primary); }
-  .te-stat-label { font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
-
-  .te-hero-chips {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    display: flex; justify-content: center; gap: 0;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    background: rgba(26,10,46,0.6); backdrop-filter: blur(10px);
-  }
-  .te-chip {
-    padding: 18px 32px; font-size: 13px; font-weight: 500; color: var(--text-muted);
-    border-right: 1px solid rgba(255,255,255,0.06); flex: 1; text-align: center;
-    transition: color 0.2s;
-  }
-  .te-chip:hover { color: var(--pink-soft); }
-  .te-chip:last-child { border-right: none; }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* SECTIONS */
-  .te-section { padding: 100px 60px; }
-  .te-section-tag {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 6px 18px; border-radius: 50px; margin-bottom: 20px;
-    border: 1px solid rgba(236,72,153,0.25); background: rgba(236,72,153,0.06);
-    font-size: 12px; font-weight: 600; color: var(--pink-soft); letter-spacing: 1.5px; text-transform: uppercase;
-  }
-  .te-section-tag::before {
-    content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--pink-primary);
-  }
-  .te-section-title { font-size: clamp(32px, 4vw, 52px); font-weight: 800; margin-bottom: 16px; }
-  .te-section-title .pink { color: var(--pink-primary); }
-  .te-section-desc { font-size: 17px; color: var(--text-secondary); max-width: 680px; line-height: 1.7; }
-
-  /* ABOUT */
-  .te-about { background: linear-gradient(180deg, #0d0520 0%, #120832 100%); }
-  .te-about-header { text-align: center; margin-bottom: 60px; display: flex; flex-direction: column; align-items: center; }
-  .te-about-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 900px; margin: 0 auto 40px; }
-  .te-about-card {
-    background: var(--card-bg); border-radius: 16px; padding: 36px;
-    border: 1.5px solid var(--card-border); backdrop-filter: blur(10px);
-    transition: all 0.3s;
-  }
-  .te-about-card:hover { border-color: var(--pink-primary); transform: translateY(-4px); }
-  .te-about-card.active { border-color: var(--pink-primary); }
-  .te-about-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
-  .te-about-card p { font-size: 15px; color: var(--text-secondary); line-height: 1.7; }
-  .te-about-card-line { width: 48px; height: 3px; border-radius: 2px; margin-top: 28px; }
-  .te-about-card.active .te-about-card-line { background: var(--pink-primary); }
-  .te-about-card:not(.active) .te-about-card-line { background: rgba(255,255,255,0.15); }
-  .te-about-text-card {
-    max-width: 900px; margin: 0 auto;
-    background: var(--card-bg); border-radius: 16px; padding: 40px;
-    border: 1px solid var(--card-border); backdrop-filter: blur(10px);
-  }
-  .te-about-text-card p { font-size: 16px; color: var(--text-secondary); line-height: 1.8; margin-bottom: 16px; }
-  .te-about-text-card p:last-child { margin-bottom: 0; }
-
-  /* STATS */
-  .te-stats-section { background: linear-gradient(180deg, #120832 0%, #0d0520 100%); text-align: center; }
-  .te-stats-headline {
-    max-width: 900px; margin: 0 auto 48px;
-    padding: 40px 48px; border-radius: 16px;
-    border: 1.5px solid var(--pink-primary);
-    background: rgba(236,72,153,0.04);
-  }
-  .te-stats-headline h2 { font-size: clamp(24px, 3vw, 36px); font-weight: 800; line-height: 1.3; }
-  .te-stats-headline h2 span { color: var(--pink-primary); }
-  .te-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 900px; margin: 0 auto; }
-  .te-stat-card {
-    background: var(--card-bg); border-radius: 12px; padding: 28px 20px;
-    border: 1px solid var(--card-border); text-align: center;
-  }
-  .te-stat-card-num { font-size: 32px; font-weight: 800; color: var(--pink-primary); margin-bottom: 6px; }
-  .te-stat-card-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
-
-  /* SERVICES */
-  .te-services { background: linear-gradient(180deg, #0d0520 0%, #120832 100%); }
-  .te-services-header { text-align: center; margin-bottom: 70px; display: flex; flex-direction: column; align-items: center; }
-  .te-service-item {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
-    max-width: 1100px; margin: 0 auto 80px;
-  }
-  .te-service-item.reverse { direction: rtl; }
-  .te-service-item.reverse > * { direction: ltr; }
-  .te-service-img-wrap {
-    position: relative; border-radius: 20px; overflow: hidden;
-    border: 1.5px solid var(--card-border);
-  }
-  .te-service-img-wrap img { width: 100%; height: 360px; object-fit: cover; display: block; }
-  .te-service-icon-badge {
-    position: absolute; top: 20px; left: 20px;
-    width: 52px; height: 52px; border-radius: 50%;
-    background: linear-gradient(135deg, #ec4899, #a855f7);
-    display: flex; align-items: center; justify-content: center; font-size: 22px;
-  }
-  .te-service-content h2 { font-size: clamp(24px, 3vw, 36px); font-weight: 800; color: var(--pink-primary); margin-bottom: 16px; }
-  .te-service-content p { font-size: 16px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 24px; }
-  .te-key-benefit {
-    padding: 20px 24px; border-radius: 12px;
-    background: rgba(236,72,153,0.06); border: 1px solid rgba(236,72,153,0.2);
-    margin-bottom: 28px;
-  }
-  .te-key-benefit-label { font-size: 11px; font-weight: 700; color: var(--pink-soft); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
-  .te-key-benefit p { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 0; }
-  .te-service-divider { width: 60px; height: 3px; background: var(--pink-primary); border-radius: 2px; margin-top: 20px; }
-
-  .te-cta-band {
-    max-width: 1100px; margin: 0 auto;
-    padding: 60px 48px; border-radius: 20px; text-align: center;
-    border: 1.5px solid var(--pink-primary);
-    background: linear-gradient(135deg, rgba(236,72,153,0.08), rgba(124,58,237,0.08));
-  }
-  .te-cta-band h2 { font-size: clamp(24px, 3vw, 36px); font-weight: 800; margin-bottom: 12px; }
-  .te-cta-band p { font-size: 16px; color: var(--text-secondary); margin-bottom: 28px; }
-
-  /* CONTACT */
-  .te-contact { background: linear-gradient(180deg, #120832 0%, #0d0520 100%); }
-  .te-contact-header { text-align: center; margin-bottom: 50px; display: flex; flex-direction: column; align-items: center; }
-  .te-contact-desc { font-size: 17px; color: var(--text-secondary); max-width: 560px; line-height: 1.7; }
-  .te-contact-card {
-    max-width: 760px; margin: 0 auto;
-    background: var(--card-bg); border-radius: 20px; padding: 52px 48px;
-    border: 1.5px solid var(--pink-primary); text-align: center;
-    backdrop-filter: blur(10px);
-  }
-  .te-contact-card p { font-size: 16px; color: var(--text-secondary); margin-bottom: 28px; }
-  .te-contact-divider { width: 60px; height: 2px; background: var(--pink-primary); border-radius: 1px; margin: 0 auto 32px; }
-  .te-btn-email {
-    display: inline-block; padding: 16px 44px; border-radius: 50px;
-    background: linear-gradient(135deg, #ec4899, #a855f7);
-    color: #fff; font-size: 16px; font-weight: 600; letter-spacing: 0.3px;
-    text-decoration: none; border: none; cursor: pointer; font-family: 'Inter', sans-serif;
-    transition: all 0.3s;
-  }
-  .te-btn-email:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(236,72,153,0.4); }
-
-  /* FOOTER */
-  .te-footer {
-    background: #0a0518;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    padding: 70px 60px 36px;
-  }
-  .te-footer-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .te-footer-logo-icon {
-    width: 40px; height: 40px; border-radius: 10px;
-    background: linear-gradient(135deg, #ec4899, #a855f7);
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 13px; color: #fff;
-  }
-  .te-footer-logo-text { font-size: 22px; font-weight: 700; }
-  .te-footer-logo-text span { color: var(--pink-primary); }
-  .te-footer-grid {
-    display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 60px;
-    max-width: 1100px; margin: 60px auto 0 auto;
-    padding-bottom: 50px; border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
-  .te-footer-col h4 { font-size: 15px; font-weight: 700; color: var(--pink-primary); margin-bottom: 24px; }
-  .te-footer-col .te-footer-brand-desc { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
-  .te-footer-col-line { width: 36px; height: 2px; background: var(--pink-primary); border-radius: 1px; margin-top: 20px; }
-  .te-footer-col ul { list-style: none; }
-  .te-footer-col ul li { margin-bottom: 14px; }
-  .te-footer-col ul li a { text-decoration: none; color: var(--text-muted); font-size: 14px; transition: color 0.2s; }
-  .te-footer-col ul li a:hover { color: var(--pink-soft); }
-  .te-footer-bottom {
-    display: flex; justify-content: space-between; align-items: center;
-    max-width: 1100px; margin: 28px auto 0;
-    font-size: 13px; color: var(--text-muted);
-  }
-
-  /* RESPONSIVE */
-  @media (max-width: 900px) {
-    .te-nav { padding: 14px 24px; }
-    .te-nav-links { display: none; }
-    .te-section { padding: 70px 24px; }
-    .te-footer { padding: 50px 24px 28px; }
-    .te-about-cards { grid-template-columns: 1fr; }
-    .te-service-item { grid-template-columns: 1fr; gap: 32px; }
-    .te-service-item.reverse { direction: ltr; }
-    .te-stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .te-footer-grid { grid-template-columns: 1fr; gap: 36px; }
-    .te-footer-bottom { flex-direction: column; gap: 10px; text-align: center; }
-    .te-hero-chips { display: none; }
-    .te-stat-item { padding: 0 18px; }
-  }
-  @media (max-width: 500px) {
-    .te-hero-stats { flex-direction: column; gap: 20px; }
-    .te-stat-item + .te-stat-item { border-left: none; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
-    .te-stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .te-cta-band { padding: 40px 24px; }
-    .te-contact-card { padding: 40px 24px; }
-    .te-stats-headline { padding: 30px 24px; }
-  }
-`;
-
-const services = [
-  {
-    img: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&q=80",
-    alt: "Flight Tickets",
-    icon: "✈️",
-    title: "Flight Tickets",
-    desc: "Book flights, train tickets, and bus passes with real-time pricing and availability. Get instant confirmations and e-tickets delivered straight to your app.",
-    benefit: "Save up to 15% compared to booking on multiple platforms.",
-    reverse: false,
-  },
-  {
-    img: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
-    alt: "Accommodations",
-    icon: "🏨",
-    title: "Accommodations",
-    desc: "Find and book hotels, hostels, and vacation rentals that match your preferences and budget. Filter by amenities, location, and price.",
-    benefit: "Price match guarantee on all accommodations.",
-    reverse: true,
-  },
-  {
-    img: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=800&q=80",
-    alt: "Transportation",
-    icon: "🚗",
-    title: "Transportation",
-    desc: "Access local transportation options including rideshares, car rentals, and public transit. Compare prices and book directly within the app.",
-    benefit: "Seamless connections between all your travel points.",
-    reverse: false,
-  },
-  {
-    img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
-    alt: "Restaurants",
-    icon: "🍽️",
-    title: "Restaurants",
-    desc: "Discover and reserve tables at local eateries with exclusive in-app discounts. Browse menus, read reviews, and make reservations in seconds.",
-    benefit: "Exclusive in-app discounts at 500+ partner restaurants.",
-    reverse: true,
-  },
-  {
-    img: "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=800&q=80",
-    alt: "Tourist Attractions",
-    icon: "🏛️",
-    title: "Tourist Attractions",
-    desc: "Explore local sights and activities with skip-the-line ticket options and guided tours. Discover hidden gems and popular destinations.",
-    benefit: "Priority access to major attractions worldwide.",
-    reverse: false,
-  },
-];
-
-const stats = [
-  { num: "10+", label: "Happy Travelers" },
-  { num: "10+", label: "Destinations" },
-  { num: "4+", label: "Travel Partners" },
-  { num: "1+", label: "Years Experience" },
-];
+// ─── MAIN LANDING COMPONENT ───────────────────────────────────────────────────
 
 export default function Landing() {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
+
+  // Packages state
+  const [packages, setPackages] = useState([]);
+  const [pkgLoading, setPkgLoading] = useState(true);
+  const [favoriteCards, setFavoriteCards] = useState(new Set());
+
+  // Reviews state
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState("All");
+
+  // Search state
+  const [searchDestination, setSearchDestination] = useState("");
+  const [searchDate, setSearchDate] = useState("");
+  const [searchTravelers, setSearchTravelers] = useState("2");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -418,308 +158,978 @@ export default function Landing() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Fetch packages (public endpoint — no token required for landing)
+  useEffect(() => {
+    const fetchTourPackages = async () => {
+      try {
+        setPkgLoading(true);
+        // Try with token if available, else without
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const response = await axios.get(`${serverURL}/api/user/package`, {
+          headers,
+        });
+        setPackages(response.data.getPackages || []);
+      } catch (error) {
+        console.error("Error fetching tour packages:", error);
+        setPackages([]);
+      } finally {
+        setPkgLoading(false);
+      }
+    };
+    fetchTourPackages();
+  }, []);
+
+  // Fetch reviews (public)
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        setReviewsLoading(true);
+        const response = await axios.get(`${serverURL}/api/review/all`);
+        const raw = response.data.reviews || [];
+        setReviews(raw.map(transformReview));
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+        setReviews([]);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+    fetchReviews();
+  }, []);
+
   const scrollTo = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const handleSearch = () => {
+    if (!searchDestination.trim()) return;
+    navigate(`/explore?search=${encodeURIComponent(searchDestination.trim())}`);
+  };
+
+  const toggleFavorite = (id) => {
+    setFavoriteCards((prev) => {
+      const s = new Set(prev);
+      s.has(id) ? s.delete(id) : s.add(id);
+      return s;
+    });
+  };
+
+  const filteredReviews = reviews.filter((r) => {
+    if (activeFilter === "5 Stars") return r.rating === 5;
+    if (activeFilter === "4 Stars") return r.rating === 4;
+    if (activeFilter === "3 Stars & below") return r.rating <= 3;
+    return true;
+  });
+
+  const avgRating =
+    reviews.length > 0
+      ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+      : "0.0";
+
+  const ratingCounts = [5, 4, 3, 2, 1].map((n) => ({
+    n,
+    count: reviews.filter((r) => r.rating === n).length,
+  }));
+
+  const reviewFilters = ["All", "5 Stars", "4 Stars", "3 Stars & below"];
+
+  const services = [
+    {
+      img: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&q=80",
+      icon: "✈️",
+      title: "Flight Tickets",
+      desc: "Book flights with real-time pricing and availability. Get instant confirmations and e-tickets delivered straight to your app.",
+      benefit: "Save up to 15% compared to booking on multiple platforms.",
+      reverse: false,
+    },
+    {
+      img: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
+      icon: "🏨",
+      title: "Accommodations",
+      desc: "Find and book hotels, hostels, and vacation rentals that match your preferences and budget.",
+      benefit: "Price match guarantee on all accommodations.",
+      reverse: true,
+    },
+    {
+      img: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=800&q=80",
+      icon: "🚗",
+      title: "Transportation",
+      desc: "Access local transportation options including rideshares, car rentals, and public transit.",
+      benefit: "Seamless connections between all your travel points.",
+      reverse: false,
+    },
+    {
+      img: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
+      icon: "🍽️",
+      title: "Restaurants",
+      desc: "Discover and reserve tables at local eateries with exclusive in-app discounts.",
+      benefit: "Exclusive in-app discounts at 500+ partner restaurants.",
+      reverse: true,
+    },
+  ];
+
   return (
-    <>
-      <style>{styles}</style>
+    <div className="min-h-screen bg-[#07030f] text-white font-sans">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&display=swap');
+        @keyframes fadeSlideIn {
+          from { opacity: 0; transform: translateY(18px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes blobFloat {
+          0%,100% { transform: translateY(0px) scale(1); }
+          50% { transform: translateY(-20px) scale(1.05); }
+        }
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .blob-float { animation: blobFloat 6s ease-in-out infinite; }
+        .blob-float-2 { animation: blobFloat 6s ease-in-out 2s infinite; }
+        .blob-float-3 { animation: blobFloat 6s ease-in-out 4s infinite; }
+        .anim-blink { animation: blink 2s ease-in-out infinite; }
+        .spinner { animation: spin 0.8s linear infinite; }
+        .fade-up { animation: fadeSlideIn 0.8s ease both; }
+        .fade-up-2 { animation: fadeSlideIn 0.8s ease 0.15s both; }
+        .fade-up-3 { animation: fadeSlideIn 0.8s ease 0.3s both; }
+        .fade-up-4 { animation: fadeSlideIn 0.8s ease 0.45s both; }
+      `}</style>
 
-      {/* NAVBAR */}
-      <nav className={`te-nav${scrolled ? " scrolled" : ""}`}>
-        <div className="te-nav-logo" onClick={() => scrollTo("home")}>
-          <div className="te-nav-logo-icon">TE</div>
-          <span className="te-nav-logo-text">
-            Travel<span>Ease</span>
-          </span>
-        </div>
-        <div className="te-nav-links">
-          {["home", "about", "services", "contact"].map((id) => (
-            <a
-              key={id}
-              href={`#${id}`}
-              onClick={(e) => {
-                e.preventDefault();
-                scrollTo(id);
-              }}
-            >
-              {id.charAt(0).toUpperCase() + id.slice(1)}
-            </a>
-          ))}
-        </div>
-        <div className="te-nav-actions">
-          <button className="te-btn-login" onClick={() => navigate("/login")}>
-            Login
-          </button>
-        </div>
-      </nav>
+      {/* Ambient blobs */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="blob-float absolute top-[-8%] left-[20%] w-[280px] h-[280px] sm:w-[520px] sm:h-[520px] rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.18)_0%,transparent_70%)] blur-[70px]" />
+        <div className="blob-float-2 absolute top-[40%] right-[-5%] w-[220px] h-[220px] sm:w-[420px] sm:h-[420px] rounded-full bg-[radial-gradient(circle,rgba(109,40,217,0.13)_0%,transparent_70%)] blur-[80px]" />
+        <div className="blob-float-3 absolute bottom-0 left-0 w-[200px] h-[200px] sm:w-[360px] sm:h-[360px] rounded-full bg-[radial-gradient(circle,rgba(76,29,149,0.15)_0%,transparent_70%)] blur-[80px]" />
+      </div>
 
-      {/* HERO */}
-      <section className="te-hero" id="home">
-        <div className="te-hero-blob te-hero-blob-1" />
-        <div className="te-hero-blob te-hero-blob-2" />
-        <div className="te-hero-blob te-hero-blob-3" />
-
-        <div className="te-hero-badge">
-          <div className="te-hero-badge-dot" />
-          <span>Your Ultimate Travel Companion</span>
-        </div>
-
-        <h1 className="te-hero-title">
-          Travel Made
-          <br />
-          <span className="pink">Effortless</span>
-        </h1>
-
-        <p className="te-hero-subtitle">
-          All your travel needs in one beautiful app — flights, accommodations,
-          <br />
-          restaurants, transportation, and attractions at your fingertips.
-        </p>
-
-        <div className="te-hero-btns">
-          <button
-            className="te-btn-primary"
-            onClick={() => scrollTo("services")}
-          >
-            Explore Services
-          </button>
-          <button
-            className="te-btn-secondary"
-            onClick={() => scrollTo("about")}
-          >
-            Learn More
-          </button>
-        </div>
-
-        <div className="te-hero-stats">
-          {stats.map((s) => (
-            <div className="te-stat-item" key={s.label}>
-              <div className="te-stat-num">{s.num}</div>
-              <div className="te-stat-label">{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="te-hero-chips">
-          {["Smart Booking", "Local Guides", "Best Prices", "24/7 Support"].map(
-            (c) => (
-              <div className="te-chip" key={c}>
-                {c}
-              </div>
-            ),
-          )}
-        </div>
-      </section>
-
-      {/* ABOUT */}
-      <section className="te-section te-about" id="about">
-        <div className="te-about-header">
-          <div className="te-section-tag">Our Story</div>
-          <h2 className="te-section-title">
-            <span className="pink">About</span> TravelEase
-          </h2>
-        </div>
-        <div className="te-about-cards">
-          <div className="te-about-card active">
-            <h3>Our Mission</h3>
-            <p>
-              TravelEase was founded with a simple mission: to make independent
-              travel truly effortless. We understand the challenges travelers
-              face when coordinating different aspects of their journey.
-            </p>
-            <div className="te-about-card-line" />
-          </div>
-          <div className="te-about-card">
-            <h3>Our Team</h3>
-            <p>
-              Our team of travel enthusiasts and tech experts came together to
-              create a solution that puts everything you need in one place — no
-              more juggling between multiple apps and websites.
-            </p>
-            <div className="te-about-card-line" />
-          </div>
-        </div>
-        <div className="te-about-text-card">
-          <p>
-            We believe that travel should be about the experience, not the
-            logistics. That's why we've built an app that handles all the
-            details, so you can focus on creating memories.
-          </p>
-          <p>
-            Our platform combines cutting-edge technology with a deep
-            understanding of travelers' needs, creating a seamless experience
-            from planning to your journey's end.
-          </p>
-        </div>
-      </section>
-
-      {/* STATS */}
-      <section className="te-section te-stats-section" id="stats">
-        <div className="te-stats-headline">
-          <h2>
-            Everything you need for travel —<br />
-            <span>in one beautiful app.</span>
-          </h2>
-        </div>
-        <div className="te-stats-grid">
-          {stats.map((s) => (
-            <div className="te-stat-card" key={s.label}>
-              <div className="te-stat-card-num">{s.num}</div>
-              <div className="te-stat-card-label">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* SERVICES */}
-      <section className="te-section te-services" id="services">
-        <div className="te-services-header">
-          <div className="te-section-tag">What We Offer</div>
-          <h2 className="te-section-title">
-            <span className="pink">Our</span> Services
-          </h2>
-          <p className="te-section-desc">
-            Everything you need for a perfect travel experience, all in one
-            place.
-          </p>
-        </div>
-
-        {services.map((svc) => (
+      <div className="relative z-10">
+        {/* ── NAVBAR ── */}
+        <nav
+          className={`fixed top-0 left-0 right-0 z-50 px-4 sm:px-8 lg:px-16 py-4 flex items-center justify-between transition-all duration-300 ${
+            scrolled
+              ? "bg-[#07030f]/90 backdrop-blur-[16px] border-b border-violet-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.4)]"
+              : "bg-transparent"
+          }`}
+        >
           <div
-            key={svc.title}
-            className={`te-service-item${svc.reverse ? " reverse" : ""}`}
+            className="flex items-center gap-2.5 cursor-pointer"
+            onClick={() => scrollTo("home")}
           >
-            <div className="te-service-img-wrap">
-              <img src={svc.img} alt={svc.alt} />
-              <div className="te-service-icon-badge">{svc.icon}</div>
+            <div className="w-9 h-9 rounded-[10px] bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white text-xs font-black">
+              TE
             </div>
-            <div className="te-service-content">
-              <h2>{svc.title}</h2>
-              <p>{svc.desc}</p>
-              <div className="te-key-benefit">
-                <div className="te-key-benefit-label">Key Benefit</div>
-                <p>{svc.benefit}</p>
-              </div>
-              <button
-                className="te-btn-primary"
-                onClick={() => navigate("/login")}
-              >
-                Book Now
-              </button>
-              <div className="te-service-divider" />
-            </div>
-          </div>
-        ))}
-
-        <div className="te-cta-band">
-          <h2>Ready to start your journey?</h2>
-          <p>
-            Download TravelEase today and experience travel like never before.
-          </p>
-          <button
-            className="te-btn-primary"
-            style={{ fontSize: "16px", padding: "16px 48px" }}
-          >
-            Get Started
-          </button>
-        </div>
-      </section>
-
-      {/* CONTACT */}
-      <section className="te-section te-contact" id="contact">
-        <div className="te-contact-header">
-          <div className="te-section-tag">Get In Touch</div>
-          <h2 className="te-section-title">
-            <span className="pink">Contact</span> Us
-          </h2>
-          <p className="te-contact-desc">
-            Have questions or feedback? We'd love to hear from you. Our team is
-            always ready to assist you with any inquiries.
-          </p>
-        </div>
-        <div className="te-contact-card">
-          <p>
-            Contact us directly via email. We'll get back to you as soon as
-            possible.
-          </p>
-          <div className="te-contact-divider" />
-          <a className="te-btn-email" href="mailto:support@travellerease.com">
-            support@travellerease.com
-          </a>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="te-footer">
-        <div style={{ textAlign: "center", marginBottom: "8px" }}>
-          <div className="te-footer-logo" style={{ justifyContent: "center" }}>
-            <div className="te-footer-logo-icon">TE</div>
-            <span className="te-footer-logo-text">
-              Travel<span>Ease</span>
+            <span
+              className="text-xl font-black text-white"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              Travel<span className="text-violet-400">Ease</span>
             </span>
           </div>
-          <p
-            style={{
-              fontSize: "14px",
-              color: "var(--text-muted)",
-              marginTop: "8px",
-            }}
+
+          <div className="hidden md:flex gap-8">
+            {[
+              "home",
+              "about",
+              "packages",
+              "services",
+              "reviews",
+              "contact",
+            ].map((id) => (
+              <a
+                key={id}
+                href={`#${id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollTo(id);
+                }}
+                className="text-[#9e9ab5] text-sm font-medium hover:text-white transition-colors capitalize no-underline"
+              >
+                {id}
+              </a>
+            ))}
+          </div>
+
+          <button
+            onClick={() => navigate("/login")}
+            className="px-5 py-2 rounded-full text-sm font-semibold text-violet-300 bg-transparent border border-violet-500/40 hover:bg-violet-500/15 hover:border-violet-500/70 transition-all cursor-pointer"
           >
-            Your journey begins with us. Experience the future of travel
-            planning.
-          </p>
-        </div>
+            Login
+          </button>
+        </nav>
 
-        <div className="te-footer-grid">
-          <div className="te-footer-col">
-            <h4>About Us</h4>
-            <p className="te-footer-brand-desc">
-              Everything you need for travel — in one beautiful, intuitive app.
-            </p>
-            <div className="te-footer-col-line" />
-          </div>
-          <div className="te-footer-col">
-            <h4>Quick Links</h4>
-            <ul>
-              {["home", "about", "services", "contact"].map((id) => (
-                <li key={id}>
-                  <a
-                    href={`#${id}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      scrollTo(id);
-                    }}
+        {/* ── HERO ── */}
+        <div
+          id="home"
+          className="relative pt-24 pb-16 sm:pb-24 overflow-hidden min-h-screen flex items-center"
+        >
+          <div className="absolute inset-0 pointer-events-none [background-image:radial-gradient(circle,rgba(139,92,246,0.08)_1px,transparent_1px)] [background-size:28px_28px]" />
+          <div className="hidden lg:block absolute right-[-80px] top-[20%] w-[500px] h-[500px] rounded-full border border-violet-500/15 animate-spin [animation-duration:22s] pointer-events-none" />
+          <div className="hidden sm:block absolute right-8 top-[30%] w-[280px] h-[280px] rounded-full border border-violet-500/10 pointer-events-none" />
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left */}
+            <div>
+              <div className="fade-up inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 bg-violet-500/10 border border-violet-500/20">
+                <span className="w-2 h-2 rounded-full bg-violet-300 anim-blink" />
+                <span className="text-[0.65rem] font-bold tracking-[0.2em] uppercase text-violet-400">
+                  ✦ 500+ Destinations Worldwide
+                </span>
+              </div>
+              <h1
+                className="fade-up-2 font-black leading-tight mb-5 text-white"
+                style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontSize: "clamp(2.4rem,5vw,4.5rem)",
+                }}
+              >
+                Discover the
+                <br />
+                <span className="bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent">
+                  World's Most
+                </span>
+                <br />
+                Beautiful Places
+              </h1>
+              <p className="fade-up-3 text-[#9e9ab5] text-base sm:text-lg leading-relaxed max-w-[420px] mb-9">
+                From ancient temples to pristine beaches — we craft
+                unforgettable journeys tailored to your soul.
+              </p>
+              <div className="fade-up-4 flex flex-wrap gap-3 mb-12">
+                <a
+                  href="#packages"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    scrollTo("packages");
+                  }}
+                  className="flex items-center gap-2 px-7 py-3.5 rounded-full font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_25px_rgba(139,92,246,0.6)] hover:scale-105 transition-all no-underline"
+                >
+                  Explore Packages <ChevronRight size={16} />
+                </a>
+                <button
+                  onClick={() => navigate("/login")}
+                  className="flex items-center gap-2 px-7 py-3.5 rounded-full font-bold text-sm text-violet-300 bg-violet-500/10 border border-violet-500/40 hover:bg-violet-500/20 transition-all cursor-pointer"
+                >
+                  Get Started
+                </button>
+              </div>
+              <div className="flex gap-8 sm:gap-12">
+                {[
+                  ["500+", "Destinations"],
+                  ["10K+", "Happy Travelers"],
+                  ["98%", "Satisfaction"],
+                ].map(([num, label], i) => (
+                  <div
+                    key={label}
+                    className="flex items-center gap-8 sm:gap-12"
                   >
-                    {id.charAt(0).toUpperCase() + id.slice(1)}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="te-footer-col">
-            <h4>Services</h4>
-            <ul>
-              {[
-                "Flights",
-                "Hotels",
-                "Experiences",
-                "Transportation",
-                "Local Guide",
-              ].map((s) => (
-                <li key={s}>
-                  <a href="#">{s}</a>
-                </li>
-              ))}
-            </ul>
+                    {i > 0 && (
+                      <div className="w-px bg-violet-500/30 h-10 mr-[-16px] sm:mr-[-20px]" />
+                    )}
+                    <div>
+                      <div
+                        className="text-[1.9rem] sm:text-[2.5rem] font-black leading-none bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent"
+                        style={{ fontFamily: "'Playfair Display', serif" }}
+                      >
+                        {num}
+                      </div>
+                      <div className="text-[#6b5a8e] text-[0.62rem] font-semibold tracking-[0.15em] uppercase mt-1">
+                        {label}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Search Card */}
+            <div className="rounded-[28px] p-6 sm:p-8 border border-violet-500/35 shadow-[0_0_60px_rgba(139,92,246,0.2)] bg-gradient-to-br from-[#1a0a3e] to-[#0f0524]">
+              <h3
+                className="text-[1.5rem] sm:text-[1.7rem] font-black text-white mb-1"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                Find Your Dream Trip
+              </h3>
+              <p className="text-[#6b5a8e] text-sm mb-6">
+                Search from 500+ curated destinations
+              </p>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
+                    Destination
+                  </label>
+                  <div className="flex items-center gap-3 bg-violet-500/10 border border-violet-500/25 rounded-[14px] px-4 py-3 focus-within:border-violet-400/60 transition-colors">
+                    <MapPin size={15} className="text-violet-500 shrink-0" />
+                    <input
+                      className="flex-1 bg-transparent outline-none text-white text-sm placeholder:text-violet-400/50 min-w-0"
+                      placeholder="Where do you want to go?"
+                      value={searchDestination}
+                      onChange={(e) => setSearchDestination(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
+                      Check-in
+                    </label>
+                    <div className="flex items-center gap-2 bg-violet-500/10 border border-violet-500/25 rounded-[14px] px-3 py-3 focus-within:border-violet-400/60 transition-colors">
+                      <Calendar
+                        size={13}
+                        className="text-violet-500 shrink-0"
+                      />
+                      <input
+                        type="date"
+                        value={searchDate}
+                        onChange={(e) => setSearchDate(e.target.value)}
+                        className="flex-1 bg-transparent text-violet-300 outline-none text-xs min-w-0"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[0.65rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
+                      Travelers
+                    </label>
+                    <div className="flex items-center gap-2 bg-violet-500/10 border border-violet-500/25 rounded-[14px] px-3 py-3 focus-within:border-violet-400/60 transition-colors">
+                      <Users size={13} className="text-violet-500 shrink-0" />
+                      <select
+                        value={searchTravelers}
+                        onChange={(e) => setSearchTravelers(e.target.value)}
+                        className="flex-1 bg-transparent text-violet-300 outline-none text-xs [&>option]:bg-[#1a0a3e] min-w-0"
+                      >
+                        <option value="1">1 Person</option>
+                        <option value="2">2 Persons</option>
+                        <option value="3">3 Persons</option>
+                        <option value="4">4+ Persons</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleSearch}
+                  className="w-full flex items-center justify-center gap-2 py-4 rounded-[16px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_25px_rgba(139,92,246,0.6)] hover:scale-[1.02] transition-all border-none cursor-pointer"
+                >
+                  <Compass size={15} /> Search Destinations
+                </button>
+              </div>
+              <div className="mt-5 pt-5 border-t border-violet-500/20">
+                <p className="text-[#6b5a8e] text-xs mb-2">🔥 Popular:</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    ["🏝", "Maldives"],
+                    ["🗼", "Paris"],
+                    ["🏯", "Kyoto"],
+                    ["🏔", "Nepal"],
+                  ].map(([icon, name]) => (
+                    <span
+                      key={name}
+                      onClick={() =>
+                        navigate(`/explore?search=${encodeURIComponent(name)}`)
+                      }
+                      className="px-3 py-1.5 rounded-full text-xs text-violet-300 bg-violet-500/10 border border-violet-500/20 cursor-pointer hover:bg-violet-500/25 transition-all select-none"
+                    >
+                      {icon} {name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="te-footer-bottom">
-          <span>© 2025 TravelEase Ltd. All rights reserved.</span>
+        {/* ── ABOUT ── */}
+        <div id="about" className="py-16 sm:py-24 px-4 sm:px-6">
+          <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 sm:gap-16 items-center">
+            <div className="rounded-[24px] overflow-hidden shadow-[0_0_60px_rgba(139,92,246,0.2)] border border-violet-500/20">
+              <img
+                src="https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=800&q=80"
+                alt="Nepal"
+                className="w-full object-cover block"
+              />
+            </div>
+            <div>
+              <div className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400 mb-3">
+                ✦ Welcome
+              </div>
+              <h2
+                className="font-black text-white mb-5 leading-tight"
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: "clamp(1.8rem,3.5vw,2.8rem)",
+                }}
+              >
+                The Kingdom We Call Home
+              </h2>
+              <p className="text-[#9e9ab5] mb-4 leading-[1.8] text-sm">
+                Nestled in the Himalayas, Nepal is a land of stunning natural
+                beauty, rich cultural heritage, and deep spiritual traditions.
+              </p>
+              <p className="text-[#9e9ab5] mb-8 leading-[1.8] text-sm">
+                Our mission is to share the magic of Nepal with the world while
+                preserving its unique culture and environment for future
+                generations.
+              </p>
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                {[
+                  ["5,500+", "Happy Travelers"],
+                  ["98%", "Satisfaction Rate"],
+                  ["16", "Years Experience"],
+                  ["27+", "Tour Packages"],
+                ].map(([num, label]) => (
+                  <div
+                    key={label}
+                    className="bg-violet-500/8 border border-violet-500/20 rounded-[16px] p-4 text-center hover:bg-violet-500/15 transition-all"
+                  >
+                    <div
+                      className="text-[1.8rem] font-black leading-none bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
+                      style={{ fontFamily: "'Playfair Display', serif" }}
+                    >
+                      {num}
+                    </div>
+                    <div className="text-[#6b5a8e] text-xs font-semibold mt-1">
+                      {label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => navigate("/login")}
+                className="px-7 py-3 rounded-full font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-105 transition-all border-none cursor-pointer"
+              >
+                Learn More
+              </button>
+            </div>
+          </div>
         </div>
-      </footer>
-    </>
+
+        {/* ── PACKAGES ── */}
+        <div id="packages" className="py-16 sm:py-24 px-4 sm:px-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-12">
+              <div className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400 mb-3">
+                ✦ Best Value
+              </div>
+              <h2
+                className="font-black text-white mb-4"
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: "clamp(2rem,4vw,3.5rem)",
+                }}
+              >
+                Popular Tour{" "}
+                <span className="bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent">
+                  Packages
+                </span>
+              </h2>
+              <p className="text-[#6b5a8e] max-w-[500px] mx-auto leading-[1.7] text-sm sm:text-base">
+                All-inclusive packages — flights, hotels, meals, and expert
+                guides.
+              </p>
+            </div>
+
+            {pkgLoading ? (
+              <div className="flex flex-col items-center py-20 gap-4">
+                <div className="w-14 h-14 rounded-full border-[3px] border-violet-500/20 border-t-violet-500 spinner" />
+                <p className="text-[#6b5a8e] font-semibold">
+                  Loading packages...
+                </p>
+              </div>
+            ) : packages.length === 0 ? (
+              <div className="text-center py-20">
+                <MapPin size={48} className="text-violet-900 mx-auto mb-4" />
+                <p className="text-[#6b5a8e] text-xl font-bold">
+                  No packages available
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+                  {packages.slice(0, 3).map((pkg, index) => {
+                    const badge = getBadgeInfo(pkg, index);
+                    const amenities = getAmenities(pkg);
+                    const nights =
+                      pkg.duration ||
+                      (pkg.nights ? `${pkg.nights} Nights` : "—");
+                    return (
+                      <div
+                        key={pkg._id}
+                        className="rounded-[28px] overflow-hidden border border-violet-500/20 hover:border-violet-500/55 hover:shadow-[0_20px_60px_rgba(139,92,246,0.25)] hover:-translate-y-1.5 transition-all duration-[400ms] cursor-pointer bg-gradient-to-br from-[#1a0a3e] to-[#120630]"
+                      >
+                        <div className="relative overflow-hidden">
+                          <img
+                            src={pkg.imageUrls?.[0]}
+                            alt={pkg.title}
+                            className="w-full h-[220px] object-cover block hover:scale-[1.06] transition-transform duration-500"
+                          />
+                          <span
+                            className={`absolute top-3 left-3 text-[0.68rem] font-bold px-3 py-1.5 rounded-full ${badgeClass[badge.cls]}`}
+                          >
+                            {badge.label}
+                          </span>
+                          <div className="absolute top-3 right-3 bg-[#07030f]/70 backdrop-blur-sm text-violet-300 text-[0.7rem] font-bold px-3 py-1.5 rounded-full border border-violet-500/30">
+                            {nights}
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(pkg._id);
+                            }}
+                            className={`absolute bottom-3 right-3 w-9 h-9 rounded-full flex items-center justify-center border-none cursor-pointer transition-all ${
+                              favoriteCards.has(pkg._id)
+                                ? "bg-violet-500 shadow-[0_4px_15px_rgba(139,92,246,0.5)]"
+                                : "bg-[#07030f]/70 backdrop-blur-sm"
+                            }`}
+                          >
+                            <Heart
+                              size={14}
+                              className="text-white"
+                              fill={
+                                favoriteCards.has(pkg._id) ? "white" : "none"
+                              }
+                            />
+                          </button>
+                        </div>
+                        <div className="p-5 sm:p-6">
+                          <div className="flex justify-between items-start gap-2 mb-2">
+                            <div>
+                              <h3
+                                className="text-[1.2rem] font-black text-white leading-tight"
+                                style={{
+                                  fontFamily: "'Playfair Display', serif",
+                                }}
+                              >
+                                {pkg.title}
+                              </h3>
+                              <p className="flex items-center gap-1 text-[#6b5a8e] text-xs mt-1">
+                                <MapPin size={10} className="text-violet-500" />
+                                {pkg.destination}
+                              </p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <div
+                                className="text-[1.5rem] font-black leading-none bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
+                                style={{
+                                  fontFamily: "'Playfair Display', serif",
+                                }}
+                              >
+                                Rs.{pkg.price}
+                              </div>
+                              <div className="text-[#6b5a8e] text-xs">
+                                per person
+                              </div>
+                            </div>
+                          </div>
+                          {amenities.length > 0 && (
+                            <div className="flex flex-wrap gap-2 my-3">
+                              {amenities.map((a, i) => (
+                                <span
+                                  key={i}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-500/12 text-violet-300 border border-violet-500/20"
+                                >
+                                  <a.icon size={9} />
+                                  {a.label}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-0.5 mb-3">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                size={11}
+                                className={
+                                  i < Math.round(pkg.rating || 4)
+                                    ? "text-amber-400 fill-amber-400"
+                                    : "text-white/12 fill-white/8"
+                                }
+                              />
+                            ))}
+                            <span className="ml-1 text-sm font-bold text-white">
+                              {pkg.rating}
+                            </span>
+                            <span className="text-[#6b5a8e] text-xs">
+                              {" "}
+                              · {pkg.reviews} reviews
+                            </span>
+                          </div>
+                          {pkg.startDate && (
+                            <div className="flex items-center gap-1.5 text-xs text-[#6b5a8e] mb-4">
+                              <Calendar size={10} className="text-violet-500" />
+                              Starts:{" "}
+                              {new Date(pkg.startDate).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                },
+                              )}
+                            </div>
+                          )}
+                          <button
+                            className="w-full py-3.5 rounded-[16px] font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_25px_rgba(139,92,246,0.6)] hover:scale-[1.02] transition-all border-none cursor-pointer"
+                            onClick={() => navigate(`/package/${pkg._id}`)}
+                          >
+                            Book This Package
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="text-center mt-10">
+                  <button
+                    onClick={() => navigate("/login")}
+                    className="inline-flex items-center gap-2 px-9 py-3.5 rounded-full font-bold text-sm text-violet-300 bg-transparent border-2 border-violet-500/50 hover:bg-violet-500/15 hover:border-violet-500/80 transition-all cursor-pointer"
+                  >
+                    View All Packages <ChevronRight size={16} />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* ── SERVICES ── */}
+        <div id="services" className="py-16 sm:py-24 px-4 sm:px-6">
+          <div className="max-w-[1100px] mx-auto">
+            <div className="text-center mb-14">
+              <div className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400 mb-3">
+                ✦ What We Offer
+              </div>
+              <h2
+                className="font-black text-white mb-4"
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: "clamp(2rem,4vw,3.5rem)",
+                }}
+              >
+                Our{" "}
+                <span className="bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent">
+                  Services
+                </span>
+              </h2>
+              <p className="text-[#6b5a8e] max-w-[500px] mx-auto leading-[1.7] text-sm">
+                Everything you need for a perfect travel experience, all in one
+                place.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-20">
+              {services.map((svc, i) => (
+                <div
+                  key={svc.title}
+                  className={`grid grid-cols-1 md:grid-cols-2 gap-10 items-center ${svc.reverse ? "md:[direction:rtl]" : ""}`}
+                >
+                  <div
+                    className={`relative rounded-[20px] overflow-hidden border border-violet-500/20 ${svc.reverse ? "[direction:ltr]" : ""}`}
+                  >
+                    <img
+                      src={svc.img}
+                      alt={svc.title}
+                      className="w-full h-[320px] object-cover block"
+                    />
+                    <div className="absolute top-5 left-5 w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-2xl shadow-[0_4px_20px_rgba(139,92,246,0.5)]">
+                      {svc.icon}
+                    </div>
+                  </div>
+                  <div className={svc.reverse ? "[direction:ltr]" : ""}>
+                    <h3
+                      className="text-[1.6rem] sm:text-[2rem] font-black text-white mb-4 bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent"
+                      style={{ fontFamily: "'Playfair Display', serif" }}
+                    >
+                      {svc.title}
+                    </h3>
+                    <p className="text-[#9e9ab5] text-sm leading-[1.8] mb-5">
+                      {svc.desc}
+                    </p>
+                    <div className="p-4 rounded-[14px] bg-violet-500/8 border border-violet-500/20 mb-6">
+                      <div className="text-[0.62rem] font-bold text-violet-400 tracking-[0.18em] uppercase mb-2">
+                        Key Benefit
+                      </div>
+                      <p className="text-white font-semibold text-sm">
+                        {svc.benefit}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => navigate("/login")}
+                      className="px-7 py-3 rounded-full font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-105 transition-all border-none cursor-pointer"
+                    >
+                      Book Now
+                    </button>
+                    <div className="w-14 h-[3px] rounded-full bg-gradient-to-r from-violet-500 to-violet-300 mt-5" />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA Band */}
+            <div className="mt-20 rounded-[24px] p-10 sm:p-14 text-center border border-violet-500/35 bg-gradient-to-br from-violet-500/10 to-violet-900/10 shadow-[0_0_60px_rgba(139,92,246,0.12)]">
+              <h2
+                className="font-black text-white text-[1.8rem] sm:text-[2.4rem] mb-3"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                Ready to start your journey?
+              </h2>
+              <p className="text-[#9e9ab5] mb-6 text-sm">
+                Join thousands of travelers and experience the world like never
+                before.
+              </p>
+              <button
+                onClick={() => navigate("/login")}
+                className="px-10 py-4 rounded-full font-bold text-base text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_20px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_30px_rgba(139,92,246,0.6)] hover:scale-105 transition-all border-none cursor-pointer"
+              >
+                Get Started
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── REVIEWS ── */}
+        <div id="reviews" className="py-16 sm:py-24 px-4 sm:px-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-12">
+              <div className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400 mb-3">
+                ✦ Traveler Stories
+              </div>
+              <h2
+                className="font-black text-white mb-4"
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: "clamp(2rem,4vw,3.5rem)",
+                }}
+              >
+                What Our Travelers{" "}
+                <span className="bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent">
+                  Say About Us
+                </span>
+              </h2>
+              <p className="text-[#6b5a8e] max-w-[500px] mx-auto leading-[1.7] text-sm">
+                Real stories from real adventurers — unfiltered and unsponsored.
+              </p>
+            </div>
+
+            {/* Rating Summary */}
+            <div className="rounded-[28px] p-6 sm:p-8 border border-violet-500/25 bg-gradient-to-br from-[#1a0a3e]/70 to-[#0f0524]/70 backdrop-blur-sm mb-8 max-w-[680px] mx-auto shadow-[0_0_50px_rgba(139,92,246,0.12)]">
+              <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 items-center justify-center">
+                <div className="text-center">
+                  <div
+                    className="text-[4rem] sm:text-[4.5rem] font-black leading-none bg-gradient-to-r from-violet-300 via-violet-400 to-violet-200 bg-clip-text text-transparent"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
+                    {avgRating}
+                  </div>
+                  <StarRating
+                    value={Math.round(parseFloat(avgRating))}
+                    size={18}
+                  />
+                  <div className="text-[#6b5a8e] text-xs mt-2">
+                    {reviews.length} total reviews
+                  </div>
+                </div>
+                <div className="flex-1 w-full sm:min-w-[200px]">
+                  {ratingCounts.map(({ n, count }) => (
+                    <div key={n} className="flex items-center gap-3 mb-2">
+                      <span className="text-xs text-violet-300 w-8 shrink-0">
+                        {n} ★
+                      </span>
+                      <div className="flex-1 h-2 rounded-full bg-white/8 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-violet-600 to-violet-400 transition-all duration-700"
+                          style={{
+                            width: reviews.length
+                              ? `${(count / reviews.length) * 100}%`
+                              : "0%",
+                          }}
+                        />
+                      </div>
+                      <span className="text-[0.7rem] text-[#6b5a8e] w-4 shrink-0 text-right">
+                        {count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Filter tabs */}
+            <div className="flex gap-2 sm:gap-3 flex-wrap justify-center mb-7">
+              {reviewFilters.map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setActiveFilter(f)}
+                  className={`px-4 sm:px-5 py-2 rounded-full text-xs font-bold transition-all border cursor-pointer
+                    ${
+                      activeFilter === f
+                        ? "bg-violet-500 text-white border-violet-500 shadow-[0_4px_15px_rgba(139,92,246,0.4)]"
+                        : "bg-transparent text-violet-400 border-violet-500/35 hover:bg-violet-500/15 hover:border-violet-500/55"
+                    }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+
+            {/* Review Cards */}
+            {reviewsLoading ? (
+              <div className="flex flex-col items-center py-16 gap-4">
+                <div className="w-14 h-14 rounded-full border-[3px] border-violet-500/20 border-t-violet-500 spinner" />
+                <p className="text-[#6b5a8e] font-semibold">
+                  Loading reviews...
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                {filteredReviews.map((review) => (
+                  <ReviewCard key={review.id} review={review} />
+                ))}
+                {filteredReviews.length === 0 && (
+                  <div className="col-span-full text-center py-12">
+                    <MessageSquare
+                      size={40}
+                      className="mx-auto mb-3 text-violet-900"
+                    />
+                    <p className="text-[#6b5a8e] font-semibold">
+                      No reviews for this filter yet.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* CTA to login for writing review */}
+            <div className="mt-10 text-center p-8 rounded-[20px] border border-violet-500/20 bg-violet-500/5">
+              <p className="text-[#9e9ab5] text-sm mb-4">
+                Traveled with us? Share your experience with the community!
+              </p>
+              <button
+                onClick={() => navigate("/login")}
+                className="inline-flex items-center gap-2 px-7 py-3 rounded-full font-bold text-sm text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_15px_rgba(139,92,246,0.4)] hover:scale-105 transition-all border-none cursor-pointer"
+              >
+                Login to Write a Review
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── CONTACT ── */}
+        <div id="contact" className="py-16 sm:py-24 px-4 sm:px-6">
+          <div className="max-w-[760px] mx-auto text-center">
+            <div className="text-[0.68rem] font-bold tracking-[0.2em] uppercase text-violet-400 mb-3">
+              ✦ Get In Touch
+            </div>
+            <h2
+              className="font-black text-white mb-4"
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: "clamp(2rem,4vw,3.2rem)",
+              }}
+            >
+              Contact{" "}
+              <span className="bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-transparent">
+                Us
+              </span>
+            </h2>
+            <p className="text-[#9e9ab5] mb-10 leading-[1.7] text-sm">
+              Have questions or feedback? We'd love to hear from you. Our team
+              is always ready to assist.
+            </p>
+            <div className="rounded-[24px] p-10 sm:p-14 border border-violet-500/30 bg-gradient-to-br from-[#1a0a3e]/90 to-[#0f0524]/90 backdrop-blur-sm shadow-[0_0_60px_rgba(139,92,246,0.15)]">
+              <p className="text-[#9e9ab5] text-sm mb-6">
+                Contact us directly via email. We'll get back to you as soon as
+                possible.
+              </p>
+              <div className="w-14 h-[2px] rounded-full bg-gradient-to-r from-violet-500 to-violet-300 mx-auto mb-8" />
+              <a
+                href="mailto:support@travellerease.com"
+                className="inline-block px-10 py-4 rounded-full font-bold text-base text-white bg-gradient-to-r from-violet-500 to-violet-700 shadow-[0_4px_20px_rgba(139,92,246,0.4)] hover:shadow-[0_8px_30px_rgba(139,92,246,0.6)] hover:scale-105 transition-all no-underline"
+              >
+                support@travellerease.com
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* ── FOOTER ── */}
+        <footer className="bg-[#040210] border-t border-violet-500/15 pt-14 pb-8 px-4 sm:px-8 lg:px-16">
+          <div className="max-w-[1100px] mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 pb-12 border-b border-violet-500/15">
+              <div>
+                <div className="flex items-center gap-2.5 mb-4">
+                  <div className="w-9 h-9 rounded-[10px] bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white text-xs font-black">
+                    TE
+                  </div>
+                  <span
+                    className="text-xl font-black text-white"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
+                    Travel<span className="text-violet-400">Ease</span>
+                  </span>
+                </div>
+                <p className="text-[#6b5a8e] text-sm leading-[1.7]">
+                  Your journey begins with us. Experience the future of travel
+                  planning.
+                </p>
+                <div className="w-10 h-[2px] bg-gradient-to-r from-violet-500 to-violet-300 rounded-full mt-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-violet-400 mb-5">
+                  Quick Links
+                </h4>
+                <ul className="flex flex-col gap-3">
+                  {[
+                    "home",
+                    "about",
+                    "packages",
+                    "services",
+                    "reviews",
+                    "contact",
+                  ].map((id) => (
+                    <li key={id}>
+                      <a
+                        href={`#${id}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          scrollTo(id);
+                        }}
+                        className="text-[#6b5a8e] text-sm hover:text-violet-300 transition-colors no-underline capitalize"
+                      >
+                        {id}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-violet-400 mb-5">
+                  Services
+                </h4>
+                <ul className="flex flex-col gap-3">
+                  {[
+                    "Flights",
+                    "Hotels",
+                    "Experiences",
+                    "Transportation",
+                    "Local Guide",
+                  ].map((s) => (
+                    <li key={s}>
+                      <a
+                        href="#"
+                        className="text-[#6b5a8e] text-sm hover:text-violet-300 transition-colors no-underline"
+                      >
+                        {s}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-7 text-xs text-[#6b5a8e]">
+              <span>© 2025 TravelEase Ltd. All rights reserved.</span>
+              <span>Made with ♥ for adventurers</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
   );
 }

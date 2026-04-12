@@ -462,16 +462,7 @@ Return ONLY this JSON structure:
             <div className="text-2xl sm:text-3xl mb-1.5 sm:mb-2">✦</div>
             <div className="flex items-center justify-center gap-2 mb-1">
               <Bot size={12} style={{ color: "#a78bfa" }} />
-              <span
-                className="text-[0.6rem] sm:text-xs font-bold uppercase tracking-widest"
-                style={{ color: "#a78bfa" }}
-              >
-                Guide
-              </span>
             </div>
-            <p className="text-xs" style={{ color: "#9e9ab5" }}>
-              Description of Package Details
-            </p>
           </div>
 
           {/* CTA */}
@@ -618,12 +609,6 @@ const Explore = () => {
                     className="w-2 h-2 rounded-full animate-pulse"
                     style={{ background: "#a78bfa" }}
                   />
-                  <span
-                    className="text-[0.65rem] sm:text-[0.68rem] font-bold tracking-[0.2em] uppercase"
-                    style={{ color: "#a78bfa" }}
-                  >
-                    AI-Powered Travel Guide
-                  </span>
                 </div>
 
                 <h1
@@ -887,7 +872,7 @@ const Explore = () => {
                               ...(pkg.group
                                 ? [{ icon: Users, label: pkg.group }]
                                 : []),
-                              { icon: Sparkles, label: "AI Guide" },
+                              { icon: Sparkles, label: "" },
                             ].map((pill, i) => (
                               <div
                                 key={i}
