@@ -17,6 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import { serverURL } from "../../App.jsx";
+import { getToken } from "./Login.jsx";
 
 // ─── PACKAGE HELPERS (same as TouristDashboard) ───────────────────────────────
 
@@ -164,7 +165,7 @@ export default function Landing() {
       try {
         setPkgLoading(true);
         // Try with token if available, else without
-        const token = localStorage.getItem("token");
+        const token = getToken();
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const response = await axios.get(`${serverURL}/api/user/package`, {
           headers,

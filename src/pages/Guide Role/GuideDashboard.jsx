@@ -716,6 +716,7 @@ export default function GuideDashboard() {
                 isTracking ? handleStopTracking() : handleStartTracking()
               }
               setActivePage={setActivePage}
+              userDetails={userData?.userDetails}
             />
           )}
           {activePage === "bookings" && <Bookings guideId={GUIDE_ID} />}

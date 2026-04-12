@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   CalendarDays,
   CheckCircle,
@@ -14,8 +14,12 @@ import {
   Package,
 } from "lucide-react";
 import axios from "axios";
+import io from "socket.io-client";
 import { serverURL } from "../../App";
 import { getToken } from "../Login.jsx";
+
+// ── same as Tracking.jsx ──
+let socket = null;
 
 const avatarColors = [
   "from-violet-400 to-purple-500",
@@ -104,55 +108,30 @@ export default function Dashboard({
   fmtTime,
   onToggleTracking,
   setActivePage,
+  userDetails,
 }) {
   const [bookings, setBookings] = useState([]);
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [location, setLocation] = useState({ lat: 27.7172, lng: 85.324 });
+  const [locationError, setLocationError] = useState(null);
+  const intervalRef = useRef(null);
 
-  useEffect(() => {
-    if (!guideId) return;
-    const fetchAll = async () => {
-      try {
-        setLoading(true);
-        const token = getToken();
-        const headers = { Authorization: `Bearer ${token}` };
-
-        const bookingsRes = await axios.get(`${serverURL}/api/booking/guide`, {
-          params: { guideId },
-          headers,
-        });
-        const toursRes = await axios.get(`${serverURL}/api/user/package`, {
-          headers,
-        });
-
-        const rawBookings =
-          bookingsRes.data.data || bookingsRes.data.bookings || [];
-        const normalised = rawBookings.map((b) => ({
-          _id: b._id,
-          tourist: b.userId?.username || "Unknown",
-          tourTitle: b.tourPackageId?.title || "—",
-          location: b.tourPackageId?.destination || "",
-          amount: b.tourPackageId?.price || 0,
-          guests: (b.numberOfAdults || 0) + (b.numberOfChildren || 0),
-          date: b.startDate || "",
-          endDate: b.endDate || "",
-          status: (b.bookingStatus || "").toLowerCase(),
-        }));
-
-        setBookings(normalised);
-        setTours(toursRes.data.getPackages || []);
-      } catch (err) {
-        console.error(
-          "Dashboard fetch error:",
-          err.response?.data || err.message,
-        );
-      } finally {
-        setLoading(false);
-      }
+  // ── copied exactly from Tracking.jsx ──
+  const emitLocation = (latitude, longitude) => {
+    if (!socket) return;
+    const payload = {
+      latitude,
+      longitude,
+      username: userDetails?.username || null,
+      email: userDetails?.email || null,
+      phoneNumber: userDetails?.phoneNumber || null,
+      location: userDetails?.location || null,
     };
-    fetchAll();
-  }, [guideId]);
+    socket.emit("sendLocation", payload);
+  };
 
+  // ── copied exactly from Tracking.jsx ──
   useEffect(() => {
     if (isTracking) {
       socket = io(serverURL, {
@@ -205,6 +184,51 @@ export default function Dashboard({
       }
     };
   }, [isTracking, guideId, userDetails]);
+
+  // ── bookings + tours fetch ──
+  useEffect(() => {
+    if (!guideId) return;
+    const fetchAll = async () => {
+      try {
+        setLoading(true);
+        const token = getToken();
+        const headers = { Authorization: `Bearer ${token}` };
+
+        const bookingsRes = await axios.get(`${serverURL}/api/booking/guide`, {
+          params: { guideId },
+          headers,
+        });
+        const toursRes = await axios.get(`${serverURL}/api/user/package`, {
+          headers,
+        });
+
+        const rawBookings =
+          bookingsRes.data.data || bookingsRes.data.bookings || [];
+        const normalised = rawBookings.map((b) => ({
+          _id: b._id,
+          tourist: b.userId?.username || "Unknown",
+          tourTitle: b.tourPackageId?.title || "—",
+          location: b.tourPackageId?.destination || "",
+          amount: b.tourPackageId?.price || 0,
+          guests: (b.numberOfAdults || 0) + (b.numberOfChildren || 0),
+          date: b.startDate || "",
+          endDate: b.endDate || "",
+          status: (b.bookingStatus || "").toLowerCase(),
+        }));
+
+        setBookings(normalised);
+        setTours(toursRes.data.getPackages || []);
+      } catch (err) {
+        console.error(
+          "Dashboard fetch error:",
+          err.response?.data || err.message,
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAll();
+  }, [guideId]);
 
   const total = bookings.length;
   const confirmed = bookings.filter((b) => b.status === "confirmed").length;
@@ -405,6 +429,9 @@ export default function Dashboard({
                     Broadcasting · {fmtTime(trackingTime)}
                   </p>
                 </div>
+              )}
+              {locationError && isTracking && (
+                <p className="text-red-300 text-xs mb-2">⚠ {locationError}</p>
               )}
               {!isTracking && (
                 <p className="text-violet-300 text-xs mb-3">
