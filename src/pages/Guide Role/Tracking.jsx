@@ -94,31 +94,8 @@ export function Tracking({
   }, [isTracking, guideId, userDetails]);
 
   useEffect(() => {
-    if (!guideId) {
-      setLoading(false);
-      return;
-    }
-    const fetchLogs = async () => {
-      try {
-        setLoading(true);
-        setLogsError(null);
-        const token = getToken();
-        const res = await axios.get(
-          `${serverURL}/api/guide/${guideId}/tracking/logs`,
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
-        setLogs(res.data.logs || []);
-      } catch (err) {
-        setLogsError(
-          err.response?.status === 404
-            ? "Tracking history not available yet."
-            : "Failed to load tracking history.",
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchLogs();
+    setLoading(false);
+    setLogs([]);
   }, [guideId]);
 
   return (

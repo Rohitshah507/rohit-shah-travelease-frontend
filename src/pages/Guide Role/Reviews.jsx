@@ -32,6 +32,7 @@ export function Reviews({ guideId }) {
             headers: { Authorization: `Bearer ${token}` },
           },
         );
+        console.log("Review sample:", res.data.reviews[0]);
         setReviews(res.data.reviews || []);
         setAvgRating(res.data.avgRating || 0);
       } catch (err) {

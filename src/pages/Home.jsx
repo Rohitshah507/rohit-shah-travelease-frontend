@@ -2,32 +2,25 @@ import React, { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-import TouristDashboard from "./Tourist Role/TouristDashboard";
-import GuideDashboard from "./Guide Role/GuideDashboard";
-import AdminDashboard from "./Admin Role/AdminDashboard";
-
 const Home = () => {
   const { userData } = useSelector((state) => state.user);
   const navigate = useNavigate();
 
-  console.log("USER DATA:", userData);
-
   useEffect(() => {
-    if (userData?.userDetails?.role?.includes("ADMIN")) {
-      navigate("/admin"); // redirect to admin page
+    if (!userData || !userData.userDetails) return;
+
+    const role = userData.userDetails.role;
+
+    if (role?.includes("ADMIN")) {
+      navigate("/admin", { replace: true });
+    } else if (role?.includes("GUIDE")) {
+      navigate("/guide", { replace: true });
+    } else if (role?.includes("TOURIST")) {
+      navigate("/tourist", { replace: true });
     }
   }, [userData, navigate]);
 
-  if (!userData || !userData.userDetails) {
-    return <div>Loading...</div>;
-  }
-
-  return (
-    <div>
-      {userData.userDetails.role.includes("TOURIST") && <TouristDashboard />}
-      {userData.userDetails.role.includes("GUIDE") && <GuideDashboard />}
-    </div>
-  );
+  return <div>Loading...</div>;
 };
 
 export default Home;

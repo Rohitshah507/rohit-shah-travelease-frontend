@@ -77,6 +77,12 @@ const BookingManagement = () => {
         icon: XCircle,
         label: "Cancelled",
       },
+      completed: {
+        bg: "bg-blue-100",
+        text: "text-blue-700",
+        icon: CheckCircle,
+        label: "Completed",
+      },
     };
     const cfg = map[s] || map.pending;
     const Icon = cfg.icon;
@@ -98,12 +104,15 @@ const BookingManagement = () => {
     confirmed: allBookings.filter(
       (b) => b.bookingStatus?.toLowerCase() === "confirmed",
     ).length,
+    completed: allBookings.filter(
+      (b) => b.bookingStatus?.toLowerCase() === "completed",
+    ).length,
     cancelled: allBookings.filter(
       (b) => b.bookingStatus?.toLowerCase() === "cancelled",
     ).length,
   };
 
-  const tabs = ["all", "pending", "confirmed", "cancelled"];
+  const tabs = ["all", "pending", "confirmed", "completed", "cancelled"];
 
   return (
     <div className="space-y-4 sm:space-y-6">

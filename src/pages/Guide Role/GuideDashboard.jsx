@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSelector } from "react-redux";
+import {
+  Routes,
+  Route,
+  useNavigate,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
 import { io as socketIO } from "socket.io-client";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -261,6 +268,7 @@ const useGuideNotifications = (userId, role) => {
   return { notifs, unread, connected, markAllRead, refreshNow };
 };
 
+// ── Notification Panel ────────────────────────────────────────────────────────
 const GuideNotifPanel = ({
   notifs,
   connected,
@@ -374,10 +382,15 @@ export default function GuideDashboard() {
   const GUIDE_ID = userData?.userDetails?._id;
   const role = userData?.userDetails?.role?.[0];
 
-  const [activePage, setActivePage] = useState("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(false); // closed by default on mobile
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Derive activePage from the URL
+  const activePage =
+    location.pathname.replace("/guide", "").replace("/", "") || "dashboard";
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [profile, setProfile] = useState(null);
   const [pendingCount, setPendingCount] = useState(0);
 
   const notifPanelRef = useRef(null);
@@ -430,30 +443,24 @@ export default function GuideDashboard() {
 
   useEffect(() => {
     if (!GUIDE_ID) return;
-    const fetchProfile = async () => {
-      try {
-        const token = getToken();
-        const res = await axios.get(`${serverURL}/api/auth/user`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setProfile(res.data.guide || res.data);
-      } catch (err) {
-        console.error("Profile fetch error:", err);
-      }
-    };
     const fetchPending = async () => {
       try {
         const token = getToken();
         const res = await axios.get(`${serverURL}/api/booking/guide`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const bookings = res.data.bookings || [];
-        setPendingCount(bookings.filter((b) => b.status === "pending").length);
+        const bookings = res.data.bookings || res.data.data || res.data || [];
+        setPendingCount(
+          Array.isArray(bookings)
+            ? bookings.filter(
+                (b) => b.bookingStatus?.toLowerCase() === "pending",
+              ).length
+            : 0,
+        );
       } catch (err) {
         console.error("Pending count error:", err);
       }
     };
-    fetchProfile();
     fetchPending();
   }, [GUIDE_ID]);
 
@@ -492,8 +499,7 @@ export default function GuideDashboard() {
   });
 
   const handleNavClick = (id) => {
-    setActivePage(id);
-    // Close sidebar on mobile after navigation
+    navigate(id === "dashboard" ? "/guide" : `/guide/${id}`);
     if (window.innerWidth < 1024) setSidebarOpen(false);
   };
 
@@ -501,7 +507,7 @@ export default function GuideDashboard() {
     <div className="flex h-screen bg-violet-50 font-sans overflow-hidden">
       <Toaster position="top-right" containerStyle={{ top: 72 }} />
 
-      {/* ══ Mobile Overlay ══ */}
+      {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/40 z-10 lg:hidden"
@@ -509,7 +515,7 @@ export default function GuideDashboard() {
         />
       )}
 
-      {/* ══ SIDEBAR ══ */}
+      {/* SIDEBAR */}
       <aside
         className={`
           ${sidebarOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0 lg:w-[72px]"}
@@ -629,7 +635,7 @@ export default function GuideDashboard() {
         </div>
       </aside>
 
-      {/* ══ MAIN AREA ══ */}
+      {/* MAIN AREA */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Topbar */}
         <header className="bg-white border-b border-violet-100 px-3 sm:px-6 py-3 sm:py-3.5 flex items-center justify-between flex-shrink-0 shadow-sm shadow-violet-100/50">
@@ -704,38 +710,52 @@ export default function GuideDashboard() {
           </div>
         </header>
 
-        {/* Page Content */}
+        {/* Page Content with nested Routes */}
         <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 bg-violet-50/60">
-          {activePage === "dashboard" && (
-            <Dashboard
-              guideId={GUIDE_ID}
-              isTracking={isTracking}
-              trackingTime={trackingTime}
-              fmtTime={fmtTime}
-              onToggleTracking={() =>
-                isTracking ? handleStopTracking() : handleStartTracking()
+          <Routes>
+            <Route
+              index
+              element={
+                <Dashboard
+                  guideId={GUIDE_ID}
+                  isTracking={isTracking}
+                  trackingTime={trackingTime}
+                  fmtTime={fmtTime}
+                  onToggleTracking={() =>
+                    isTracking ? handleStopTracking() : handleStartTracking()
+                  }
+                  setActivePage={(id) =>
+                    navigate(id === "dashboard" ? "/guide" : `/guide/${id}`)
+                  }
+                  userDetails={userData?.userDetails}
+                />
               }
-              setActivePage={setActivePage}
-              userDetails={userData?.userDetails}
             />
-          )}
-          {activePage === "bookings" && <Bookings guideId={GUIDE_ID} />}
-          {activePage === "tours" && <Tours guideId={GUIDE_ID} />}
-          {activePage === "history" && <HistoryPage guideId={GUIDE_ID} />}
-          {activePage === "tracking" && (
-            <Tracking
-              guideId={GUIDE_ID}
-              isTracking={isTracking}
-              trackingTime={trackingTime}
-              fmtTime={fmtTime}
-              onStart={handleStartTracking}
-              onStop={handleStopTracking}
-              userDetails={userData?.userDetails}
+            <Route path="bookings" element={<Bookings guideId={GUIDE_ID} />} />
+            <Route path="tours" element={<Tours guideId={GUIDE_ID} />} />
+            <Route
+              path="history"
+              element={<HistoryPage guideId={GUIDE_ID} />}
             />
-          )}
-          {activePage === "reviews" && <Reviews guideId={GUIDE_ID} />}
-          {activePage === "earnings" && <Earnings guideId={GUIDE_ID} />}
-          {activePage === "profile" && <Profile guideId={GUIDE_ID} />}
+            <Route
+              path="tracking"
+              element={
+                <Tracking
+                  guideId={GUIDE_ID}
+                  isTracking={isTracking}
+                  trackingTime={trackingTime}
+                  fmtTime={fmtTime}
+                  onStart={handleStartTracking}
+                  onStop={handleStopTracking}
+                  userDetails={userData?.userDetails}
+                />
+              }
+            />
+            <Route path="reviews" element={<Reviews guideId={GUIDE_ID} />} />
+            <Route path="earnings" element={<Earnings guideId={GUIDE_ID} />} />
+            <Route path="profile" element={<Profile guideId={GUIDE_ID} />} />
+            <Route path="*" element={<Navigate to="/guide" replace />} />
+          </Routes>
         </main>
       </div>
     </div>

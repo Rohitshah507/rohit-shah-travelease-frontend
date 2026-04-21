@@ -1,6 +1,3 @@
-// ============================================================
-//  src/pages/guide/History.jsx
-// ============================================================
 import { useState, useEffect } from "react";
 import { Star, Download } from "lucide-react";
 import axios from "axios";
@@ -36,30 +33,60 @@ export function History() {
         const token = getToken();
         const headers = { Authorization: `Bearer ${token}` };
 
+        // Fetch bookings
         const bookingsRes = await axios.get(`${serverURL}/api/booking/guide`, {
           headers,
         });
         const guideBookings = bookingsRes.data.data || bookingsRes.data || [];
 
+        // Fetch payments
         const paymentsRes = await axios.get(
           `${serverURL}/api/payment/guide-payments`,
           { headers },
         );
         const guidePayments = paymentsRes.data.data || paymentsRes.data || [];
 
-        const confirmedBookings = guideBookings.filter(
-          (b) => b.bookingStatus === "Confirmed",
+        const completedBookings = guideBookings.filter(
+          (b) => b.bookingStatus === "COMPLETED",
         );
-        const totalTours = confirmedBookings.length;
+        const totalTours = completedBookings.length;
 
         const totalEarnings = guidePayments
           .filter((p) => p.status === "COMPLETED")
           .reduce((sum, p) => sum + (p.amount || 0), 0);
 
-        const fiveStarReviews = 0;
-        const avgRating = 0;
+        let fiveStarReviews = 0;
+        let avgRating = 0;
 
-        const historyItems = confirmedBookings.map((booking) => {
+        try {
+          const profileRes = await axios.get(`${serverURL}/api/auth/user`, {
+            headers,
+          });
+          const guideId = profileRes.data.userDetails?._id;
+
+          if (guideId) {
+            const reviewRes = await axios.get(
+              `${serverURL}/api/review/guide/${guideId}`,
+              { headers },
+            );
+            const reviewData = reviewRes.data.data || reviewRes.data || {};
+
+            // The getGuideRating endpoint likely returns { avgRating, totalReviews, reviews[] }
+            // Adjust based on your actual response shape
+            avgRating = reviewData.avgRating || reviewData.averageRating || 0;
+            const reviews = reviewData.reviews || reviewData || [];
+            if (Array.isArray(reviews)) {
+              fiveStarReviews = reviews.filter((r) => r.rating === 5).length;
+            } else {
+              fiveStarReviews = reviewData.fiveStarCount || 0;
+            }
+          }
+        } catch (reviewErr) {
+          console.warn("Could not fetch reviews:", reviewErr);
+        }
+
+        // Build history from completed bookings
+        const historyItems = completedBookings.map((booking) => {
           const payment = guidePayments.find(
             (p) =>
               p.bookingId?._id === booking._id ||
@@ -139,7 +166,10 @@ export function History() {
               },
               {
                 label: "Avg Rating",
-                value: stats.avgRating.toFixed(1),
+                value:
+                  typeof stats.avgRating === "number"
+                    ? stats.avgRating.toFixed(1)
+                    : "0.0",
                 icon: "📊",
               },
             ].map((s, i) => (
@@ -194,14 +224,12 @@ export function History() {
                 key={h._id}
                 className="px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4 hover:bg-gray-50 transition"
               >
-                {/* Tourist Avatar */}
                 <div
                   className={`w-9 sm:w-10 h-9 sm:h-10 ${avatarColors[i % avatarColors.length]} rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm`}
                 >
                   {h.tourist?.[0]?.toUpperCase() || "T"}
                 </div>
 
-                {/* Tour Details */}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 text-xs sm:text-sm truncate">
                     {h.tourist}
@@ -214,7 +242,6 @@ export function History() {
                   </p>
                 </div>
 
-                {/* Rating Stars — hidden on very small screens */}
                 <div className="hidden xs:flex gap-0.5 flex-shrink-0">
                   {[...Array(5)].map((_, j) => (
                     <Star
@@ -229,9 +256,8 @@ export function History() {
                   ))}
                 </div>
 
-                {/* Amount */}
                 <span className="font-bold text-yellow-600 flex-shrink-0 text-sm">
-                  ${h.amount}
+                  Rs.{h.amount}
                 </span>
               </div>
             ))}
