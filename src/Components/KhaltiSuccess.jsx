@@ -32,7 +32,6 @@ export default function KhaltiSuccess() {
   const purchaseOrderId = searchParams.get("purchase_order_id");
   const mobile = searchParams.get("mobile");
 
-  // Display amount (Khalti sends in paisa, divide by 100 for rupees)
   const displayAmount = totalAmount
     ? (Number(totalAmount) / 100).toLocaleString()
     : amount
@@ -62,8 +61,6 @@ export default function KhaltiSuccess() {
           "Payment verify error:",
           err.response?.data || err.message,
         );
-        // Even if backend verify fails, Khalti already confirmed payment
-        // so we still show success (don't block the user)
         setVerified(true);
       } finally {
         setVerifying(false);

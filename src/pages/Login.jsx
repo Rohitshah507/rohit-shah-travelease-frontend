@@ -8,7 +8,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { serverURL } from "../App.jsx";
 import { setUserData } from "../redux/userSlice.js";
 
-// ─── Token helpers (7-day expiry) ─────────────────────────────────────────────
+
 const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const saveTokenWithExpiry = (token) => {

@@ -50,7 +50,7 @@ const AllPackages = () => {
     try {
       setDeleting(true);
       const token = getToken();
-      await axios.delete(`${serverURL}/api/user/package/${pkgId}`, {
+      await axios.delete(`${serverURL}/api/user/${pkgId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("🗑️ Package deleted.");

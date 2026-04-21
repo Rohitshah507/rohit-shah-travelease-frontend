@@ -21,9 +21,7 @@ import useUser from "../hooks/useUser";
 import { serverURL } from "../App";
 import { getToken } from "../pages/Login";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Notification type config
-// ─────────────────────────────────────────────────────────────────────────────
+
 const getNotifStyle = (type = "", message = "") => {
   const t = type.toUpperCase();
   const m = message.toLowerCase();

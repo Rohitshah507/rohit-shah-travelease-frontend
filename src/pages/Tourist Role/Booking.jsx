@@ -38,7 +38,7 @@ const BookingPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
   const [bookingId, setBookingId] = useState(null);
-  const [existingBookingStatus, setExistingBookingStatus] = useState(null); // "pending" | "confirmed" | "completed" | etc.
+  const [existingBookingStatus, setExistingBookingStatus] = useState(null); 
   const [existingPaymentStatus, setExistingPaymentStatus] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -58,7 +58,7 @@ const BookingPage = () => {
     specialRequests: "",
   });
 
-  // Derive isPaid from existing booking statuses
+
   const isPaid =
     ["success", "completed", "paid"].includes(
       existingPaymentStatus?.toLowerCase(),
