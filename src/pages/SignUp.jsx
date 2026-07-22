@@ -351,7 +351,7 @@ const SignUp = () => {
           <div style={{ marginBottom: "1rem" }}>
             <label style={labelStyle}>Role</label>
             <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              {["TOURIST", "GUIDE", "ADMIN"].map((r) => (
+              {["TOURIST", "GUIDE"].map((r) => (
                 <button
                   key={r}
                   onClick={() => setRole(r)}
