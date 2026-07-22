@@ -63,7 +63,7 @@ const Packages = () => {
   const [sortBy, setSortBy] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
 
-  // ── READ ?search= PARAM FROM URL (new) ──
+  // ── READ ?search= PARAM FROM URL ──
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const q = params.get("search");
